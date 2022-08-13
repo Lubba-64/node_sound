@@ -1,19 +1,16 @@
-use eframe::{run_native, epi::App, egui::CentralPanel, NativeOptions};
+use eframe::{egui::CentralPanel, App};
 use rodio::{OutputStream, source::Source};
 mod components;
 use components::*;
 mod wave_table;
 use wave_table::WavetableOscillator;
+mod node_graph;
 
 struct MainApp;
 
 impl App for MainApp{
-    fn update(&mut self, ctx: &eframe::egui::Context, _frame: &eframe::epi::Frame) {
+    fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame) {
         CentralPanel::default().show(ctx, |ui| {ui.label("hello")});
-    }
-
-    fn name(&self) -> &str {
-        "HELLO WORLD!!!"
     }
 }
 
@@ -29,8 +26,14 @@ fn main() {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let _result = stream_handle.play_raw(oscillator.convert_samples());
 
+    use eframe::egui::Visuals;
 
-    let app = MainApp;
-    let native_options = NativeOptions::default();
-    run_native(Box::new(app), native_options)
+    eframe::run_native(
+        "Egui node graph example",
+        eframe::NativeOptions::default(),
+        Box::new(|cc| {
+            cc.egui_ctx.set_visuals(Visuals::dark());
+            Box::new(node_graph::NodeGraphExample::default())
+        }),
+    );
 }
