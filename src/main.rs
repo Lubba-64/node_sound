@@ -8,7 +8,7 @@ use wave_table::WavetableOscillator;
 struct MainApp;
 
 impl App for MainApp{
-    fn update(&mut self, ctx: &eframe::egui::Context, frame: &eframe::epi::Frame) {
+    fn update(&mut self, ctx: &eframe::egui::Context, _frame: &eframe::epi::Frame) {
         CentralPanel::default().show(ctx, |ui| {ui.label("hello")});
     }
 
