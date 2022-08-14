@@ -1247,6 +1247,7 @@ dependencies = [
  "egui_node_graph",
  "noise",
  "rodio",
+ "slotmap",
 ]
 
 [[package]]
