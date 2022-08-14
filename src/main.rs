@@ -1,30 +1,27 @@
-use eframe::{egui::CentralPanel, App};
-use rodio::{OutputStream, source::Source};
-mod components;
-use components::*;
-mod wave_table;
-use wave_table::WavetableOscillator;
-mod node_graph;
-
-struct MainApp;
-
-impl App for MainApp{
-    fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame) {
-        CentralPanel::default().show(ctx, |ui| {ui.label("hello")});
-    }
-}
-
+use rodio::{OutputStream, Source};
+use std::time::Duration;
+mod sources;
+use sources::*;
+mod sound_graph;
 
 fn main() {
+    let mut source = DefaultSource::new(44100, sin_wave_table(64), Some(Duration::new(1, 0)));
+    let mut source2 = DefaultSource::new(44100, square_wave_table(64), Some(Duration::new(1, 0)));
+    source2.set_frequency(442.0);
+    source.set_frequency(100.0);
 
-    let square_ = change_amplitude(square_wave_table(64), 0.02);
-    let sin_ = change_amplitude(sin_wave_table(64), 0.1);
-    let test_ = perlin_wave_table(64, 1000000100);
-    let combine_ = combine(combine(sin_, square_), test_);
-    let mut oscillator = WavetableOscillator::new(44100, combine_);
-    oscillator.set_frequency(442.0);
+    let source_ops = source2
+        .amplify(0.05)
+        .fade_in(Duration::new(1, 0))
+        .mix(source.amplify(0.01))
+        .reverb(Duration::new(0, 10), 0.2)
+        .amplify(0.2)
+        .speed(0.3)
+        .take_duration(Duration::new(1, 0));
+
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    let _result = stream_handle.play_raw(oscillator.convert_samples());
+
+    let _result = stream_handle.play_raw(source_ops.convert_samples());
 
     use eframe::egui::Visuals;
 
@@ -33,7 +30,7 @@ fn main() {
         eframe::NativeOptions::default(),
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(Visuals::dark());
-            Box::new(node_graph::NodeGraphExample::default())
+            Box::new(sound_graph::graph::NodeGraphExample::default())
         }),
     );
 }
