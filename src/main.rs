@@ -23,6 +23,10 @@ fn main() {
 
     let _result = stream_handle.play_raw(source_ops.convert_samples());
 
+
+}
+
+/*
     use eframe::egui::Visuals;
 
     eframe::run_native(
@@ -30,7 +34,7 @@ fn main() {
         eframe::NativeOptions::default(),
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(Visuals::dark());
-            Box::new(sound_graph::graph::NodeGraphExample::default())
+            Box::new(sound_graph::graph::NodeGraphExample::new(vec![]))
         }),
     );
-}
+*/

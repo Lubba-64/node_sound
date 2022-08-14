@@ -1,11 +1,9 @@
 use std::{borrow::Cow, collections::HashMap, time::Duration};
-
-use crate::types::{DataType, ValueType};
-use eframe::egui::{self, DragValue, TextStyle};
+use crate::sound_graph::types::{DataType, ValueType};
+use eframe::{egui::{self, DragValue, TextStyle}};
 use egui_node_graph::*;
-use rodio::source::Zero;
 
-use super::{types::{NodeDefinitions, SoundNode, InputValueConfig}, DEFAULT_SAMPLE_RATE};
+use super::{types::{NodeDefinitions, SoundNode, InputValueConfig}};
 
 // ========= First, define your user data types =============
 
@@ -66,7 +64,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
     type ValueType = ValueType;
 
     fn node_finder_label(&self) -> &str {
-        &self.0.name.as_str()
+        &self.0.name
     }
 
     fn node_graph_label(&self) -> String {
@@ -92,13 +90,13 @@ impl NodeTemplateTrait for NodeDefinitionUi {
         // We define some closures here to avoid boilerplate. Note that this is
         // entirely optional.
 
-        for input in self.0.inputs {
+        for input in self.0.inputs.iter() {
             graph.add_input_param(
                 node_id,
                 input.name.clone(),
                 input.data_type,
                 match input.value {
-                    InputValueConfig::AudioSource => {ValueType::AudioSource { value: Box::new(Zero::new(1,DEFAULT_SAMPLE_RATE)) }}
+                    InputValueConfig::AudioSource => { ValueType::AudioSource { value: 0 }}
                     InputValueConfig::Float { value } => ValueType::Float { value },
                     InputValueConfig::Duration { value } => ValueType::Duration { value: Duration::from_secs_f32(value) }
                 },
@@ -106,7 +104,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                 true,
             );
         }
-        for output in self.0.outputs{
+        for output in self.0.outputs.iter() {
             graph.add_output_param(node_id, output.name.clone(), output.data_type);
         }
     }
@@ -166,7 +164,7 @@ impl NodeDataTrait for NodeData {
         &self,
         ui: &mut egui::Ui,
         node_id: NodeId,
-        _graph: &Graph<NodeData, DataType, ValueType>,
+        _graph: &Graph<NodeData, DataType, Self::ValueType>,
         user_state: &Self::UserState,
     ) -> Vec<NodeResponse<MyResponse, NodeData>>
     where
@@ -208,25 +206,24 @@ type MyGraph = Graph<NodeData, DataType, ValueType>;
 type MyEditorState =
     GraphEditorState<NodeData, DataType, ValueType, NodeDefinitionUi, SoundGraphState>;
 
-pub struct NodeGraphExample {
+pub struct NodeGraphExample<'a> {
     // The `GraphEditorState` is the top-level object. You "register" all your
     // custom types by specifying it as its generic parameters.
     pub state: MyEditorState,
+    pub node_definitions: &'a NodeDefinitions
 }
 
-impl eframe::App for NodeGraphExample {
+impl<'a> eframe::App for NodeGraphExample<'a> {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        draw_node_graph(ctx,&mut self.state,node_definitions)
+        draw_node_graph(ctx,&mut self.state,self.node_definitions)
     }
 }
 
-impl Default for NodeGraphExample {
-    fn default() -> Self {
-        Self {
-            state: MyEditorState::new(1.0, SoundGraphState::default()),
-        }
+impl<'a> NodeGraphExample<'a> {
+    pub fn new(node_definitions: &'a NodeDefinitions) -> Self{
+        Self { state: MyEditorState::new(1.0, SoundGraphState::default()), node_definitions: node_definitions }
     }
 }
 
@@ -274,22 +271,18 @@ pub fn draw_node_graph(ctx: &egui::Context, state: &mut MyEditorState, defs: &No
     }
 }
 
-type OutputsCache = HashMap<OutputId, ValueType>;
+type OutputsCache<'a> = HashMap<OutputId, ValueType>;
 
 /// Recursively evaluates all dependencies of this node, then evaluates the node itself.
-pub fn evaluate_node(
+pub fn evaluate_node<'a>(
     graph: &MyGraph,
     node_id: NodeId,
     outputs_cache: &mut OutputsCache,
 ) -> anyhow::Result<ValueType> {
-    // To solve a similar problem as creating node types above, we define an
-    // Evaluator as a convenience. It may be overkill for this small example,
-    // but something like this makes the code much more readable when the
-    // number of nodes starts growing.
 
     struct Evaluator<'a> {
         graph: &'a MyGraph,
-        outputs_cache: &'a mut OutputsCache,
+        outputs_cache: &'a mut OutputsCache<'a>,
         node_id: NodeId,
     }
     impl<'a> Evaluator<'a> {
@@ -301,8 +294,6 @@ pub fn evaluate_node(
             }
         }
         fn evaluate_input(&mut self, name: &str) -> anyhow::Result<ValueType> {
-            // Calling `evaluate_input` recursively evaluates other nodes in the
-            // graph until the input value for a paramater has been computed.
             evaluate_input(self.graph, self.node_id, name, self.outputs_cache)
         }
         fn populate_output(
@@ -310,73 +301,27 @@ pub fn evaluate_node(
             name: &str,
             value: ValueType,
         ) -> anyhow::Result<ValueType> {
-            // After computing an output, we don't just return it, but we also
-            // populate the outputs cache with it. This ensures the evaluation
-            // only ever computes an output once.
-            //
-            // The return value of the function is the "final" output of the
-            // node, the thing we want to get from the evaluation. The example
-            // would be slightly more contrived when we had multiple output
-            // values, as we would need to choose which of the outputs is the
-            // one we want to return. Other outputs could be used as
-            // intermediate values.
-            //
-            // Note that this is just one possible semantic interpretation of
-            // the graphs, you can come up with your own evaluation semantics!
             populate_output(self.graph, self.outputs_cache, self.node_id, name, value)
         }
-        fn input_vector(&mut self, name: &str) -> anyhow::Result<egui::Vec2> {
-            self.evaluate_input(name)?.try_to_vec2()
+        fn input_duration(&mut self, name: &str) -> anyhow::Result<Duration> {
+            self.evaluate_input(name)?.try_to_duration()
         }
-        fn input_scalar(&mut self, name: &str) -> anyhow::Result<f32> {
-            self.evaluate_input(name)?.try_to_scalar()
+        fn input_float(&mut self, name: &str) -> anyhow::Result<f32> {
+            self.evaluate_input(name)?.try_to_float()
         }
-        fn output_vector(&mut self, name: &str, value: egui::Vec2) -> anyhow::Result<ValueType> {
-            self.populate_output(name, ValueType::Vec2 { value })
+        fn output_duration(&mut self, name: &str, value: Duration) -> anyhow::Result<ValueType> {
+            self.populate_output(name, ValueType::Duration { value })
         }
-        fn output_scalar(&mut self, name: &str, value: f32) -> anyhow::Result<ValueType> {
-            self.populate_output(name, ValueType::Scalar { value })
+        fn output_float(&mut self, name: &str, value: f32) -> anyhow::Result<ValueType> {
+            self.populate_output(name, ValueType::Float { value })
         }
     }
 
     let node = &graph[node_id];
     let mut evaluator = Evaluator::new(graph, outputs_cache, node_id);
-    match node.user_data.template {
-        MyNodeTemplate::AddScalar => {
-            let a = evaluator.input_scalar("A")?;
-            let b = evaluator.input_scalar("B")?;
-            evaluator.output_scalar("out", a + b)
-        }
-        MyNodeTemplate::SubtractScalar => {
-            let a = evaluator.input_scalar("A")?;
-            let b = evaluator.input_scalar("B")?;
-            evaluator.output_scalar("out", a - b)
-        }
-        MyNodeTemplate::VectorTimesScalar => {
-            let scalar = evaluator.input_scalar("scalar")?;
-            let vector = evaluator.input_vector("vector")?;
-            evaluator.output_vector("out", vector * scalar)
-        }
-        MyNodeTemplate::AddVector => {
-            let v1 = evaluator.input_vector("v1")?;
-            let v2 = evaluator.input_vector("v2")?;
-            evaluator.output_vector("out", v1 + v2)
-        }
-        MyNodeTemplate::SubtractVector => {
-            let v1 = evaluator.input_vector("v1")?;
-            let v2 = evaluator.input_vector("v2")?;
-            evaluator.output_vector("out", v1 - v2)
-        }
-        MyNodeTemplate::MakeVector => {
-            let x = evaluator.input_scalar("x")?;
-            let y = evaluator.input_scalar("y")?;
-            evaluator.output_vector("out", egui::vec2(x, y))
-        }
-        MyNodeTemplate::MakeScalar => {
-            let value = evaluator.input_scalar("value")?;
-            evaluator.output_scalar("out", value)
-        }
-    }
+
+    todo!();
+   
 }
 
 fn populate_output(
@@ -387,7 +332,7 @@ fn populate_output(
     value: ValueType,
 ) -> anyhow::Result<ValueType> {
     let output_id = graph[node_id].get_output(param_name)?;
-    outputs_cache.insert(output_id, value);
+    outputs_cache.insert(output_id, value.clone());
     Ok(value)
 }
 
@@ -405,7 +350,7 @@ fn evaluate_input(
         // The value was already computed due to the evaluation of some other
         // node. We simply return value from the cache.
         if let Some(other_value) = outputs_cache.get(&other_output_id) {
-            Ok(*other_value)
+            Ok(other_value.clone())
         }
         // This is the first time encountering this node, so we need to
         // recursively evaluate it.
@@ -414,13 +359,13 @@ fn evaluate_input(
             evaluate_node(graph, graph[other_output_id].node, outputs_cache)?;
 
             // Now that we know the value is cached, return it
-            Ok(*outputs_cache
+            Ok(outputs_cache
                 .get(&other_output_id)
-                .expect("Cache should be populated"))
+                .expect("Cache should be populated").clone())
         }
     }
     // No existing connection, take the inline value instead.
     else {
-        Ok(graph[input_id].value)
+        Ok(graph[input_id].value.clone())
     }
 }
