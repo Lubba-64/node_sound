@@ -1,5 +1,6 @@
 use egui_node_graph::InputParamKind;
 use egui_node_graph::NodeId;
+use rodio::Source;
 use slotmap::{self, SecondaryMap, SlotMap};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -9,6 +10,8 @@ pub use self::data_types::*;
 mod data_types {
     use std::fmt::Debug;
 
+    use rodio::Sample;
+
     use super::*;
     #[derive(Copy, Clone, PartialEq, Eq, Debug)]
     pub enum DataType {
@@ -16,10 +19,10 @@ mod data_types {
         Float,
         Duration,
     }
-    
+
     #[derive(Clone)]
     pub enum ValueType {
-        AudioSource { value: usize},
+        AudioSource { value: usize },
         Float { value: f32 },
         Duration { value: Duration },
     }
@@ -92,12 +95,15 @@ mod input_output {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct SoundNode {
     pub name: String,
     pub inputs: Vec<InputParameter>,
     pub outputs: Vec<Output>,
-    pub operation : fn(HashMap<String, ValueType>) -> HashMap<String, ValueType>
+    pub operation: fn(
+        HashMap<String, ValueType>,
+        &mut Vec<Box<dyn Source<Item = f32>>>,
+    ) -> HashMap<String, ValueType>,
 }
 
 pub struct NodeDefinitions(pub BTreeMap<String, SoundNode>);
