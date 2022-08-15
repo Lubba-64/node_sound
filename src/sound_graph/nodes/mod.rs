@@ -1,14 +1,15 @@
+mod mix_node;
+use mix_node::mix_node;
 mod sawtooth_node;
+use sawtooth_node::sawtooth_node;
 mod sounds;
-use std::collections::BTreeMap;
-
-pub use sawtooth_node::sawtooth_node;
 pub use sounds::*;
+use std::collections::BTreeMap;
 
 use super::types::NodeDefinitions;
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes = [sawtooth_node()];
+    let nodes = [sawtooth_node(), mix_node()];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.name.clone(), n.clone())),
     ))

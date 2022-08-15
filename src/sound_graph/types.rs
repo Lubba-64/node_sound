@@ -17,7 +17,7 @@ mod data_types {
 
     #[derive(Clone)]
     pub enum ValueType {
-        AudioSource { value: usize },
+        AudioSource { value: FiniteSource<f32> },
         Float { value: f32 },
         Duration { value: Duration },
     }
@@ -46,7 +46,7 @@ mod data_types {
 
     impl ValueType {
         /// Tries to downcast this value type to a vector
-        pub fn try_to_source(self) -> Result<usize, String> {
+        pub fn try_to_source(self) -> Result<FiniteSource<f32>, String> {
             match self {
                 ValueType::AudioSource { value } => Ok(value),
                 _ => Err("invalid cast".to_string()),
@@ -94,8 +94,7 @@ pub struct SoundNode {
     pub name: String,
     pub inputs: HashMap<String, InputParameter>,
     pub outputs: HashMap<String, Output>,
-    pub operation:
-        fn(HashMap<String, ValueType>, &mut Vec<FiniteSource<f32>>) -> HashMap<String, ValueType>,
+    pub operation: fn(HashMap<String, ValueType>) -> HashMap<String, ValueType>,
 }
 
 pub struct NodeDefinitions(pub BTreeMap<String, SoundNode>);
