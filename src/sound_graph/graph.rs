@@ -24,6 +24,7 @@ pub enum MyResponse {
 #[derive(Default)]
 pub struct SoundGraphState {
     pub active_node: Option<NodeId>,
+    pub active_modified: bool,
 }
 
 impl DataTypeTrait<SoundGraphState> for DataType {
@@ -161,7 +162,6 @@ impl NodeDataTrait for NodeData {
                 responses.push(NodeResponse::User(MyResponse::ClearActiveNode));
             }
         }
-
         responses
     }
 }
@@ -176,17 +176,6 @@ pub struct NodeGraphExample {
     pub stream_handle: (OutputStream, OutputStreamHandle),
 }
 
-impl eframe::App for NodeGraphExample {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        draw_node_graph(
-            ctx,
-            &mut self.state,
-            &self.node_definitions,
-            &mut self.stream_handle.1,
-        )
-    }
-}
-
 impl NodeGraphExample {
     pub fn new() -> Self {
         Self {
@@ -197,67 +186,79 @@ impl NodeGraphExample {
     }
 }
 
-pub fn draw_node_graph<'a>(
-    ctx: &egui::Context,
-    state: &mut MyEditorState,
-    defs: &NodeDefinitions,
-    stream_handle: &'a mut OutputStreamHandle,
-) {
-    egui::TopBottomPanel::top("top").show(ctx, |ui| {
-        egui::menu::bar(ui, |ui| {
-            egui::widgets::global_dark_light_mode_switch(ui);
+impl eframe::App for NodeGraphExample {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::TopBottomPanel::top("top").show(ctx, |ui| {
+            egui::menu::bar(ui, |ui| {
+                egui::widgets::global_dark_light_mode_switch(ui);
+            });
         });
-    });
-    let graph_response = egui::CentralPanel::default()
-        .show(ctx, |ui| {
-            state.draw_graph_editor(ui, NodeDefinitionsUi(defs))
-        })
-        .inner;
-    for node_response in graph_response.node_responses {
-        if let NodeResponse::User(user_event) = node_response {
-            match user_event {
-                MyResponse::SetActiveNode(node) => state.user_state.active_node = Some(node),
-                MyResponse::ClearActiveNode => state.user_state.active_node = None,
+        let graph_response = egui::CentralPanel::default()
+            .show(ctx, |ui| {
+                self.state
+                    .draw_graph_editor(ui, NodeDefinitionsUi(&self.node_definitions))
+            })
+            .inner;
+
+        for node_response in graph_response.node_responses {
+            if let NodeResponse::User(user_event) = node_response {
+                match user_event {
+                    MyResponse::SetActiveNode(node) => {
+                        self.state.user_state.active_node = Some(node);
+                        self.state.user_state.active_modified = true;
+                    }
+                    MyResponse::ClearActiveNode => self.state.user_state.active_node = None,
+                }
             }
         }
-    }
 
-    if let Some(node) = state.user_state.active_node {
-        if state.graph.nodes.contains_key(node) {
-            let mut source_stack =
-                vec![Zero::new(1, DEFAULT_SAMPLE_RATE).as_finite(Duration::new(1, 0))];
+        let mut sound_result = None;
 
-            let text;
+        if let Some(node) = self.state.user_state.active_node {
+            if self.state.graph.nodes.contains_key(node) {
+                let mut source_stack =
+                    vec![Zero::new(1, DEFAULT_SAMPLE_RATE).as_finite(Duration::new(1, 0))];
 
-            match evaluate_node(
-                &state.graph,
-                node,
-                &mut HashMap::new(),
-                defs,
-                &mut source_stack,
-            ) {
-                Ok(value) => {
-                    let sound = value.try_to_source().unwrap();
+                let text;
 
-                    match stream_handle.play_raw(source_stack[sound].clone()) {
-                        Ok(_x) => text = "Playing Anonymous audio source.",
-                        Err(_x) => text = "An error occured trying to play the audio source.",
+                match evaluate_node(
+                    &self.state.graph,
+                    node,
+                    &mut HashMap::new(),
+                    &self.node_definitions,
+                    &mut source_stack,
+                ) {
+                    Ok(value) => {
+                        let sound = value.try_to_source().unwrap();
+                        sound_result = Some(source_stack[sound].clone());
+                        text = "Playing Anonymous audio source.";
                     }
-                }
-                Err(_err) => {
-                    text = "An error occured trying to play the audio source.";
-                }
-            };
+                    Err(_err) => {
+                        sound_result = None;
+                        text = "An error occured trying to play the audio source.";
+                    }
+                };
 
-            ctx.debug_painter().text(
-                egui::pos2(10.0, 35.0),
-                egui::Align2::LEFT_TOP,
-                text,
-                TextStyle::Button.resolve(&ctx.style()),
-                egui::Color32::WHITE,
-            );
-        } else {
-            state.user_state.active_node = None;
+                ctx.debug_painter().text(
+                    egui::pos2(10.0, 35.0),
+                    egui::Align2::LEFT_TOP,
+                    text,
+                    TextStyle::Button.resolve(&ctx.style()),
+                    egui::Color32::WHITE,
+                );
+            } else {
+                self.state.user_state.active_node = None;
+            }
+        }
+
+        match sound_result {
+            Some(x) => {
+                if self.state.user_state.active_modified {
+                    self.stream_handle.1.play_raw(x);
+                    self.state.user_state.active_modified = false;
+                }
+            }
+            None => (),
         }
     }
 }
