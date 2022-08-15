@@ -1,7 +1,4 @@
 use egui_node_graph::InputParamKind;
-use egui_node_graph::NodeId;
-use rodio::Source;
-use slotmap::{self, SecondaryMap, SlotMap};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::time::Duration;
@@ -9,8 +6,6 @@ use std::time::Duration;
 pub use self::data_types::*;
 mod data_types {
     use std::fmt::Debug;
-
-    use rodio::Sample;
 
     use super::*;
     #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -29,7 +24,7 @@ mod data_types {
 
     #[derive(Clone, Debug)]
     pub enum InputValueConfig {
-        AudioSource,
+        AudioSource {},
         Float { value: f32 },
         Duration { value: f32 },
     }
@@ -104,20 +99,3 @@ pub struct SoundNode {
 }
 
 pub struct NodeDefinitions(pub BTreeMap<String, SoundNode>);
-
-slotmap::new_key_type! { pub struct SoundNodeId; }
-impl SoundNodeId {
-    pub fn display_id(self) -> String {
-        format!("{:?}", self.0)
-    }
-}
-
-pub struct NodeSoundGraph {
-    pub nodes: SlotMap<SoundNodeId, SoundNode>,
-}
-
-#[derive(Clone, Debug)]
-pub struct NodeMapping(
-    SecondaryMap<SoundNodeId, NodeId>,
-    SecondaryMap<NodeId, SoundNodeId>,
-);

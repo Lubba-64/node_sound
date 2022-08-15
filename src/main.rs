@@ -1,14 +1,11 @@
 use std::time::Duration;
 
-use rodio::{
-    source::{ChannelVolume, SineWave},
-    OutputStream, Sample, Source,
-};
-use sound_graph::nodes::{sawtooth_node, AsFiniteSource, FiniteSource, SawToothWave, SquareWave};
-
-use crate::sound_graph::{nodes::get_nodes, types::NodeDefinitions};
+use rodio::{source::SineWave, OutputStream, Source};
+use sound_graph::nodes::{AsFiniteSource, FiniteSource, SawToothWave, SquareWave};
 mod sound_graph;
-fn main() {
+use eframe::egui::Visuals;
+
+fn sound_example() {
     let sin = SineWave::new(100.0);
     let square = SquareWave::new(100.0);
     let saw = SawToothWave::new(100.0);
@@ -19,15 +16,15 @@ fn main() {
     ];
 
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    let res = stream_handle.play_raw(
-        sounds[0]
-            .clone()
-            .amplify(0.5)
-            .as_finite(Duration::from_secs_f32(0.5))
-            .mix(sounds[1].clone())
-            .as_finite(Duration::from_secs_f32(0.25))
-            .convert_samples(),
-    );
+
+    let sound = sounds[0]
+        .clone()
+        .amplify(0.5)
+        .as_finite(Duration::from_secs_f32(0.5))
+        .mix(sounds[1].clone())
+        .as_finite(Duration::from_secs_f32(0.25));
+
+    let res = stream_handle.play_raw(sound.convert_samples());
 
     match res {
         Ok(_x) => {}
@@ -36,9 +33,10 @@ fn main() {
         }
     }
 
-    ///std::thread::sleep(std::time::Duration::from_secs(5));
-    use eframe::egui::Visuals;
+    std::thread::sleep(std::time::Duration::from_secs(5));
+}
 
+fn main() {
     eframe::run_native(
         "Egui node graph example",
         eframe::NativeOptions::default(),

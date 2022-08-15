@@ -14,7 +14,7 @@ pub fn sawtooth_node() -> SoundNode {
                 "frequency".to_string(),
                 InputParameter {
                     data_type: DataType::Float,
-                    kind: InputParamKind::ConstantOnly,
+                    kind: InputParamKind::ConnectionOrConstant,
                     name: "frequency".to_string(),
                     value: InputValueConfig::Float { value: 0.0 },
                 },
@@ -23,7 +23,7 @@ pub fn sawtooth_node() -> SoundNode {
                 "duration".to_string(),
                 InputParameter {
                     data_type: DataType::Duration,
-                    kind: InputParamKind::ConstantOnly,
+                    kind: InputParamKind::ConnectionOrConstant,
                     name: "duration".to_string(),
                     value: InputValueConfig::Duration { value: 1.0 },
                 },
