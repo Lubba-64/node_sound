@@ -1,5 +1,6 @@
+use rodio::Source;
+
 use crate::sound_graph::DEFAULT_SAMPLE_RATE;
-use crate::Source;
 use std::time::Duration;
 
 #[derive(Clone, Debug)]

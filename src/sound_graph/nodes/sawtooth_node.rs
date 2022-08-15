@@ -8,7 +8,7 @@ use super::{AsFiniteSource, SawToothWave};
 
 pub fn sawtooth_node() -> SoundNode {
     SoundNode {
-        name: "sawtooth".to_string(),
+        name: "Sawtooth Wave".to_string(),
         inputs: HashMap::from([
             (
                 "frequency".to_string(),
@@ -36,7 +36,7 @@ pub fn sawtooth_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
-        operation: |x, sources| {
+        operation: |x| {
             let freq = x.get("frequency").unwrap().clone().try_to_float().unwrap();
             let duration = x
                 .get("duration")
@@ -44,11 +44,10 @@ pub fn sawtooth_node() -> SoundNode {
                 .clone()
                 .try_to_duration()
                 .unwrap();
-            sources.push(SawToothWave::new(freq).as_finite(duration));
             HashMap::from([(
                 "out".to_string(),
                 ValueType::AudioSource {
-                    value: sources.len() - 1,
+                    value: SawToothWave::new(freq).as_finite(duration),
                 },
             )])
         },

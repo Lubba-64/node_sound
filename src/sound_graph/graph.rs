@@ -77,7 +77,9 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                 input.0.clone(),
                 input.1.data_type,
                 match input.1.value {
-                    InputValueConfig::AudioSource {} => ValueType::AudioSource { value: 0 },
+                    InputValueConfig::AudioSource {} => ValueType::AudioSource {
+                        value: Zero::new(1, DEFAULT_SAMPLE_RATE).as_finite(Duration::new(1, 0)),
+                    },
                     InputValueConfig::Float { value } => ValueType::Float { value },
                     InputValueConfig::Duration { value } => ValueType::Duration {
                         value: Duration::from_secs_f32(value),
@@ -216,9 +218,6 @@ impl eframe::App for NodeGraphExample {
 
         if let Some(node) = self.state.user_state.active_node {
             if self.state.graph.nodes.contains_key(node) {
-                let mut source_stack =
-                    vec![Zero::new(1, DEFAULT_SAMPLE_RATE).as_finite(Duration::new(1, 0))];
-
                 let text;
 
                 match evaluate_node(
@@ -226,11 +225,10 @@ impl eframe::App for NodeGraphExample {
                     node,
                     &mut HashMap::new(),
                     &self.node_definitions,
-                    &mut source_stack,
                 ) {
                     Ok(value) => {
                         let sound = value.try_to_source().unwrap();
-                        sound_result = Some(source_stack[sound].clone());
+                        sound_result = Some(sound.clone());
                         text = "Playing Anonymous audio source.";
                     }
                     Err(_err) => {
@@ -271,7 +269,6 @@ pub fn evaluate_node<'a>(
     node_id: NodeId,
     outputs_cache: &mut OutputsCache,
     all_nodes: &NodeDefinitions,
-    sources: &mut Vec<FiniteSource<f32>>,
 ) -> Result<ValueType, &'a str> {
     let node = match all_nodes.0.get(&graph[node_id].user_data.name) {
         Some(x) => x,
@@ -280,14 +277,7 @@ pub fn evaluate_node<'a>(
     let mut closure = |name: String| {
         (
             name.clone(),
-            match evaluate_input(
-                graph,
-                node_id,
-                name.as_str(),
-                outputs_cache,
-                all_nodes,
-                sources,
-            ) {
+            match evaluate_input(graph, node_id, name.as_str(), outputs_cache, all_nodes) {
                 Ok(x) => x,
                 Err(_x) => panic!("Input resolution failed"),
             },
@@ -298,7 +288,7 @@ pub fn evaluate_node<'a>(
             .iter()
             .map(|(name, _input)| (closure)(name.to_string())),
     );
-    let res = (node.operation)(input_to_name, sources);
+    let res = (node.operation)(input_to_name);
 
     for (name, value) in res.iter() {
         match populate_output(graph, outputs_cache, node_id, name, value.clone()) {
@@ -334,7 +324,6 @@ fn evaluate_input<'a>(
     param_name: &'a str,
     outputs_cache: &'a mut OutputsCache,
     all_nodes: &'a NodeDefinitions,
-    sources: &mut Vec<FiniteSource<f32>>,
 ) -> Result<ValueType, &'a str> {
     let input_id = match graph[node_id].get_input(param_name) {
         Ok(x) => x,
@@ -352,13 +341,7 @@ fn evaluate_input<'a>(
         // recursively evaluate it.
         else {
             // Calling this will populate the cache
-            match evaluate_node(
-                graph,
-                graph[other_output_id].node,
-                outputs_cache,
-                all_nodes,
-                sources,
-            ) {
+            match evaluate_node(graph, graph[other_output_id].node, outputs_cache, all_nodes) {
                 Ok(x) => x,
                 Err(_x) => panic!("eval failed"),
             };
