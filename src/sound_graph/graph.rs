@@ -1,9 +1,9 @@
-use std::{borrow::Cow, collections::HashMap, time::Duration};
 use crate::sound_graph::types::{DataType, ValueType};
-use eframe::{egui::{self, DragValue, TextStyle}};
+use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph::*;
+use std::{borrow::Cow, collections::HashMap, time::Duration};
 
-use super::{types::{NodeDefinitions, SoundNode, InputValueConfig}};
+use super::types::{InputValueConfig, NodeDefinitions, SoundNode};
 
 // ========= First, define your user data types =============
 
@@ -56,7 +56,7 @@ impl DataTypeTrait<SoundGraphState> for DataType {
 
 // A trait for the node kinds, which tells the library how to build new nodes
 // from the templates in the node finder
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct NodeDefinitionUi(pub SoundNode);
 impl NodeTemplateTrait for NodeDefinitionUi {
     type NodeData = NodeData;
@@ -96,9 +96,11 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                 input.name.clone(),
                 input.data_type,
                 match input.value {
-                    InputValueConfig::AudioSource => { ValueType::AudioSource { value: 0 }}
+                    InputValueConfig::AudioSource => ValueType::AudioSource { value: 0 },
                     InputValueConfig::Float { value } => ValueType::Float { value },
-                    InputValueConfig::Duration { value } => ValueType::Duration { value: Duration::from_secs_f32(value) }
+                    InputValueConfig::Duration { value } => ValueType::Duration {
+                        value: Duration::from_secs_f32(value),
+                    },
                 },
                 input.kind,
                 true,
@@ -109,7 +111,6 @@ impl NodeTemplateTrait for NodeDefinitionUi {
         }
     }
 }
-
 
 pub struct NodeDefinitionsUi<'a>(&'a NodeDefinitions);
 impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
@@ -210,20 +211,23 @@ pub struct NodeGraphExample<'a> {
     // The `GraphEditorState` is the top-level object. You "register" all your
     // custom types by specifying it as its generic parameters.
     pub state: MyEditorState,
-    pub node_definitions: &'a NodeDefinitions
+    pub node_definitions: &'a NodeDefinitions,
 }
 
 impl<'a> eframe::App for NodeGraphExample<'a> {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        draw_node_graph(ctx,&mut self.state,self.node_definitions)
+        draw_node_graph(ctx, &mut self.state, self.node_definitions)
     }
 }
 
 impl<'a> NodeGraphExample<'a> {
-    pub fn new(node_definitions: &'a NodeDefinitions) -> Self{
-        Self { state: MyEditorState::new(1.0, SoundGraphState::default()), node_definitions: node_definitions }
+    pub fn new(node_definitions: &'a NodeDefinitions) -> Self {
+        Self {
+            state: MyEditorState::new(1.0, SoundGraphState::default()),
+            node_definitions: node_definitions,
+        }
     }
 }
 
@@ -244,14 +248,12 @@ pub fn draw_node_graph(ctx: &egui::Context, state: &mut MyEditorState, defs: &No
         // connection is created
         if let NodeResponse::User(user_event) = node_response {
             match user_event {
-                MyResponse::SetActiveNode(node) => {
-                    state.user_state.active_node = Some(node)
-                }
+                MyResponse::SetActiveNode(node) => state.user_state.active_node = Some(node),
                 MyResponse::ClearActiveNode => state.user_state.active_node = None,
             }
         }
     }
-    
+
     if let Some(node) = state.user_state.active_node {
         if state.graph.nodes.contains_key(node) {
             let text = match evaluate_node(&state.graph, node, &mut HashMap::new()) {
@@ -279,7 +281,6 @@ pub fn evaluate_node<'a>(
     node_id: NodeId,
     outputs_cache: &mut OutputsCache,
 ) -> anyhow::Result<ValueType> {
-
     struct Evaluator<'a> {
         graph: &'a MyGraph,
         outputs_cache: &'a mut OutputsCache<'a>,
@@ -296,11 +297,7 @@ pub fn evaluate_node<'a>(
         fn evaluate_input(&mut self, name: &str) -> anyhow::Result<ValueType> {
             evaluate_input(self.graph, self.node_id, name, self.outputs_cache)
         }
-        fn populate_output(
-            &mut self,
-            name: &str,
-            value: ValueType,
-        ) -> anyhow::Result<ValueType> {
+        fn populate_output(&mut self, name: &str, value: ValueType) -> anyhow::Result<ValueType> {
             populate_output(self.graph, self.outputs_cache, self.node_id, name, value)
         }
         fn input_duration(&mut self, name: &str) -> anyhow::Result<Duration> {
@@ -321,7 +318,6 @@ pub fn evaluate_node<'a>(
     let mut evaluator = Evaluator::new(graph, outputs_cache, node_id);
 
     todo!();
-   
 }
 
 fn populate_output(
@@ -361,7 +357,8 @@ fn evaluate_input(
             // Now that we know the value is cached, return it
             Ok(outputs_cache
                 .get(&other_output_id)
-                .expect("Cache should be populated").clone())
+                .expect("Cache should be populated")
+                .clone())
         }
     }
     // No existing connection, take the inline value instead.
