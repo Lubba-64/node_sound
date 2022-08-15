@@ -1,44 +1,31 @@
 use crate::sound_graph::types::{DataType, ValueType};
 use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph::*;
+use rodio::{source::Zero, OutputStream, OutputStreamHandle};
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 
 use super::{
-    nodes::{get_nodes, FiniteSource},
+    nodes::{get_nodes, AsFiniteSource, FiniteSource},
     types::{InputValueConfig, NodeDefinitions, SoundNode},
+    DEFAULT_SAMPLE_RATE,
 };
 
-// ========= First, define your user data types =============
-
-/// The NodeData holds a custom data struct inside each node. It's useful to
-/// store additional information that doesn't live in parameters. For this
-/// example, the node data stores the template (i.e. the "type") of the node.
 #[derive(Clone)]
 pub struct NodeData {
     pub name: String,
 }
 
-/// The response type is used to encode side-effects produced when drawing a
-/// node in the graph. Most side-effects (creating new nodes, deleting existing
-/// nodes, handling connections...) are already handled by the library, but this
-/// mechanism allows creating additional side effects from user code.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MyResponse {
     SetActiveNode(NodeId),
     ClearActiveNode,
 }
 
-/// The graph 'global' state. This state struct is passed around to the node and
-/// parameter drawing callbacks. The contents of this struct are entirely up to
-/// the user. For this example, we use it to keep track of the 'active' node.
 #[derive(Default)]
 pub struct SoundGraphState {
     pub active_node: Option<NodeId>,
 }
 
-// =========== Then, you need to implement some traits ============
-
-// A trait for the data types, to tell the library how to display them
 impl DataTypeTrait<SoundGraphState> for DataType {
     fn data_type_color(&self, _user_state: &SoundGraphState) -> egui::Color32 {
         match self {
@@ -57,8 +44,6 @@ impl DataTypeTrait<SoundGraphState> for DataType {
     }
 }
 
-// A trait for the node kinds, which tells the library how to build new nodes
-// from the templates in the node finder
 #[derive(Clone)]
 pub struct NodeDefinitionUi(pub SoundNode);
 impl NodeTemplateTrait for NodeDefinitionUi {
@@ -71,8 +56,6 @@ impl NodeTemplateTrait for NodeDefinitionUi {
     }
 
     fn node_graph_label(&self) -> String {
-        // It's okay to delegate this to node_finder_label if you don't want to
-        // show different names in the node finder and the node itself.
         self.node_finder_label().into()
     }
 
@@ -87,19 +70,13 @@ impl NodeTemplateTrait for NodeDefinitionUi {
         graph: &mut Graph<Self::NodeData, Self::DataType, Self::ValueType>,
         node_id: NodeId,
     ) {
-        // The nodes are created empty by default. This function needs to take
-        // care of creating the desired inputs and outputs based on the template
-
-        // We define some closures here to avoid boilerplate. Note that this is
-        // entirely optional.
-
         for input in self.0.inputs.iter() {
             graph.add_input_param(
                 node_id,
                 input.0.clone(),
                 input.1.data_type,
                 match input.1.value {
-                    InputValueConfig::AudioSource => ValueType::AudioSource { value: 0 },
+                    InputValueConfig::AudioSource {} => ValueType::AudioSource { value: 0 },
                     InputValueConfig::Float { value } => ValueType::Float { value },
                     InputValueConfig::Duration { value } => ValueType::Duration {
                         value: Duration::from_secs_f32(value),
@@ -127,11 +104,8 @@ impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
 impl WidgetValueTrait for ValueType {
     type Response = MyResponse;
     fn value_widget(&mut self, param_name: &str, ui: &mut egui::Ui) -> Vec<MyResponse> {
-        // This trait is used to tell the library which UI to display for the
-        // inline parameter widgets.
         match self {
             ValueType::Float { value } => {
-                ui.label(param_name);
                 ui.horizontal(|ui| {
                     ui.label(param_name);
                     ui.add(DragValue::new(value));
@@ -140,14 +114,15 @@ impl WidgetValueTrait for ValueType {
             ValueType::Duration { value } => {
                 ui.horizontal(|ui| {
                     ui.label(param_name);
-                    ui.add(DragValue::new(&mut value.as_secs_f32()));
+                    let mut secs_f32 = value.as_secs_f32();
+                    ui.add(DragValue::new(&mut secs_f32));
+                    *value = Duration::from_secs_f32(secs_f32.max(0.0));
                 });
             }
-            ValueType::AudioSource { value } => {
+            ValueType::AudioSource { value: _ } => {
                 ui.label(param_name);
             }
         }
-        // This allows you to return your responses from the inline widgets.
         Vec::new()
     }
 }
@@ -159,11 +134,6 @@ impl NodeDataTrait for NodeData {
     type DataType = DataType;
     type ValueType = ValueType;
 
-    // This method will be called when drawing each node. This allows adding
-    // extra ui elements inside the nodes. In this case, we create an "active"
-    // button which introduces the concept of having an active node in the
-    // graph. This is done entirely from user code with no modifications to the
-    // node graph library.
     fn bottom_ui(
         &self,
         ui: &mut egui::Ui,
@@ -174,28 +144,18 @@ impl NodeDataTrait for NodeData {
     where
         MyResponse: UserResponseTrait,
     {
-        // This logic is entirely up to the user. In this case, we check if the
-        // current node we're drawing is the active one, by comparing against
-        // the value stored in the global user state, and draw different button
-        // UIs based on that.
-
         let mut responses = vec![];
         let is_active = user_state
             .active_node
             .map(|id| id == node_id)
             .unwrap_or(false);
-
-        // Pressing the button will emit a custom user response to either set,
-        // or clear the active node. These responses do nothing by themselves,
-        // the library only makes the responses available to you after the graph
-        // has been drawn. See below at the update method for an example.
         if !is_active {
-            if ui.button("👁 Set active").clicked() {
+            if ui.button("▶ Play").clicked() {
                 responses.push(NodeResponse::User(MyResponse::SetActiveNode(node_id)));
             }
         } else {
             let button =
-                egui::Button::new(egui::RichText::new("👁 Active").color(egui::Color32::BLACK))
+                egui::Button::new(egui::RichText::new("⏹ Stop").color(egui::Color32::BLACK))
                     .fill(egui::Color32::GOLD);
             if ui.add(button).clicked() {
                 responses.push(NodeResponse::User(MyResponse::ClearActiveNode));
@@ -211,17 +171,19 @@ type MyEditorState =
     GraphEditorState<NodeData, DataType, ValueType, NodeDefinitionUi, SoundGraphState>;
 
 pub struct NodeGraphExample {
-    // The `GraphEditorState` is the top-level object. You "register" all your
-    // custom types by specifying it as its generic parameters.
     pub state: MyEditorState,
     pub node_definitions: NodeDefinitions,
+    pub stream_handle: (OutputStream, OutputStreamHandle),
 }
 
 impl eframe::App for NodeGraphExample {
-    /// Called each time the UI needs repainting, which may be many times per second.
-    /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        draw_node_graph(ctx, &mut self.state, &self.node_definitions)
+        draw_node_graph(
+            ctx,
+            &mut self.state,
+            &self.node_definitions,
+            &mut self.stream_handle.1,
+        )
     }
 }
 
@@ -230,11 +192,17 @@ impl NodeGraphExample {
         Self {
             state: MyEditorState::new(1.0, SoundGraphState::default()),
             node_definitions: get_nodes(),
+            stream_handle: OutputStream::try_default().unwrap(),
         }
     }
 }
 
-pub fn draw_node_graph(ctx: &egui::Context, state: &mut MyEditorState, defs: &NodeDefinitions) {
+pub fn draw_node_graph<'a>(
+    ctx: &egui::Context,
+    state: &mut MyEditorState,
+    defs: &NodeDefinitions,
+    stream_handle: &'a mut OutputStreamHandle,
+) {
     egui::TopBottomPanel::top("top").show(ctx, |ui| {
         egui::menu::bar(ui, |ui| {
             egui::widgets::global_dark_light_mode_switch(ui);
@@ -246,9 +214,6 @@ pub fn draw_node_graph(ctx: &egui::Context, state: &mut MyEditorState, defs: &No
         })
         .inner;
     for node_response in graph_response.node_responses {
-        // Here, we ignore all other graph events. But you may find
-        // some use for them. For example, by playing a sound when a new
-        // connection is created
         if let NodeResponse::User(user_event) = node_response {
             match user_event {
                 MyResponse::SetActiveNode(node) => state.user_state.active_node = Some(node),
@@ -259,18 +224,31 @@ pub fn draw_node_graph(ctx: &egui::Context, state: &mut MyEditorState, defs: &No
 
     if let Some(node) = state.user_state.active_node {
         if state.graph.nodes.contains_key(node) {
-            let mut source_stack = vec![];
+            let mut source_stack =
+                vec![Zero::new(1, DEFAULT_SAMPLE_RATE).as_finite(Duration::new(1, 0))];
 
-            let text = match evaluate_node(
+            let text;
+
+            match evaluate_node(
                 &state.graph,
                 node,
                 &mut HashMap::new(),
                 defs,
                 &mut source_stack,
             ) {
-                Ok(value) => format!("The result is: {:?}", value),
-                Err(err) => format!("Execution error: {}", err),
+                Ok(value) => {
+                    let sound = value.try_to_source().unwrap();
+
+                    match stream_handle.play_raw(source_stack[sound].clone()) {
+                        Ok(_x) => text = "Playing Anonymous audio source.",
+                        Err(_x) => text = "An error occured trying to play the audio source.",
+                    }
+                }
+                Err(_err) => {
+                    text = "An error occured trying to play the audio source.";
+                }
             };
+
             ctx.debug_painter().text(
                 egui::pos2(10.0, 35.0),
                 egui::Align2::LEFT_TOP,
@@ -349,7 +327,6 @@ fn populate_output<'a>(
     Ok(value)
 }
 
-// Evaluates the input value of
 fn evaluate_input<'a>(
     graph: &'a MyGraph,
     node_id: NodeId,
@@ -374,13 +351,16 @@ fn evaluate_input<'a>(
         // recursively evaluate it.
         else {
             // Calling this will populate the cache
-            evaluate_node(
+            match evaluate_node(
                 graph,
                 graph[other_output_id].node,
                 outputs_cache,
                 all_nodes,
                 sources,
-            );
+            ) {
+                Ok(x) => x,
+                Err(_x) => panic!("eval failed"),
+            };
 
             // Now that we know the value is cached, return it
             Ok(outputs_cache

@@ -1,6 +1,6 @@
 mod sawtooth_node;
 mod sounds;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 pub use sawtooth_node::sawtooth_node;
 pub use sounds::*;
