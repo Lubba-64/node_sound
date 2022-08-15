@@ -4,7 +4,9 @@ use rodio::{
     source::{ChannelVolume, SineWave},
     OutputStream, Sample, Source,
 };
-use sound_graph::nodes::{AsFiniteSource, FiniteSource, SawToothWave, SquareWave};
+use sound_graph::nodes::{sawtooth_node, AsFiniteSource, FiniteSource, SawToothWave, SquareWave};
+
+use crate::sound_graph::{nodes::get_nodes, types::NodeDefinitions};
 mod sound_graph;
 fn main() {
     let sin = SineWave::new(100.0);
@@ -34,10 +36,7 @@ fn main() {
         }
     }
 
-    std::thread::sleep(std::time::Duration::from_secs(5));
-}
-
-/*
+    ///std::thread::sleep(std::time::Duration::from_secs(5));
     use eframe::egui::Visuals;
 
     eframe::run_native(
@@ -45,7 +44,7 @@ fn main() {
         eframe::NativeOptions::default(),
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(Visuals::dark());
-            Box::new(sound_graph::graph::NodeGraphExample::new(vec![]))
+            Box::new(sound_graph::graph::NodeGraphExample::new())
         }),
     );
-*/
+}
