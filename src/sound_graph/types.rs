@@ -51,34 +51,33 @@ mod data_types {
 
     impl ValueType {
         /// Tries to downcast this value type to a vector
-        pub fn try_to_source(self) -> anyhow::Result<usize> {
-            if let ValueType::AudioSource { value } = self {
-                Ok(value)
-            } else {
-                anyhow::bail!("Invalid cast from {:?} to vec2", self)
+        pub fn try_to_source(self) -> Result<usize, String> {
+            match self {
+                ValueType::AudioSource { value } => Ok(value),
+                _ => Err("invalid cast".to_string()),
             }
         }
 
         /// Tries to downcast this value type to a scalar
-        pub fn try_to_float(self) -> anyhow::Result<f32> {
-            if let ValueType::Float { value } = self {
-                Ok(value)
-            } else {
-                anyhow::bail!("Invalid cast from {:?} to scalar", self)
+        pub fn try_to_float(self) -> Result<f32, String> {
+            match self {
+                ValueType::Float { value } => Ok(value),
+                _ => Err("invalid cast".to_string()),
             }
         }
 
-        pub fn try_to_duration(self) -> anyhow::Result<Duration> {
-            if let ValueType::Duration { value } = self {
-                Ok(value)
-            } else {
-                anyhow::bail!("Invalid cast from {:?} to scalar", self)
+        pub fn try_to_duration(self) -> Result<Duration, String> {
+            match self {
+                ValueType::Duration { value } => Ok(value),
+                _ => Err("invalid cast".to_string()),
             }
         }
     }
 }
 
 pub use self::input_output::*;
+
+use super::nodes::FiniteSource;
 mod input_output {
     use super::*;
     #[derive(Clone, Debug)]
@@ -98,12 +97,10 @@ mod input_output {
 #[derive(Clone)]
 pub struct SoundNode {
     pub name: String,
-    pub inputs: Vec<InputParameter>,
-    pub outputs: Vec<Output>,
-    pub operation: fn(
-        HashMap<String, ValueType>,
-        &mut Vec<Box<dyn Source<Item = f32>>>,
-    ) -> HashMap<String, ValueType>,
+    pub inputs: HashMap<String, InputParameter>,
+    pub outputs: HashMap<String, Output>,
+    pub operation:
+        fn(HashMap<String, ValueType>, &mut Vec<FiniteSource<f32>>) -> HashMap<String, ValueType>,
 }
 
 pub struct NodeDefinitions(pub BTreeMap<String, SoundNode>);
