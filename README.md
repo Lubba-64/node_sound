@@ -1,5 +1,3 @@
 # node_sound
 
-A Free and open source digital audio workstation, which bases the audio synthesis part of making music on a node graph. The outputs of parts of this node graph are fed into tracks like normal, however.
-
-This is work in progress.
+This project is on hold untill I can figure out how to create an anonymous source that can derive form any other source from the rodio crate. this is a blocking issue, and I have also lost motivation for this project.
