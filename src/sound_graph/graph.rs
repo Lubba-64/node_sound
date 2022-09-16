@@ -5,8 +5,8 @@ use rodio::{source::Zero, OutputStream, OutputStreamHandle};
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 
 use super::{
-    nodes::{get_nodes, AsFiniteSource, FiniteSource},
-    types::{InputValueConfig, NodeDefinitions, SoundNode},
+    nodes::get_nodes,
+    types::{InputValueConfig, NodeDefinitions, SoundNode, SourceStack},
     DEFAULT_SAMPLE_RATE,
 };
 
@@ -77,9 +77,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                 input.0.clone(),
                 input.1.data_type,
                 match input.1.value {
-                    InputValueConfig::AudioSource {} => ValueType::AudioSource {
-                        value: Zero::new(1, DEFAULT_SAMPLE_RATE).as_finite(Duration::new(1, 0)),
-                    },
+                    InputValueConfig::AudioSource {} => ValueType::AudioSource { value: 0 },
                     InputValueConfig::Float { value } => ValueType::Float { value },
                     InputValueConfig::Duration { value } => ValueType::Duration {
                         value: Duration::from_secs_f32(value),
@@ -215,6 +213,7 @@ impl eframe::App for NodeGraphExample {
         }
 
         let mut sound_result = None;
+        let mut stack: SourceStack = vec![Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE))];
 
         if let Some(node) = self.state.user_state.active_node {
             if self.state.graph.nodes.contains_key(node) {
@@ -225,6 +224,7 @@ impl eframe::App for NodeGraphExample {
                     node,
                     &mut HashMap::new(),
                     &self.node_definitions,
+                    &mut stack,
                 ) {
                     Ok(value) => {
                         let sound = value.try_to_source().unwrap();
@@ -252,7 +252,7 @@ impl eframe::App for NodeGraphExample {
         match sound_result {
             Some(x) => {
                 if self.state.user_state.active_modified {
-                    self.stream_handle.1.play_raw(x);
+                    self.stream_handle.1.play_raw(stack.remove(x));
                     self.state.user_state.active_modified = false;
                 }
             }
@@ -269,6 +269,7 @@ pub fn evaluate_node<'a>(
     node_id: NodeId,
     outputs_cache: &mut OutputsCache,
     all_nodes: &NodeDefinitions,
+    mut stack: &mut SourceStack,
 ) -> Result<ValueType, &'a str> {
     let node = match all_nodes.0.get(&graph[node_id].user_data.name) {
         Some(x) => x,
@@ -277,7 +278,14 @@ pub fn evaluate_node<'a>(
     let mut closure = |name: String| {
         (
             name.clone(),
-            match evaluate_input(graph, node_id, name.as_str(), outputs_cache, all_nodes) {
+            match evaluate_input(
+                graph,
+                node_id,
+                name.as_str(),
+                outputs_cache,
+                all_nodes,
+                stack,
+            ) {
                 Ok(x) => x,
                 Err(_x) => panic!("Input resolution failed"),
             },
@@ -288,7 +296,7 @@ pub fn evaluate_node<'a>(
             .iter()
             .map(|(name, _input)| (closure)(name.to_string())),
     );
-    let res = (node.operation)(input_to_name);
+    let res = (node.operation)(input_to_name, stack);
 
     for (name, value) in res.iter() {
         match populate_output(graph, outputs_cache, node_id, name, value.clone()) {
@@ -324,6 +332,7 @@ fn evaluate_input<'a>(
     param_name: &'a str,
     outputs_cache: &'a mut OutputsCache,
     all_nodes: &'a NodeDefinitions,
+    stack: &mut SourceStack,
 ) -> Result<ValueType, &'a str> {
     let input_id = match graph[node_id].get_input(param_name) {
         Ok(x) => x,
@@ -341,7 +350,13 @@ fn evaluate_input<'a>(
         // recursively evaluate it.
         else {
             // Calling this will populate the cache
-            match evaluate_node(graph, graph[other_output_id].node, outputs_cache, all_nodes) {
+            match evaluate_node(
+                graph,
+                graph[other_output_id].node,
+                outputs_cache,
+                all_nodes,
+                stack,
+            ) {
                 Ok(x) => x,
                 Err(_x) => panic!("eval failed"),
             };
