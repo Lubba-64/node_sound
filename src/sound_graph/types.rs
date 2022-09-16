@@ -1,4 +1,5 @@
 use egui_node_graph::InputParamKind;
+use rodio::Source;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::time::Duration;
@@ -17,7 +18,7 @@ mod data_types {
 
     #[derive(Clone)]
     pub enum ValueType {
-        AudioSource { value: FiniteSource<f32> },
+        AudioSource { value: usize },
         Float { value: f32 },
         Duration { value: Duration },
     }
@@ -46,7 +47,7 @@ mod data_types {
 
     impl ValueType {
         /// Tries to downcast this value type to a vector
-        pub fn try_to_source(self) -> Result<FiniteSource<f32>, String> {
+        pub fn try_to_source(self) -> Result<usize, String> {
             match self {
                 ValueType::AudioSource { value } => Ok(value),
                 _ => Err("invalid cast".to_string()),
@@ -72,7 +73,6 @@ mod data_types {
 
 pub use self::input_output::*;
 
-use super::nodes::FiniteSource;
 mod input_output {
     use super::*;
     #[derive(Clone, Debug)]
@@ -89,12 +89,14 @@ mod input_output {
     }
 }
 
+pub type SourceStack = Vec<Box<dyn Source<Item = f32> + Send>>;
+
 #[derive(Clone)]
 pub struct SoundNode {
     pub name: String,
     pub inputs: HashMap<String, InputParameter>,
     pub outputs: HashMap<String, Output>,
-    pub operation: fn(HashMap<String, ValueType>) -> HashMap<String, ValueType>,
+    pub operation: fn(HashMap<String, ValueType>, &mut SourceStack) -> HashMap<String, ValueType>,
 }
 
 pub struct NodeDefinitions(pub BTreeMap<String, SoundNode>);
