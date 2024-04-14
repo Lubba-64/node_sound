@@ -17,7 +17,7 @@ mod data_types {
 
     #[derive(Clone)]
     pub enum ValueType {
-        AudioSource { value: FiniteSource<f32> },
+        AudioSource { value: usize },
         Float { value: f32 },
         Duration { value: Duration },
     }
@@ -46,7 +46,7 @@ mod data_types {
 
     impl ValueType {
         /// Tries to downcast this value type to a vector
-        pub fn try_to_source(self) -> Result<FiniteSource<f32>, String> {
+        pub fn try_to_source(self) -> Result<usize, String> {
             match self {
                 ValueType::AudioSource { value } => Ok(value),
                 _ => Err("invalid cast".to_string()),
@@ -72,7 +72,6 @@ mod data_types {
 
 pub use self::input_output::*;
 
-use super::nodes::FiniteSource;
 mod input_output {
     use super::*;
     #[derive(Clone, Debug)]

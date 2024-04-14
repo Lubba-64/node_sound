@@ -4,6 +4,7 @@ use crate::sound_graph::types::{
 use egui_node_graph::InputParamKind;
 use std::collections::HashMap;
 
+use super::super::sound_queue::SOUND_QUEUE;
 use super::{AsFiniteSource, SawToothWave};
 
 pub fn sawtooth_node() -> SoundNode {
@@ -37,17 +38,26 @@ pub fn sawtooth_node() -> SoundNode {
             },
         )]),
         operation: |x| {
-            let freq = x.get("frequency").unwrap().clone().try_to_float().unwrap();
+            let freq = x
+                .get("frequency")
+                .unwrap()
+                .clone()
+                .0
+                .try_to_float()
+                .unwrap();
             let duration = x
                 .get("duration")
                 .unwrap()
                 .clone()
+                .0
                 .try_to_duration()
                 .unwrap();
             HashMap::from([(
                 "out".to_string(),
                 ValueType::AudioSource {
-                    value: SawToothWave::new(freq).as_finite(duration),
+                    value: unsafe {
+                        SOUND_QUEUE.push(SawToothWave::new(freq).as_generic(duration, repeats))
+                    },
                 },
             )])
         },

@@ -4,5 +4,5 @@ mod square;
 pub use square::SquareWave;
 mod sawtooth;
 pub use sawtooth::SawToothWave;
-mod finite;
-pub use finite::{AsFiniteSource, FiniteSource};
+mod source_wrapper;
+pub use source_wrapper::{AsFiniteSource, SourceWrapper};

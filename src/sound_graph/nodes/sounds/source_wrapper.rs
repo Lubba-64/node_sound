@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use super::{SawToothWave, SquareWave, TriangleWave};
 use rodio::{
     source::{
         Amplify, BltFilter, Buffered, Delay, FadeIn, Mix, Repeat, SamplesConverter, SineWave,
@@ -8,57 +9,54 @@ use rodio::{
     Sample, Source,
 };
 
-use super::{SawToothWave, SquareWave, TriangleWave};
-#[derive(Clone)]
-pub struct FiniteSource<T>
+pub struct SourceWrapper<T>
 where
     T: Sample,
 {
-    sound: Vec<T>,
+    sound: Box<dyn Iterator<Item = T>>,
     sample_rate: u32,
     channles: u16,
     index: usize,
+    duration: Option<std::time::Duration>,
 }
 
-impl<T> FiniteSource<T>
+impl<T> SourceWrapper<T>
 where
     T: Sample,
 {
-    fn new(sound: Vec<T>, sample_rate: u32, channels: u16) -> Self {
+    fn new(
+        sound: Box<dyn Iterator<Item = T>>,
+        sample_rate: u32,
+        channels: u16,
+        duration: Option<std::time::Duration>,
+    ) -> Self {
         Self {
             sound: sound,
             sample_rate: sample_rate,
             channles: channels,
             index: 0,
+            duration: duration,
         }
     }
 }
 
-impl<T> Iterator for FiniteSource<T>
+impl<T> Iterator for SourceWrapper<T>
 where
     T: Sample,
 {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index + 1 >= self.sound.len() {
-            return None;
-        }
-        self.index += 1;
-        Some(self.sound[self.index])
+        self.sound.next()
     }
 }
 
-impl<T> Source for FiniteSource<T>
+impl<T> Source for SourceWrapper<T>
 where
     T: Sample,
 {
     fn current_frame_len(&self) -> Option<usize> {
-        let diff = self.sound.len() - self.index;
-        if diff == 0 {
-            return None;
-        }
-        Some(diff)
+        None
     }
 
     fn channels(&self) -> u16 {
@@ -70,9 +68,7 @@ where
     }
 
     fn total_duration(&self) -> Option<std::time::Duration> {
-        Some(Duration::from_secs_f32(
-            self.sound.len() as f32 / self.sample_rate as f32,
-        ))
+        self.duration
     }
 }
 
@@ -85,11 +81,20 @@ pub mod as_finite_source {
     where
         T: Sample,
     {
-        fn as_finite(self, duration: Duration) -> FiniteSource<T> {
+        fn as_generic(
+            self,
+            duration: Option<Duration>,
+            repeats: Option<usize>,
+        ) -> SourceWrapper<T> {
             let channels = self.channels();
             let sample_rate = self.sample_rate();
-            let sound: Vec<T> = self.take_duration(duration).collect();
-            FiniteSource::new(sound, sample_rate, channels)
+            match repeats {
+                Some(x) => {
+                    let x = Box::new(self.flat_map(|n| std::iter::repeat(n).take(x)));
+                    SourceWrapper::new(x, sample_rate, channels, duration)
+                }
+                None => SourceWrapper::new(Box::new(self), sample_rate, channels, duration),
+            }
         }
     }
     impl AsFiniteSource<f32> for SineWave {}

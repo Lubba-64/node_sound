@@ -47,7 +47,7 @@ pub fn traingle_node() -> SoundNode {
             HashMap::from([(
                 "out".to_string(),
                 ValueType::AudioSource {
-                    value: TriangleWave::new(freq).as_finite(duration),
+                    value: TriangleWave::new(freq).as_generic(duration),
                 },
             )])
         },
