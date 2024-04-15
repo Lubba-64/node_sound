@@ -9,6 +9,8 @@ mod triangle_node;
 use sine_node::sine_node;
 use std::collections::BTreeMap;
 use triangle_node::traingle_node;
+mod square_node;
+use square_node::square_node;
 
 use crate::sound_graph::graph_types::{InputParameter, Output, ValueType};
 use std::collections::HashMap;
@@ -34,6 +36,7 @@ pub fn get_nodes() -> NodeDefinitions {
         traingle_node(),
         duration_node(),
         sine_node(),
+        square_node(),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.name.clone(), n.clone())),
