@@ -1,4 +1,7 @@
+mod nodes;
 mod sound_graph;
+mod sound_queue;
+mod sounds;
 use eframe::egui::Visuals;
 
 fn main() {

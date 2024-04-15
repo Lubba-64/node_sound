@@ -1,14 +1,15 @@
-use crate::sound_graph::types::{
+use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, SoundNode, ValueType,
 };
 use egui_node_graph::InputParamKind;
 use std::collections::HashMap;
 
-use super::{AsFiniteSource, TriangleWave};
+use crate::sound_queue;
+use crate::sounds::{AsGenericSource, SawToothWave};
 
-pub fn traingle_node() -> SoundNode {
+pub fn sawtooth_node() -> SoundNode {
     SoundNode {
-        name: "Triangle Wave".to_string(),
+        name: "Sawtooth Wave".to_string(),
         inputs: HashMap::from([
             (
                 "frequency".to_string(),
@@ -36,20 +37,28 @@ pub fn traingle_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
-        operation: |x| {
-            let freq = x.get("frequency").unwrap().clone().try_to_float().unwrap();
-            let duration = x
+        operation: |props| {
+            let freq = props
+                .inputs
+                .get("frequency")
+                .unwrap()
+                .clone()
+                .try_to_float()
+                .unwrap();
+            let duration = props
+                .inputs
                 .get("duration")
                 .unwrap()
                 .clone()
                 .try_to_duration()
                 .unwrap();
-            HashMap::from([(
-                "out".to_string(),
-                ValueType::AudioSource {
-                    value: TriangleWave::new(freq).as_generic(duration),
-                },
-            )])
+
+            let idx = sound_queue::push_sound(SawToothWave::new(freq).as_generic(
+                Some(duration),
+                Some(*props.output_connection_counts.get("out").unwrap()),
+            ));
+
+            HashMap::from([("out".to_string(), ValueType::AudioSource { value: idx })])
         },
     }
 }
