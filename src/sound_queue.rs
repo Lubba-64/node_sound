@@ -8,8 +8,8 @@ pub fn push_sound(v: GenericSource<f32>) -> usize {
     }
 }
 
-pub fn get_sound(idx: usize) -> GenericSource<f32> {
-    return unsafe { SOUND_QUEUE[idx] };
+pub fn pop_sound(idx: usize) -> GenericSource<f32> {
+    return unsafe { SOUND_QUEUE.remove(idx) };
 }
 
 pub fn clear() {

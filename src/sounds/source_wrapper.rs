@@ -1,6 +1,7 @@
-use std::time::Duration;
+use std::{ops::Deref, time::Duration};
 
 use super::{SawToothWave, SquareWave, TriangleWave};
+use eframe::egui::mutex::Mutex;
 use rodio::{
     source::{
         Amplify, BltFilter, Buffered, Delay, FadeIn, Mix, Repeat, SamplesConverter, SineWave,
@@ -8,6 +9,7 @@ use rodio::{
     },
     Sample, Source,
 };
+use std::sync::Arc;
 
 type SendIterDyn<T> = Box<dyn Iterator<Item = T> + Send>;
 
@@ -81,9 +83,9 @@ pub mod as_finite_source_impls {
     use std::fmt::Debug;
 
     use super::*;
-    pub trait AsGenericSource<T>: Source<Item = T> + Sized + Send
+    pub trait AsGenericSource<T>: Source<Item = T> + Sized + Send + 'static
     where
-        T: Sample + Send,
+        T: Sample + Send + 'static,
     {
         fn as_generic(
             self,
@@ -93,10 +95,13 @@ pub mod as_finite_source_impls {
             let channels = self.channels();
             let sample_rate = self.sample_rate();
             match repeats {
-                Some(x) => {
-                    let x = Box::new(self.flat_map(|n| std::iter::repeat(n).take(x)));
-                    GenericSource::new(x as SendIterDyn<T>, sample_rate, channels, duration)
-                }
+                Some(x) => GenericSource::new(
+                    Box::new(self.flat_map(move |n| std::iter::repeat(n).take(x)))
+                        as SendIterDyn<T>,
+                    sample_rate,
+                    channels,
+                    duration,
+                ),
                 None => GenericSource::new(
                     Box::new(self) as SendIterDyn<T>,
                     sample_rate,
@@ -114,23 +119,23 @@ pub mod as_finite_source_impls {
 
     impl AsGenericSource<f32> for SawToothWave {}
 
-    impl<I> AsGenericSource<I::Item> for Amplify<I> where I: Source<Item = f32> + Send {}
+    impl<I> AsGenericSource<I::Item> for Amplify<I> where I: Source<Item = f32> + Send + 'static {}
 
-    impl<I> AsGenericSource<I::Item> for BltFilter<I> where I: Source<Item = f32> + Send {}
+    impl<I> AsGenericSource<I::Item> for BltFilter<I> where I: Source<Item = f32> + Send + 'static {}
 
-    impl<I> AsGenericSource<I::Item> for Delay<I> where I: Source<Item = f32> + Send {}
+    impl<I> AsGenericSource<I::Item> for Delay<I> where I: Source<Item = f32> + Send + 'static {}
 
     impl AsGenericSource<f32> for Zero<f32> {}
-    impl<I> AsGenericSource<I::Item> for FadeIn<I> where I: Source<Item = f32> + Send {}
+    impl<I> AsGenericSource<I::Item> for FadeIn<I> where I: Source<Item = f32> + Send + 'static {}
     impl<I1, I2> AsGenericSource<I1::Item> for Mix<I1, I2>
     where
-        I1: Source<Item = f32> + Send,
-        I2: Source<Item = f32> + Send,
+        I1: Source<Item = f32> + Send + 'static,
+        I2: Source<Item = f32> + Send + 'static,
     {
     }
 
-    impl<I> AsGenericSource<I::Item> for Repeat<I> where I: Source<Item = f32> + Send {}
-    impl<I> AsGenericSource<I::Item> for SkipDuration<I> where I: Source<Item = f32> + Send {}
-    impl<I> AsGenericSource<I::Item> for Spatial<I> where I: Source<Item = f32> + Send {}
-    impl<I> AsGenericSource<I::Item> for Speed<I> where I: Source<Item = f32> + Send {}
+    impl<I> AsGenericSource<I::Item> for Repeat<I> where I: Source<Item = f32> + Send + 'static {}
+    impl<I> AsGenericSource<I::Item> for SkipDuration<I> where I: Source<Item = f32> + Send + 'static {}
+    impl<I> AsGenericSource<I::Item> for Spatial<I> where I: Source<Item = f32> + Send + 'static {}
+    impl<I> AsGenericSource<I::Item> for Speed<I> where I: Source<Item = f32> + Send + 'static {}
 }

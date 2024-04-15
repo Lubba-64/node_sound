@@ -167,15 +167,15 @@ impl NodeDataTrait for NodeData {
 type MyGraph = Graph<NodeData, DataType, ValueType>;
 
 trait GraphOutputAndInputConnectionCounts {
-    fn get_input_count(id: InputId) -> usize;
-    fn get_output_count(id: InputId) -> usize;
+    fn get_input_count(self, id: InputId) -> usize;
+    fn get_output_count(self, id: OutputId) -> usize;
 }
 
-impl GraphOutputAndInputConnectionCounts for Graph<NodeData, DataType, ValueType> {
-    fn get_input_count(id: InputId) -> usize {
+impl<T1, T2, T3> GraphOutputAndInputConnectionCounts for &Graph<T1, T2, T3> {
+    fn get_input_count(self, id: InputId) -> usize {
         1
     }
-    fn get_output_count(id: InputId) -> usize {
+    fn get_output_count(self, id: OutputId) -> usize {
         1
     }
 }
@@ -263,7 +263,7 @@ impl eframe::App for NodeGraphExample {
         match sound_result {
             Some(x) => {
                 if self.state.user_state.active_modified {
-                    self.stream_handle.1.play_raw(sound_queue::get_sound(x));
+                    self.stream_handle.1.play_raw(sound_queue::pop_sound(x));
                     self.state.user_state.active_modified = false;
                 }
             }
@@ -302,14 +302,18 @@ pub fn evaluate_node<'a>(
             .iter()
             .map(|(name, _input)| (closure)(name.to_string())),
     );
-    /*
-    SoundNodeProps{
-        inputs: input_to_name_and_output_count,
-        output_connection_counts: HashMap::from_iter(graph.nodes[node_id].outputs.iter().map(|(name, output) {return }|))
-        sound_manager: SoundsManager::new(),
-    };*/
 
-    let res = (node.operation)(input_to_name_and_output_count);
+    SoundNodeProps {
+        inputs: input_to_name_and_output_count,
+        output_connection_counts: HashMap::from_iter(
+            graph.nodes[node_id]
+                .outputs
+                .iter()
+                .map(|(name, output)| return (name.clone(), graph.get_output_count(*output))),
+        ),
+    };
+
+    let res: HashMap<String, ValueType> = HashMap::new();
 
     for (name, value) in res.iter() {
         match populate_output(graph, outputs_cache, node_id, name, value.clone()) {

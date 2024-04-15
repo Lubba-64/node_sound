@@ -1,11 +1,11 @@
+use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, SoundNode, ValueType,
+    DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use egui_node_graph::InputParamKind;
-use std::collections::HashMap;
-
 use crate::sound_queue;
 use crate::sounds::{AsGenericSource, SawToothWave};
+use egui_node_graph::InputParamKind;
+use std::collections::HashMap;
 
 pub fn sawtooth_node() -> SoundNode {
     SoundNode {
