@@ -88,15 +88,3 @@ mod input_output {
         pub data_type: DataType,
     }
 }
-
-pub type SourceStack = Vec<Box<dyn Source<Item = f32> + Send>>;
-
-#[derive(Clone)]
-pub struct SoundNode {
-    pub name: String,
-    pub inputs: HashMap<String, InputParameter>,
-    pub outputs: HashMap<String, Output>,
-    pub operation: fn(HashMap<String, ValueType>, &mut SourceStack) -> HashMap<String, ValueType>,
-}
-
-pub struct NodeDefinitions(pub BTreeMap<String, SoundNode>);
