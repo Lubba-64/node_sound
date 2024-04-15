@@ -1,12 +1,12 @@
-use crate::sound_graph::types::{
-    DataType, InputParameter, InputValueConfig, Output, SoundNode, ValueType,
+use crate::nodes::SoundNode;
+use crate::sound_graph::graph_types::{
+    DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
+use crate::sound_queue;
+use crate::sounds::AsGenericSource;
 use egui_node_graph::InputParamKind;
 use rodio::Source;
 use std::collections::HashMap;
-
-use super::AsFiniteSource;
-
 pub fn mix_node() -> SoundNode {
     SoundNode {
         name: "Mix".to_string(),
@@ -37,25 +37,31 @@ pub fn mix_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
-        operation: |x| {
-            let first = x
+        operation: |props| {
+            let first = props
+                .inputs
                 .get("audio source 1")
                 .unwrap()
                 .clone()
                 .try_to_source()
                 .unwrap();
-            let second = x
+            let second = props
+                .inputs
                 .get("audio source 2")
                 .unwrap()
                 .clone()
                 .try_to_source()
                 .unwrap();
-            let duration = first.total_duration().unwrap();
+
+            let new_sound = sound_queue::push_sound(
+                (sound_queue::clone_sound(first))
+                    .mix(sound_queue::clone_sound(second))
+                    .as_generic(None),
+            );
+
             HashMap::from([(
                 "out".to_string(),
-                ValueType::AudioSource {
-                    value: first.mix(second).as_finite(duration),
-                },
+                ValueType::AudioSource { value: new_sound },
             )])
         },
     }

@@ -1,11 +1,10 @@
-use super::{graph_types::InputValueConfig, DEFAULT_SAMPLE_RATE};
+use super::graph_types::InputValueConfig;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_queue;
-use crate::sounds::{AsGenericSource, GenericSource};
 use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph::*;
-use rodio::{source::Zero, OutputStream, OutputStreamHandle};
+use rodio::{OutputStream, OutputStreamHandle};
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 
 #[derive(Clone)]
@@ -166,20 +165,6 @@ impl NodeDataTrait for NodeData {
 
 type MyGraph = Graph<NodeData, DataType, ValueType>;
 
-trait GraphOutputAndInputConnectionCounts {
-    fn get_input_count(self, id: InputId) -> usize;
-    fn get_output_count(self, id: OutputId) -> usize;
-}
-
-impl<T1, T2, T3> GraphOutputAndInputConnectionCounts for &Graph<T1, T2, T3> {
-    fn get_input_count(self, id: InputId) -> usize {
-        1
-    }
-    fn get_output_count(self, id: OutputId) -> usize {
-        1
-    }
-}
-
 type MyEditorState =
     GraphEditorState<NodeData, DataType, ValueType, NodeDefinitionUi, SoundGraphState>;
 
@@ -226,7 +211,6 @@ impl eframe::App for NodeGraphExample {
         }
 
         let mut sound_result = None;
-        let mut stack: SourceStack = vec![Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE))];
 
         if let Some(node) = self.state.user_state.active_node {
             if self.state.graph.nodes.contains_key(node) {
@@ -237,7 +221,6 @@ impl eframe::App for NodeGraphExample {
                     node,
                     &mut HashMap::new(),
                     &self.node_definitions,
-                    &mut stack,
                 ) {
                     Ok(value) => {
                         let sound = value.try_to_source().unwrap();
@@ -265,7 +248,10 @@ impl eframe::App for NodeGraphExample {
         match sound_result {
             Some(x) => {
                 if self.state.user_state.active_modified {
-                    self.stream_handle.1.play_raw(sound_queue::clone_sound(x));
+                    self.stream_handle
+                        .1
+                        .play_raw(sound_queue::clone_sound(x))
+                        .unwrap();
                     self.state.user_state.active_modified = false;
                 }
             }
@@ -282,7 +268,6 @@ pub fn evaluate_node<'a>(
     node_id: NodeId,
     outputs_cache: &mut OutputsCache,
     all_nodes: &NodeDefinitions,
-    mut stack: &mut SourceStack,
 ) -> Result<ValueType, &'a str> {
     let node = match all_nodes.0.get(&graph[node_id].user_data.name) {
         Some(x) => x,
@@ -294,36 +279,21 @@ pub fn evaluate_node<'a>(
     let mut closure = |name: String| {
         (
             name.clone(),
-            match evaluate_input(
-                graph,
-                node_id,
-                name.as_str(),
-                outputs_cache,
-                all_nodes,
-                stack,
-            ) {
+            match evaluate_input(graph, node_id, name.as_str(), outputs_cache, all_nodes) {
                 Ok(x) => x,
                 Err(_x) => panic!("Input resolution failed"),
             },
         )
     };
-    let input_to_name_and_output_count = HashMap::from_iter(
+    let input_to_name = HashMap::from_iter(
         node.inputs
             .iter()
             .map(|(name, _input)| (closure)(name.to_string())),
     );
 
-    SoundNodeProps {
-        inputs: input_to_name_and_output_count,
-        output_connection_counts: HashMap::from_iter(
-            graph.nodes[node_id]
-                .outputs
-                .iter()
-                .map(|(name, output)| return (name.clone(), graph.get_output_count(*output))),
-        ),
-    };
-
-    let res: HashMap<String, ValueType> = HashMap::new();
+    let res = (node.operation)(SoundNodeProps {
+        inputs: input_to_name,
+    });
 
     for (name, value) in res.iter() {
         match populate_output(graph, outputs_cache, node_id, name, value.clone()) {
@@ -359,7 +329,6 @@ fn evaluate_input<'a>(
     param_name: &'a str,
     outputs_cache: &'a mut OutputsCache,
     all_nodes: &'a NodeDefinitions,
-    stack: &mut SourceStack,
 ) -> Result<ValueType, &'a str> {
     let input_id = match graph[node_id].get_input(param_name) {
         Ok(x) => x,
@@ -377,13 +346,7 @@ fn evaluate_input<'a>(
         // recursively evaluate it.
         else {
             // Calling this will populate the cache
-            match evaluate_node(
-                graph,
-                graph[other_output_id].node,
-                outputs_cache,
-                all_nodes,
-                stack,
-            ) {
+            match evaluate_node(graph, graph[other_output_id].node, outputs_cache, all_nodes) {
                 Ok(x) => x,
                 Err(_x) => panic!("eval failed"),
             };

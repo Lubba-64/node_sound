@@ -5,7 +5,7 @@ use dyn_clone::DynClone;
 use rodio::{
     source::{
         Amplify, BltFilter, Delay, FadeIn, Mix, Repeat, SineWave, SkipDuration, Spatial, Speed,
-        Zero,
+        TakeDuration, Zero,
     },
     Sample, Source,
 };
@@ -21,7 +21,6 @@ where
     sound: Box<SendIterDyn<T>>,
     sample_rate: u32,
     channles: u16,
-    index: usize,
     duration: Option<std::time::Duration>,
 }
 
@@ -30,7 +29,6 @@ impl<T: Sample> Clone for GenericSource<T> {
         GenericSource {
             channles: self.channles,
             duration: self.duration,
-            index: self.index,
             sample_rate: self.sample_rate,
             sound: dyn_clone::clone_box(&(*self.sound)),
         }
@@ -53,7 +51,6 @@ where
             sound: sound,
             sample_rate: sample_rate,
             channles: channels,
-            index: 0,
             duration: duration,
         }
     }
@@ -160,4 +157,7 @@ pub mod as_finite_source_impls {
     impl<I> AsGenericSource for Speed<I> where I: StaticSource {}
     impl<I> StaticSource for Speed<I> where I: StaticSource {}
     impl StaticSource for GenericSource<f32> {}
+    impl<I> DynCloneIter<f32> for TakeDuration<I> where I: StaticSource {}
+    impl<I> AsGenericSource for TakeDuration<I> where I: StaticSource {}
+    impl<I> StaticSource for TakeDuration<I> where I: StaticSource {}
 }
