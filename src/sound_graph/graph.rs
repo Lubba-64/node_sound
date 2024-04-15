@@ -4,7 +4,8 @@ use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_queue;
 use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph::*;
-use rodio::{OutputStream, OutputStreamHandle};
+use rodio::{OutputStream, OutputStreamHandle, Sink};
+use std::any::Any;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 
 #[derive(Clone)]
@@ -171,15 +172,18 @@ type MyEditorState =
 pub struct NodeGraphExample {
     pub state: MyEditorState,
     pub node_definitions: NodeDefinitions,
-    pub stream_handle: (OutputStream, OutputStreamHandle),
+    pub stream: (OutputStream, OutputStreamHandle),
+    pub sink: Sink,
 }
 
 impl NodeGraphExample {
     pub fn new() -> Self {
+        let (stream, stream_handle) = OutputStream::try_default().unwrap();
         Self {
             state: MyEditorState::new(1.0, SoundGraphState::default()),
             node_definitions: get_nodes(),
-            stream_handle: OutputStream::try_default().unwrap(),
+            sink: Sink::try_new(&stream_handle).unwrap(),
+            stream: (stream, stream_handle),
         }
     }
 }
@@ -248,14 +252,15 @@ impl eframe::App for NodeGraphExample {
         match sound_result {
             Some(x) => {
                 if self.state.user_state.active_modified {
-                    self.stream_handle
-                        .1
-                        .play_raw(sound_queue::clone_sound(x))
-                        .unwrap();
+                    self.sink.append(sound_queue::clone_sound(x));
+                    self.sink.play();
+                    self.sink.set_volume(1.0);
                     self.state.user_state.active_modified = false;
                 }
             }
-            None => (),
+            None => {
+                self.sink.clear();
+            }
         }
     }
 }
