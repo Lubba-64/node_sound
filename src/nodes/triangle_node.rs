@@ -5,6 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sound_queue;
 use crate::sounds::{AsGenericSource, TriangleWave};
 use egui_node_graph::InputParamKind;
+use rodio::Source;
 use std::collections::HashMap;
 pub fn traingle_node() -> SoundNode {
     SoundNode {
@@ -52,7 +53,11 @@ pub fn traingle_node() -> SoundNode {
                 .try_to_duration()
                 .unwrap();
 
-            let idx = sound_queue::push_sound(TriangleWave::new(freq).as_generic(Some(duration)));
+            let idx = sound_queue::push_sound(
+                TriangleWave::new(freq)
+                    .take_duration(duration)
+                    .as_generic(Some(duration)),
+            );
 
             HashMap::from([("out".to_string(), ValueType::AudioSource { value: idx })])
         },

@@ -11,7 +11,6 @@ use std::collections::HashMap;
 
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
-    pub output_connection_counts: HashMap<String, usize>,
 }
 
 impl SoundNodeProps {
@@ -19,10 +18,7 @@ impl SoundNodeProps {
         inputs: HashMap<String, ValueType>,
         output_connection_counts: HashMap<String, usize>,
     ) -> Self {
-        SoundNodeProps {
-            inputs,
-            output_connection_counts,
-        }
+        SoundNodeProps { inputs }
     }
 }
 
