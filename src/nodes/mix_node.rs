@@ -57,7 +57,7 @@ pub fn mix_node() -> SoundNode {
             let new_sound = sound_queue::push_sound(
                 (sound_queue::pop_sound(first))
                     .mix(sound_queue::pop_sound(second))
-                    .as_generic(None, None),
+                    .as_generic(None),
             );
 
             HashMap::from([(

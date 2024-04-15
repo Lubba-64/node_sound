@@ -1,27 +1,40 @@
-use std::{ops::Deref, time::Duration};
+use std::time::Duration;
 
 use super::{SawToothWave, SquareWave, TriangleWave};
-use eframe::egui::mutex::Mutex;
+use dyn_clone::DynClone;
 use rodio::{
     source::{
-        Amplify, BltFilter, Buffered, Delay, FadeIn, Mix, Repeat, SamplesConverter, SineWave,
-        SkipDuration, Spatial, Speed, UniformSourceIterator, Zero,
+        Amplify, BltFilter, Delay, FadeIn, Mix, Repeat, SineWave, SkipDuration, Spatial, Speed,
+        Zero,
     },
     Sample, Source,
 };
-use std::sync::Arc;
 
-type SendIterDyn<T> = Box<dyn Iterator<Item = T> + Send>;
+pub trait DynCloneIter<T>: Iterator<Item = T> + Send + DynClone {}
+
+type SendIterDyn<T> = dyn DynCloneIter<T>;
 
 pub struct GenericSource<T>
 where
     T: Sample,
 {
-    sound: SendIterDyn<T>,
+    sound: Box<SendIterDyn<T>>,
     sample_rate: u32,
     channles: u16,
     index: usize,
     duration: Option<std::time::Duration>,
+}
+
+impl<T: Sample> Clone for GenericSource<T> {
+    fn clone(&self) -> Self {
+        GenericSource {
+            channles: self.channles,
+            duration: self.duration,
+            index: self.index,
+            sample_rate: self.sample_rate,
+            sound: dyn_clone::clone_box(&(*self.sound)),
+        }
+    }
 }
 
 unsafe impl<T: Sample> Send for GenericSource<T> {}
@@ -31,7 +44,7 @@ where
     T: Sample,
 {
     fn new(
-        sound: SendIterDyn<T>,
+        sound: Box<SendIterDyn<T>>,
         sample_rate: u32,
         channels: u16,
         duration: Option<std::time::Duration>,
@@ -46,21 +59,15 @@ where
     }
 }
 
-impl<T> Iterator for GenericSource<T>
-where
-    T: Sample,
-{
-    type Item = T;
+impl<'a> Iterator for GenericSource<f32> {
+    type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.sound.next()
     }
 }
 
-impl<T> Source for GenericSource<T>
-where
-    T: Sample,
-{
+impl<'a> Source for GenericSource<f32> {
     fn current_frame_len(&self) -> Option<usize> {
         None
     }
@@ -80,62 +87,77 @@ where
 
 pub use as_finite_source_impls::*;
 pub mod as_finite_source_impls {
-    use std::fmt::Debug;
-
+    impl DynCloneIter<f32> for std::vec::IntoIter<f32> {}
     use super::*;
-    pub trait AsGenericSource<T>: Source<Item = T> + Sized + Send + 'static
-    where
-        T: Sample + Send + 'static,
-    {
-        fn as_generic(
-            self,
-            duration: Option<Duration>,
-            repeats: Option<usize>,
-        ) -> GenericSource<T> {
+    pub trait AsGenericSource: Source + DynCloneIter<f32> + Sized + Send + Clone + 'static {
+        fn as_generic(&self, duration: Option<Duration>) -> GenericSource<f32>
+        where
+            Self: Sized,
+        {
             let channels = self.channels();
             let sample_rate = self.sample_rate();
-            match repeats {
-                Some(x) => GenericSource::new(
-                    Box::new(self.flat_map(move |n| std::iter::repeat(n).take(x)))
-                        as SendIterDyn<T>,
-                    sample_rate,
-                    channels,
-                    duration,
-                ),
-                None => GenericSource::new(
-                    Box::new(self) as SendIterDyn<T>,
-                    sample_rate,
-                    channels,
-                    duration,
-                ),
-            }
+            GenericSource::new(Box::new(self.clone()), sample_rate, channels, duration)
         }
     }
-    impl AsGenericSource<f32> for SineWave {}
 
-    impl AsGenericSource<f32> for SquareWave {}
+    trait StaticSource: Source<Item = f32> + Send + Clone + 'static {}
 
-    impl AsGenericSource<f32> for TriangleWave {}
-
-    impl AsGenericSource<f32> for SawToothWave {}
-
-    impl<I> AsGenericSource<I::Item> for Amplify<I> where I: Source<Item = f32> + Send + 'static {}
-
-    impl<I> AsGenericSource<I::Item> for BltFilter<I> where I: Source<Item = f32> + Send + 'static {}
-
-    impl<I> AsGenericSource<I::Item> for Delay<I> where I: Source<Item = f32> + Send + 'static {}
-
-    impl AsGenericSource<f32> for Zero<f32> {}
-    impl<I> AsGenericSource<I::Item> for FadeIn<I> where I: Source<Item = f32> + Send + 'static {}
-    impl<I1, I2> AsGenericSource<I1::Item> for Mix<I1, I2>
+    impl DynCloneIter<f32> for SineWave {}
+    impl AsGenericSource for SineWave {}
+    impl StaticSource for SineWave {}
+    impl DynCloneIter<f32> for SquareWave {}
+    impl AsGenericSource for SquareWave {}
+    impl StaticSource for SquareWave {}
+    impl DynCloneIter<f32> for TriangleWave {}
+    impl AsGenericSource for TriangleWave {}
+    impl StaticSource for TriangleWave {}
+    impl DynCloneIter<f32> for SawToothWave {}
+    impl AsGenericSource for SawToothWave {}
+    impl StaticSource for SawToothWave {}
+    impl<I> DynCloneIter<f32> for Amplify<I> where I: StaticSource {}
+    impl<I> AsGenericSource for Amplify<I> where I: StaticSource {}
+    impl<I> StaticSource for Amplify<I> where I: StaticSource {}
+    impl<I> DynCloneIter<f32> for BltFilter<I> where I: StaticSource {}
+    impl<I> AsGenericSource for BltFilter<I> where I: StaticSource {}
+    impl<I> StaticSource for BltFilter<I> where I: StaticSource {}
+    impl<I> DynCloneIter<f32> for Delay<I> where I: StaticSource {}
+    impl<I> AsGenericSource for Delay<I> where I: StaticSource {}
+    impl<I> StaticSource for Delay<I> where I: StaticSource {}
+    impl DynCloneIter<f32> for Zero<f32> {}
+    impl AsGenericSource for Zero<f32> {}
+    impl StaticSource for Zero<f32> {}
+    impl<I> DynCloneIter<f32> for FadeIn<I> where I: StaticSource {}
+    impl<I> AsGenericSource for FadeIn<I> where I: StaticSource {}
+    impl<I> StaticSource for FadeIn<I> where I: StaticSource {}
+    impl<I1, I2> DynCloneIter<f32> for Mix<I1, I2>
     where
-        I1: Source<Item = f32> + Send + 'static,
-        I2: Source<Item = f32> + Send + 'static,
+        I1: StaticSource,
+        I2: StaticSource,
     {
     }
-
-    impl<I> AsGenericSource<I::Item> for Repeat<I> where I: Source<Item = f32> + Send + 'static {}
-    impl<I> AsGenericSource<I::Item> for SkipDuration<I> where I: Source<Item = f32> + Send + 'static {}
-    impl<I> AsGenericSource<I::Item> for Spatial<I> where I: Source<Item = f32> + Send + 'static {}
-    impl<I> AsGenericSource<I::Item> for Speed<I> where I: Source<Item = f32> + Send + 'static {}
+    impl<I1, I2> AsGenericSource for Mix<I1, I2>
+    where
+        I1: StaticSource,
+        I2: StaticSource,
+    {
+    }
+    impl<I1, I2> StaticSource for Mix<I1, I2>
+    where
+        I1: StaticSource,
+        I2: StaticSource,
+    {
+    }
+    impl<I> DynCloneIter<f32> for Repeat<I> where I: StaticSource {}
+    impl<I> AsGenericSource for Repeat<I> where I: StaticSource {}
+    impl<I> StaticSource for Repeat<I> where I: StaticSource {}
+    impl<I> DynCloneIter<f32> for SkipDuration<I> where I: StaticSource {}
+    impl<I> AsGenericSource for SkipDuration<I> where I: StaticSource {}
+    impl<I> StaticSource for SkipDuration<I> where I: StaticSource {}
+    impl<I> DynCloneIter<f32> for Spatial<I> where I: StaticSource {}
+    impl<I> AsGenericSource for Spatial<I> where I: StaticSource {}
+    impl<I> StaticSource for Spatial<I> where I: StaticSource {}
+    impl<I> DynCloneIter<f32> for Speed<I> where I: StaticSource {}
+    impl<I> AsGenericSource for Speed<I> where I: StaticSource {}
+    impl<I> StaticSource for Speed<I> where I: StaticSource {}
+    impl StaticSource for GenericSource<f32> {}
 }

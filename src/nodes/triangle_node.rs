@@ -52,10 +52,7 @@ pub fn traingle_node() -> SoundNode {
                 .try_to_duration()
                 .unwrap();
 
-            let idx = sound_queue::push_sound(TriangleWave::new(freq).as_generic(
-                Some(duration),
-                Some(*props.output_connection_counts.get("out").unwrap()),
-            ));
+            let idx = sound_queue::push_sound(TriangleWave::new(freq).as_generic(Some(duration)));
 
             HashMap::from([("out".to_string(), ValueType::AudioSource { value: idx })])
         },
