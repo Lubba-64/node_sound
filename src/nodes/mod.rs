@@ -11,8 +11,9 @@ use std::collections::BTreeMap;
 use triangle_node::traingle_node;
 mod square_node;
 use square_node::square_node;
-
+mod delay_node;
 use crate::sound_graph::graph_types::{InputParameter, Output, ValueType};
+use delay_node::delay_node;
 use std::collections::HashMap;
 
 pub struct SoundNodeProps {
@@ -37,6 +38,7 @@ pub fn get_nodes() -> NodeDefinitions {
         duration_node(),
         sine_node(),
         square_node(),
+        delay_node(),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.name.clone(), n.clone())),
