@@ -1,15 +1,12 @@
-use crate::sound_graph::types::{DataType, ValueType};
+use super::{graph_types::InputValueConfig, DEFAULT_SAMPLE_RATE};
+use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
+use crate::sound_graph::graph_types::{DataType, ValueType};
+use crate::sound_queue;
+use crate::sounds::{AsGenericSource, GenericSource};
 use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph::*;
 use rodio::{source::Zero, OutputStream, OutputStreamHandle};
 use std::{borrow::Cow, collections::HashMap, time::Duration};
-
-use super::{
-    nodes::{get_nodes, AsFiniteSource, SourceWrapper},
-    types::{InputValueConfig, NodeDefinitions, SoundNode},
-    DEFAULT_SAMPLE_RATE,
-};
-use crate::sound_graph::sound_queue::SOUND_QUEUE;
 
 #[derive(Clone)]
 pub struct NodeData {
@@ -168,6 +165,21 @@ impl NodeDataTrait for NodeData {
 }
 
 type MyGraph = Graph<NodeData, DataType, ValueType>;
+
+trait GraphOutputAndInputConnectionCounts {
+    fn get_input_count(id: InputId) -> usize;
+    fn get_output_count(id: InputId) -> usize;
+}
+
+impl GraphOutputAndInputConnectionCounts for Graph<NodeData, DataType, ValueType> {
+    fn get_input_count(id: InputId) -> usize {
+        1
+    }
+    fn get_output_count(id: InputId) -> usize {
+        1
+    }
+}
+
 type MyEditorState =
     GraphEditorState<NodeData, DataType, ValueType, NodeDefinitionUi, SoundGraphState>;
 
@@ -251,7 +263,7 @@ impl eframe::App for NodeGraphExample {
         match sound_result {
             Some(x) => {
                 if self.state.user_state.active_modified {
-                    self.stream_handle.1.play_raw(unsafe { SOUND_QUEUE[x] });
+                    self.stream_handle.1.play_raw(sound_queue::get_sound(x));
                     self.state.user_state.active_modified = false;
                 }
             }
@@ -273,6 +285,9 @@ pub fn evaluate_node<'a>(
         Some(x) => x,
         None => panic!("Node deref failed"),
     };
+
+    // graph.connections.values().into_iter().filter(|x| {x.})
+
     let mut closure = |name: String| {
         (
             name.clone(),
@@ -287,6 +302,13 @@ pub fn evaluate_node<'a>(
             .iter()
             .map(|(name, _input)| (closure)(name.to_string())),
     );
+    /*
+    SoundNodeProps{
+        inputs: input_to_name_and_output_count,
+        output_connection_counts: HashMap::from_iter(graph.nodes[node_id].outputs.iter().map(|(name, output) {return }|))
+        sound_manager: SoundsManager::new(),
+    };*/
+
     let res = (node.operation)(input_to_name_and_output_count);
 
     for (name, value) in res.iter() {
