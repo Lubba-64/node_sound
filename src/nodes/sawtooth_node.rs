@@ -1,10 +1,11 @@
-use crate::sound_graph::types::{
-    DataType, InputParameter, InputValueConfig, Output, SoundNode, ValueType,
+use crate::nodes::SoundNode;
+use crate::sound_graph::graph_types::{
+    DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
+use crate::sound_queue;
+use crate::sounds::{AsGenericSource, SawToothWave};
 use egui_node_graph::InputParamKind;
 use std::collections::HashMap;
-
-use super::SawToothWave;
 
 pub fn sawtooth_node() -> SoundNode {
     SoundNode {
@@ -25,15 +26,25 @@ pub fn sawtooth_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
-        operation: |hash, stack| {
-            let freq = hash
+        operation: |props| {
+            let freq = props
+                .inputs
                 .get("frequency")
                 .unwrap()
                 .clone()
                 .try_to_float()
                 .unwrap();
-            stack.push(Box::new(SawToothWave::new(freq)));
-            HashMap::from([("out".to_string(), ValueType::AudioSource { value: 0 })])
+            let duration = props
+                .inputs
+                .get("duration")
+                .unwrap()
+                .clone()
+                .try_to_float()
+                .unwrap();
+
+            let idx = sound_queue::push_sound(SawToothWave::new(freq).as_generic(Some(duration)));
+
+            HashMap::from([("out".to_string(), ValueType::AudioSource { value: idx })])
         },
     }
 }
