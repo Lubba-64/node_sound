@@ -4,7 +4,9 @@ mod duration_node;
 mod sawtooth_node;
 use duration_node::duration_node;
 use sawtooth_node::sawtooth_node;
+mod sine_node;
 mod triangle_node;
+use sine_node::sine_node;
 use std::collections::BTreeMap;
 use triangle_node::traingle_node;
 
@@ -31,6 +33,7 @@ pub fn get_nodes() -> NodeDefinitions {
         mix_node(),
         traingle_node(),
         duration_node(),
+        sine_node(),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.name.clone(), n.clone())),
