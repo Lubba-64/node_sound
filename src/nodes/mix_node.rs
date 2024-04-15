@@ -1,5 +1,6 @@
+use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, SoundNode, ValueType,
+    DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
 use crate::sound_queue;
 use crate::sounds::AsGenericSource;
@@ -54,8 +55,8 @@ pub fn mix_node() -> SoundNode {
                 .unwrap();
 
             let new_sound = sound_queue::push_sound(
-                sound_queue::get_sound(first)
-                    .mix(sound_queue::get_sound(second))
+                (sound_queue::pop_sound(first))
+                    .mix(sound_queue::pop_sound(second))
                     .as_generic(None, None),
             );
 

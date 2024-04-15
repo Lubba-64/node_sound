@@ -87,30 +87,3 @@ mod input_output {
         pub data_type: DataType,
     }
 }
-
-pub struct SoundNodeProps {
-    pub inputs: HashMap<String, ValueType>,
-    pub output_connection_counts: HashMap<String, usize>,
-}
-
-impl SoundNodeProps {
-    pub fn new(
-        inputs: HashMap<String, ValueType>,
-        output_connection_counts: HashMap<String, usize>,
-    ) -> Self {
-        SoundNodeProps {
-            inputs,
-            output_connection_counts,
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct SoundNode {
-    pub name: String,
-    pub inputs: HashMap<String, InputParameter>,
-    pub outputs: HashMap<String, Output>,
-    pub operation: fn(SoundNodeProps) -> HashMap<String, ValueType>,
-}
-
-pub struct NodeDefinitions(pub BTreeMap<String, SoundNode>);
