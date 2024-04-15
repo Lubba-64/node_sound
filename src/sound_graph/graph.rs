@@ -263,7 +263,7 @@ impl eframe::App for NodeGraphExample {
         match sound_result {
             Some(x) => {
                 if self.state.user_state.active_modified {
-                    self.stream_handle.1.play_raw(sound_queue::pop_sound(x));
+                    self.stream_handle.1.play_raw(sound_queue::clone_sound(x));
                     self.state.user_state.active_modified = false;
                 }
             }

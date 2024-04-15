@@ -55,8 +55,8 @@ pub fn mix_node() -> SoundNode {
                 .unwrap();
 
             let new_sound = sound_queue::push_sound(
-                (sound_queue::pop_sound(first))
-                    .mix(sound_queue::pop_sound(second))
+                (sound_queue::clone_sound(first))
+                    .mix(sound_queue::clone_sound(second))
                     .as_generic(None),
             );
 
