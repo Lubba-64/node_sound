@@ -166,6 +166,7 @@ impl NodeDataTrait for NodeData {
         if !is_active {
             if ui.button("▶ Play").clicked() {
                 responses.push(NodeResponse::User(MyResponse::SetActiveNode(node_id)));
+                user_state.active_modified = true;
             }
         } else {
             let button =
@@ -278,6 +279,7 @@ impl eframe::App for NodeGraphExample {
             }
             None => {
                 self.sink.clear();
+                sound_queue::clear();
             }
         }
     }
@@ -296,8 +298,6 @@ pub fn evaluate_node<'a>(
         Some(x) => x,
         None => panic!("Node deref failed"),
     };
-
-    // graph.connections.values().into_iter().filter(|x| {x.})
 
     let mut closure = |name: String| {
         (
