@@ -4,7 +4,7 @@ use crate::sound_graph::graph_types::{
 };
 use crate::sound_queue;
 use crate::sounds::{AsGenericSource, SquareWave};
-use egui_node_graph::InputParamKind;
+use egui_node_graph_2::InputParamKind;
 use std::collections::HashMap;
 pub fn square_node() -> SoundNode {
     SoundNode {

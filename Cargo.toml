@@ -9,6 +9,6 @@ rust-version = "1.56"
 
 [dependencies]
 rodio = "0.17.3"
-eframe = "0.18.0"
-egui_node_graph = "0.3.0"
+eframe = "0.27.2"
+egui_node_graph_2 = {version = "0.4.1", git="https://github.com/Lubba-64/egui_node_graph_2.git"}
 dyn-clone = "1.0.17"
