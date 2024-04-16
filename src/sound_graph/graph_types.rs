@@ -1,4 +1,4 @@
-use egui_node_graph::InputParamKind;
+use egui_node_graph_2::InputParamKind;
 use rodio::Source;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -16,11 +16,19 @@ mod data_types {
         Duration,
     }
 
-    #[derive(Clone)]
+    #[derive(Clone, Default)]
     pub enum ValueType {
-        AudioSource { value: usize },
-        Float { value: f32 },
-        Duration { value: Duration },
+        #[default]
+        None,
+        AudioSource {
+            value: usize,
+        },
+        Float {
+            value: f32,
+        },
+        Duration {
+            value: Duration,
+        },
     }
 
     #[derive(Clone, Debug)]
@@ -41,6 +49,7 @@ mod data_types {
                 Self::Duration { value } => {
                     f.debug_struct("Duration").field("value", value).finish()
                 }
+                Self::None => f.debug_struct("None").finish(),
             }
         }
     }

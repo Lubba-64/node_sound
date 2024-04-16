@@ -3,7 +3,7 @@ use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_queue;
 use eframe::egui::{self, DragValue, TextStyle};
-use egui_node_graph::*;
+use egui_node_graph_2::*;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use std::any::Any;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
@@ -26,7 +26,7 @@ pub struct SoundGraphState {
 }
 
 impl DataTypeTrait<SoundGraphState> for DataType {
-    fn data_type_color(&self, _user_state: &SoundGraphState) -> egui::Color32 {
+    fn data_type_color(&self, _user_state: &mut SoundGraphState) -> egui::Color32 {
         match self {
             DataType::Duration => egui::Color32::from_rgb(38, 109, 211),
             DataType::Float => egui::Color32::from_rgb(238, 207, 109),
@@ -49,16 +49,18 @@ impl NodeTemplateTrait for NodeDefinitionUi {
     type NodeData = NodeData;
     type DataType = DataType;
     type ValueType = ValueType;
+    type UserState = SoundGraphState;
+    type CategoryType = ();
 
-    fn node_finder_label(&self) -> &str {
-        &self.0.name
+    fn node_finder_label(&self, user_state: &mut Self::UserState) -> Cow<'_, str> {
+        Cow::Owned(self.0.name.clone())
     }
 
-    fn node_graph_label(&self) -> String {
-        self.node_finder_label().into()
+    fn node_graph_label(&self, user_state: &mut Self::UserState) -> String {
+        self.node_finder_label(user_state).into()
     }
 
-    fn user_data(&self) -> Self::NodeData {
+    fn user_data(&self, user_state: &mut Self::UserState) -> Self::NodeData {
         NodeData {
             name: self.0.name.clone(),
         }
@@ -67,6 +69,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
     fn build_node(
         &self,
         graph: &mut Graph<Self::NodeData, Self::DataType, Self::ValueType>,
+        user_state: &mut Self::UserState,
         node_id: NodeId,
     ) {
         for input in self.0.inputs.iter() {
@@ -102,7 +105,16 @@ impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
 
 impl WidgetValueTrait for ValueType {
     type Response = MyResponse;
-    fn value_widget(&mut self, param_name: &str, ui: &mut egui::Ui) -> Vec<MyResponse> {
+    type UserState = SoundGraphState;
+    type NodeData = NodeData;
+    fn value_widget(
+        &mut self,
+        param_name: &str,
+        node_id: NodeId,
+        ui: &mut egui::Ui,
+        user_state: &mut Self::UserState,
+        node_data: &Self::NodeData,
+    ) -> Vec<MyResponse> {
         match self {
             ValueType::Float { value } => {
                 ui.horizontal(|ui| {
@@ -121,6 +133,9 @@ impl WidgetValueTrait for ValueType {
             ValueType::AudioSource { value: _ } => {
                 ui.label(param_name);
             }
+            ValueType::None => {
+                ui.label("None");
+            }
         }
         Vec::new()
     }
@@ -138,7 +153,7 @@ impl NodeDataTrait for NodeData {
         ui: &mut egui::Ui,
         node_id: NodeId,
         _graph: &Graph<NodeData, DataType, Self::ValueType>,
-        user_state: &Self::UserState,
+        user_state: &mut Self::UserState,
     ) -> Vec<NodeResponse<MyResponse, NodeData>>
     where
         MyResponse: UserResponseTrait,
@@ -170,6 +185,7 @@ type MyEditorState =
     GraphEditorState<NodeData, DataType, ValueType, NodeDefinitionUi, SoundGraphState>;
 
 pub struct NodeGraphExample {
+    pub user_state: SoundGraphState,
     pub state: MyEditorState,
     pub node_definitions: NodeDefinitions,
     pub stream: (OutputStream, OutputStreamHandle),
@@ -180,10 +196,11 @@ impl NodeGraphExample {
     pub fn new() -> Self {
         let (stream, stream_handle) = OutputStream::try_default().unwrap();
         Self {
-            state: MyEditorState::new(1.0, SoundGraphState::default()),
+            state: MyEditorState::new(1.0),
             node_definitions: get_nodes(),
             sink: Sink::try_new(&stream_handle).unwrap(),
             stream: (stream, stream_handle),
+            user_state: SoundGraphState::default(),
         }
     }
 }
@@ -197,26 +214,27 @@ impl eframe::App for NodeGraphExample {
         });
         let graph_response = egui::CentralPanel::default()
             .show(ctx, |ui| {
-                self.state
-                    .draw_graph_editor(ui, NodeDefinitionsUi(&self.node_definitions))
+                self.state.draw_graph_editor(
+                    ui,
+                    NodeDefinitionsUi(&self.node_definitions),
+                    &mut self.user_state,
+                    Vec::default(),
+                )
             })
             .inner;
 
         for node_response in graph_response.node_responses {
             if let NodeResponse::User(user_event) = node_response {
                 match user_event {
-                    MyResponse::SetActiveNode(node) => {
-                        self.state.user_state.active_node = Some(node);
-                        self.state.user_state.active_modified = true;
-                    }
-                    MyResponse::ClearActiveNode => self.state.user_state.active_node = None,
+                    MyResponse::SetActiveNode(node) => self.user_state.active_node = Some(node),
+                    MyResponse::ClearActiveNode => self.user_state.active_node = None,
                 }
             }
         }
 
         let mut sound_result = None;
 
-        if let Some(node) = self.state.user_state.active_node {
+        if let Some(node) = self.user_state.active_node {
             if self.state.graph.nodes.contains_key(node) {
                 let text;
 
@@ -245,17 +263,17 @@ impl eframe::App for NodeGraphExample {
                     egui::Color32::WHITE,
                 );
             } else {
-                self.state.user_state.active_node = None;
+                self.user_state.active_node = None;
             }
         }
 
         match sound_result {
             Some(x) => {
-                if self.state.user_state.active_modified {
+                if self.user_state.active_modified {
                     self.sink.append(sound_queue::clone_sound(x));
                     self.sink.play();
                     self.sink.set_volume(1.0);
-                    self.state.user_state.active_modified = false;
+                    self.user_state.active_modified = false;
                 }
             }
             None => {
