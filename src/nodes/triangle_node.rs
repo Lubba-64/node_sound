@@ -6,7 +6,9 @@ use crate::sound_queue;
 use crate::sounds::{AsGenericSource, TriangleWave};
 use egui_node_graph_2::InputParamKind;
 use std::collections::HashMap;
-pub fn traingle_node() -> SoundNode {
+
+use super::{SoundNodeProps, SoundNodeResult};
+pub fn triangle_node() -> SoundNode {
     SoundNode {
         name: "Triangle Wave".to_string(),
         inputs: HashMap::from([(
@@ -25,15 +27,16 @@ pub fn traingle_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
-        operation: |props| {
-            Ok(HashMap::from([(
-                "out".to_string(),
-                ValueType::AudioSource {
-                    value: sound_queue::push_sound(
-                        TriangleWave::new(props.get_float("frequency")?).as_generic(None),
-                    ),
-                },
-            )]))
-        },
     }
+}
+
+pub fn triangle_logic(props: SoundNodeProps) -> SoundNodeResult {
+    Ok(HashMap::from([(
+        "out".to_string(),
+        ValueType::AudioSource {
+            value: sound_queue::push_sound(
+                TriangleWave::new(props.get_float("frequency")?).as_generic(None),
+            ),
+        },
+    )]))
 }

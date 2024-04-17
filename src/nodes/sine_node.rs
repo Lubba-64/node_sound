@@ -7,6 +7,8 @@ use crate::sounds::AsGenericSource;
 use egui_node_graph_2::InputParamKind;
 use rodio::source::SineWave;
 use std::collections::HashMap;
+
+use super::{SoundNodeProps, SoundNodeResult};
 pub fn sine_node() -> SoundNode {
     SoundNode {
         name: "Sine Wave".to_string(),
@@ -26,15 +28,15 @@ pub fn sine_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
-        operation: |props| {
-            Ok(HashMap::from([(
-                "out".to_string(),
-                ValueType::AudioSource {
-                    value: sound_queue::push_sound(
-                        SineWave::new(props.get_float("frequency")?).as_generic(None),
-                    ),
-                },
-            )]))
-        },
     }
+}
+pub fn sine_logic(props: SoundNodeProps) -> SoundNodeResult {
+    Ok(HashMap::from([(
+        "out".to_string(),
+        ValueType::AudioSource {
+            value: sound_queue::push_sound(
+                SineWave::new(props.get_float("frequency")?).as_generic(None),
+            ),
+        },
+    )]))
 }

@@ -8,6 +8,8 @@ use egui_node_graph_2::InputParamKind;
 use rodio::Source;
 use std::collections::HashMap;
 
+use super::{SoundNodeProps, SoundNodeResult};
+
 pub fn amplify_node() -> SoundNode {
     SoundNode {
         name: "Amplify".to_string(),
@@ -38,17 +40,17 @@ pub fn amplify_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
-        operation: |props| {
-            Ok(HashMap::from([(
-                "out".to_string(),
-                ValueType::AudioSource {
-                    value: sound_queue::push_sound(
-                        sound_queue::clone_sound(props.get_source("audio 1")?)?
-                            .amplify(props.get_float("amplification")?)
-                            .as_generic(None),
-                    ),
-                },
-            )]))
-        },
     }
+}
+pub fn amplify_logic(props: SoundNodeProps) -> SoundNodeResult {
+    Ok(HashMap::from([(
+        "out".to_string(),
+        ValueType::AudioSource {
+            value: sound_queue::push_sound(
+                sound_queue::clone_sound(props.get_source("audio 1")?)?
+                    .amplify(props.get_float("amplification")?)
+                    .as_generic(None),
+            ),
+        },
+    )]))
 }

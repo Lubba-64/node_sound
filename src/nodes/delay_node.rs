@@ -8,6 +8,8 @@ use egui_node_graph_2::InputParamKind;
 use rodio::Source;
 use std::collections::HashMap;
 
+use super::{SoundNodeProps, SoundNodeResult};
+
 pub fn delay_node() -> SoundNode {
     SoundNode {
         name: "Delay".to_string(),
@@ -38,17 +40,18 @@ pub fn delay_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
-        operation: |props| {
-            Ok(HashMap::from([(
-                "out".to_string(),
-                ValueType::AudioSource {
-                    value: sound_queue::push_sound(
-                        sound_queue::clone_sound(props.get_source("audio 1")?)?
-                            .delay(props.get_duration("delay")?)
-                            .as_generic(None),
-                    ),
-                },
-            )]))
-        },
     }
+}
+
+pub fn delay_logic(props: SoundNodeProps) -> SoundNodeResult {
+    Ok(HashMap::from([(
+        "out".to_string(),
+        ValueType::AudioSource {
+            value: sound_queue::push_sound(
+                sound_queue::clone_sound(props.get_source("audio 1")?)?
+                    .delay(props.get_duration("delay")?)
+                    .as_generic(None),
+            ),
+        },
+    )]))
 }
