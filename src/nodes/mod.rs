@@ -17,6 +17,8 @@ use delay_node::delay_node;
 use std::collections::HashMap;
 mod amplify_node;
 use amplify_node::amplify_node;
+mod repeat_infinite;
+use repeat_infinite::repeat_infinite_node;
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -69,6 +71,7 @@ pub fn get_nodes() -> NodeDefinitions {
         square_node(),
         delay_node(),
         amplify_node(),
+        repeat_infinite_node(),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.name.clone(), n.clone())),
