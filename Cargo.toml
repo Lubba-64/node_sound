@@ -13,3 +13,5 @@ eframe = "0.27.2"
 egui_node_graph_2 = {version = "0.4.1", git="https://github.com/Lubba-64/egui_node_graph_2.git", features = ["persistence"]}
 dyn-clone = "1.0.17"
 serde = {version = "1.0.198", features = ["derive"]}
+rfd = "0.14.1"
+ron = "0.8.1"

@@ -220,6 +220,13 @@ impl eframe::App for NodeGraphExample {
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::widgets::global_dark_light_mode_switch(ui);
+                egui::ComboBox::from_label("")
+                    .selected_text("File")
+                    .show_ui(ui, |ui| {
+                        if ui.add(egui::Button::new("Save")).clicked() {}
+                        if ui.add(egui::Button::new("Save As")).clicked() {}
+                        if ui.add(egui::Button::new("Open")).clicked() {}
+                    })
             });
         });
         let graph_response = egui::CentralPanel::default()
