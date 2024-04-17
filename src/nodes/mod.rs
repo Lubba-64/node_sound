@@ -15,6 +15,8 @@ mod delay_node;
 use crate::sound_graph::graph_types::{InputParameter, Output, ValueType};
 use delay_node::delay_node;
 use std::collections::HashMap;
+mod amplify_node;
+use amplify_node::amplify_node;
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -66,6 +68,7 @@ pub fn get_nodes() -> NodeDefinitions {
         sine_node(),
         square_node(),
         delay_node(),
+        amplify_node(),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.name.clone(), n.clone())),
