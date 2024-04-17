@@ -27,17 +27,14 @@ pub fn sine_node() -> SoundNode {
             },
         )]),
         operation: |props| {
-            let freq = props
-                .inputs
-                .get("frequency")
-                .unwrap()
-                .clone()
-                .try_to_float()
-                .unwrap();
-
-            let idx = sound_queue::push_sound(SineWave::new(freq).as_generic(None));
-
-            HashMap::from([("out".to_string(), ValueType::AudioSource { value: idx })])
+            Ok(HashMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: sound_queue::push_sound(
+                        SineWave::new(props.get_float("frequency")?).as_generic(None),
+                    ),
+                },
+            )]))
         },
     }
 }

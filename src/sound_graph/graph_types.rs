@@ -1,7 +1,4 @@
 use egui_node_graph_2::InputParamKind;
-use rodio::Source;
-use std::collections::BTreeMap;
-use std::collections::HashMap;
 use std::time::Duration;
 
 pub use self::data_types::*;
@@ -29,6 +26,12 @@ mod data_types {
         Duration {
             value: Duration,
         },
+    }
+
+    impl Default for &ValueType {
+        fn default() -> Self {
+            &ValueType::None
+        }
     }
 
     #[derive(Clone, Debug)]

@@ -1,9 +1,12 @@
 use super::graph_types::InputValueConfig;
+use super::DEFAULT_SAMPLE_RATE;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_queue;
+use crate::sounds::AsGenericSource;
 use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph_2::*;
+use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use std::any::Any;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
@@ -195,11 +198,12 @@ pub struct NodeGraphExample {
 
 impl NodeGraphExample {
     pub fn new() -> Self {
-        let (stream, stream_handle) = OutputStream::try_default().unwrap();
+        let (stream, stream_handle) =
+            OutputStream::try_default().expect("could not initialize audio subsystem");
         Self {
             state: MyEditorState::new(1.0),
             node_definitions: get_nodes(),
-            sink: Sink::try_new(&stream_handle).unwrap(),
+            sink: Sink::try_new(&stream_handle).expect("could not create audio sink"),
             stream: (stream, stream_handle),
             user_state: SoundGraphState::default(),
         }
@@ -246,7 +250,7 @@ impl eframe::App for NodeGraphExample {
                     &self.node_definitions,
                 ) {
                     Ok(value) => {
-                        let sound = value.try_to_source().unwrap();
+                        let sound = value.try_to_source().expect("expected valid audio source");
                         sound_result = Some(sound.clone());
                         text = "Playing Anonymous audio source.";
                     }
@@ -271,7 +275,10 @@ impl eframe::App for NodeGraphExample {
         match sound_result {
             Some(x) => {
                 if self.user_state.active_modified {
-                    self.sink.append(sound_queue::clone_sound(x));
+                    self.sink.append(match sound_queue::clone_sound(x) {
+                        Err(_) => Zero::new(1, DEFAULT_SAMPLE_RATE).as_generic(None),
+                        Ok(x) => x,
+                    });
                     self.sink.play();
                     self.sink.set_volume(1.0);
                     self.user_state.active_modified = false;
@@ -293,7 +300,7 @@ pub fn evaluate_node<'a>(
     node_id: NodeId,
     outputs_cache: &mut OutputsCache,
     all_nodes: &NodeDefinitions,
-) -> Result<ValueType, &'a str> {
+) -> Result<ValueType, Box<dyn std::error::Error>> {
     let node = match all_nodes.0.get(&graph[node_id].user_data.name) {
         Some(x) => x,
         None => panic!("Node deref failed"),
@@ -316,10 +323,10 @@ pub fn evaluate_node<'a>(
 
     let res = (node.operation)(SoundNodeProps {
         inputs: input_to_name,
-    });
+    })?;
 
-    for (name, value) in res.iter() {
-        match populate_output(graph, outputs_cache, node_id, name, value.clone()) {
+    for (name, value) in &res {
+        match populate_output(graph, outputs_cache, node_id, &name, value.clone()) {
             Ok(_x) => (),
             Err(_x) => panic!("Output failed to populate"),
         }
@@ -327,7 +334,10 @@ pub fn evaluate_node<'a>(
 
     match res.get("out") {
         Some(x) => Ok(x.clone()),
-        None => Err("Node had no output"),
+        None => Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Node had no output",
+        ))),
     }
 }
 
