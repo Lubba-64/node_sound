@@ -25,6 +25,7 @@ pub enum MyResponse {
 pub struct SoundGraphState {
     pub active_node: Option<NodeId>,
     pub active_modified: bool,
+    pub sound_result_evaluated: bool,
 }
 
 impl DataTypeTrait<SoundGraphState> for DataType {
@@ -251,36 +252,38 @@ impl eframe::App for NodeGraphExample {
 
         let mut sound_result = None;
 
-        if let Some(node) = self.user_state.active_node {
-            if self.state.graph.nodes.contains_key(node) {
-                let text;
+        if self.user_state.active_modified {
+            if let Some(node) = self.user_state.active_node {
+                if self.state.graph.nodes.contains_key(node) {
+                    let text;
 
-                match evaluate_node(
-                    &self.state.graph,
-                    node,
-                    &mut HashMap::new(),
-                    &self.node_definitions,
-                ) {
-                    Ok(value) => {
-                        let sound = value.try_to_source().expect("expected valid audio source");
-                        sound_result = Some(sound.clone());
-                        text = "Playing Anonymous audio source.";
-                    }
-                    Err(_err) => {
-                        sound_result = None;
-                        text = "An error occured trying to play the audio source.";
-                    }
-                };
+                    match evaluate_node(
+                        &self.state.graph,
+                        node,
+                        &mut HashMap::new(),
+                        &self.node_definitions,
+                    ) {
+                        Ok(value) => {
+                            let sound = value.try_to_source().expect("expected valid audio source");
+                            sound_result = Some(sound.clone());
+                            text = "Playing Anonymous audio source.";
+                        }
+                        Err(_err) => {
+                            sound_result = None;
+                            text = "An error occured trying to play the audio source.";
+                        }
+                    };
 
-                ctx.debug_painter().text(
-                    egui::pos2(10.0, 35.0),
-                    egui::Align2::LEFT_TOP,
-                    text,
-                    TextStyle::Button.resolve(&ctx.style()),
-                    egui::Color32::WHITE,
-                );
-            } else {
-                self.user_state.active_node = None;
+                    ctx.debug_painter().text(
+                        egui::pos2(10.0, 35.0),
+                        egui::Align2::LEFT_TOP,
+                        text,
+                        TextStyle::Button.resolve(&ctx.style()),
+                        egui::Color32::WHITE,
+                    );
+                } else {
+                    self.user_state.active_node = None;
+                }
             }
         }
 
