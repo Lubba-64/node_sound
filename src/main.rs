@@ -12,5 +12,6 @@ fn main() {
             cc.egui_ctx.set_visuals(Visuals::dark());
             Box::new(sound_graph::graph::NodeGraphExample::new())
         }),
-    );
+    )
+    .expect("eframe failed to run");
 }
