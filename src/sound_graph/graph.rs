@@ -8,7 +8,6 @@ use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph_2::*;
 use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
-use std::any::Any;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 
 #[derive(Clone)]
@@ -55,7 +54,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
     type UserState = SoundGraphState;
     type CategoryType = ();
 
-    fn node_finder_label(&self, user_state: &mut Self::UserState) -> Cow<'_, str> {
+    fn node_finder_label(&self, _user_state: &mut Self::UserState) -> Cow<'_, str> {
         Cow::Owned(self.0.name.clone())
     }
 
@@ -63,7 +62,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
         self.node_finder_label(user_state).into()
     }
 
-    fn user_data(&self, user_state: &mut Self::UserState) -> Self::NodeData {
+    fn user_data(&self, _user_state: &mut Self::UserState) -> Self::NodeData {
         NodeData {
             name: self.0.name.clone(),
         }
@@ -72,7 +71,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
     fn build_node(
         &self,
         graph: &mut Graph<Self::NodeData, Self::DataType, Self::ValueType>,
-        user_state: &mut Self::UserState,
+        _user_state: &mut Self::UserState,
         node_id: NodeId,
     ) {
         for input in self.0.inputs.iter() {
@@ -102,7 +101,13 @@ impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
     type Item = NodeDefinitionUi;
 
     fn all_kinds(&self) -> Vec<Self::Item> {
-        self.0 .0.values().cloned().map(NodeDefinitionUi).collect()
+        self.0
+             .0
+            .values()
+            .cloned()
+            .map(|x| x.0)
+            .map(NodeDefinitionUi)
+            .collect()
     }
 }
 
@@ -113,10 +118,10 @@ impl WidgetValueTrait for ValueType {
     fn value_widget(
         &mut self,
         param_name: &str,
-        node_id: NodeId,
+        _node_id: NodeId,
         ui: &mut egui::Ui,
-        user_state: &mut Self::UserState,
-        node_data: &Self::NodeData,
+        _user_state: &mut Self::UserState,
+        _node_data: &Self::NodeData,
     ) -> Vec<MyResponse> {
         match self {
             ValueType::Float { value } => {
@@ -316,12 +321,13 @@ pub fn evaluate_node<'a>(
         )
     };
     let input_to_name = HashMap::from_iter(
-        node.inputs
+        node.0
+            .inputs
             .iter()
             .map(|(name, _input)| (closure)(name.to_string())),
     );
 
-    let res = (node.operation)(SoundNodeProps {
+    let res = (node.1)(SoundNodeProps {
         inputs: input_to_name,
     })?;
 

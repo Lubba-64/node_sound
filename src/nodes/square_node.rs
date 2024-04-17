@@ -6,6 +6,8 @@ use crate::sound_queue;
 use crate::sounds::{AsGenericSource, SquareWave};
 use egui_node_graph_2::InputParamKind;
 use std::collections::HashMap;
+
+use super::{SoundNodeProps, SoundNodeResult};
 pub fn square_node() -> SoundNode {
     SoundNode {
         name: "Square Wave".to_string(),
@@ -25,15 +27,16 @@ pub fn square_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
-        operation: |props| {
-            Ok(HashMap::from([(
-                "out".to_string(),
-                ValueType::AudioSource {
-                    value: sound_queue::push_sound(
-                        SquareWave::new(props.get_float("frequency")?).as_generic(None),
-                    ),
-                },
-            )]))
-        },
     }
+}
+
+pub fn square_logic(props: SoundNodeProps) -> SoundNodeResult {
+    Ok(HashMap::from([(
+        "out".to_string(),
+        ValueType::AudioSource {
+            value: sound_queue::push_sound(
+                SquareWave::new(props.get_float("frequency")?).as_generic(None),
+            ),
+        },
+    )]))
 }

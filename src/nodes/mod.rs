@@ -1,24 +1,26 @@
 mod mix_node;
-use mix_node::mix_node;
+use mix_node::{mix_logic, mix_node};
 mod duration_node;
 mod sawtooth_node;
-use duration_node::duration_node;
-use sawtooth_node::sawtooth_node;
+use duration_node::{duration_logic, duration_node};
+use sawtooth_node::{sawtooth_logic, sawtooth_node};
 mod sine_node;
 mod triangle_node;
-use sine_node::sine_node;
+use serde::{Deserialize, Serialize};
+use sine_node::{sine_logic, sine_node};
 use std::{collections::BTreeMap, time::Duration};
-use triangle_node::traingle_node;
+use triangle_node::{triangle_logic, triangle_node};
 mod square_node;
-use square_node::square_node;
+use square_node::{square_logic, square_node};
 mod delay_node;
 use crate::sound_graph::graph_types::{InputParameter, Output, ValueType};
-use delay_node::delay_node;
+use delay_node::{delay_logic, delay_node};
 use std::collections::HashMap;
 mod amplify_node;
-use amplify_node::amplify_node;
+use amplify_node::{amplify_logic, amplify_node};
 mod repeat_infinite;
-use repeat_infinite::repeat_infinite_node;
+use repeat_infinite::{repeat_infinite_logic, repeat_infinite_node};
+
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -50,30 +52,30 @@ impl SoundNodeProps {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SoundNode {
     pub name: String,
     pub inputs: HashMap<String, InputParameter>,
     pub outputs: HashMap<String, Output>,
-    pub operation:
-        fn(SoundNodeProps) -> Result<HashMap<String, ValueType>, Box<dyn std::error::Error>>,
 }
-
-pub struct NodeDefinitions(pub BTreeMap<String, SoundNode>);
+type SoundNodeOp =
+    fn(SoundNodeProps) -> Result<HashMap<String, ValueType>, Box<dyn std::error::Error>>;
+type SoundNodeResult = Result<HashMap<String, ValueType>, Box<dyn std::error::Error>>;
+pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes = [
-        sawtooth_node(),
-        mix_node(),
-        traingle_node(),
-        duration_node(),
-        sine_node(),
-        square_node(),
-        delay_node(),
-        amplify_node(),
-        repeat_infinite_node(),
+    let nodes: [(SoundNode, Box<SoundNodeOp>); 9] = [
+        (mix_node(), Box::new(mix_logic)),
+        (duration_node(), Box::new(duration_logic)),
+        (delay_node(), Box::new(delay_logic)),
+        (amplify_node(), Box::new(amplify_logic)),
+        (repeat_infinite_node(), Box::new(repeat_infinite_logic)),
+        (sine_node(), Box::new(sine_logic)),
+        (sawtooth_node(), Box::new(sawtooth_logic)),
+        (triangle_node(), Box::new(triangle_logic)),
+        (square_node(), Box::new(square_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
-        nodes.iter().map(|n| (n.name.clone(), n.clone())),
+        nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
     ))
 }

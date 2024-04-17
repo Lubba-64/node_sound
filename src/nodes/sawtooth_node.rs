@@ -6,7 +6,8 @@ use crate::sound_queue;
 use crate::sounds::{AsGenericSource, SawToothWave};
 use egui_node_graph_2::InputParamKind;
 use std::collections::HashMap;
-use std::convert::Infallible;
+
+use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn sawtooth_node() -> SoundNode {
     SoundNode {
@@ -27,15 +28,15 @@ pub fn sawtooth_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
-        operation: |props| {
-            Ok(HashMap::from([(
-                "out".to_string(),
-                ValueType::AudioSource {
-                    value: sound_queue::push_sound(
-                        SawToothWave::new(props.get_float("frequency")?).as_generic(None),
-                    ),
-                },
-            )]))
-        },
     }
+}
+pub fn sawtooth_logic(props: SoundNodeProps) -> SoundNodeResult {
+    Ok(HashMap::from([(
+        "out".to_string(),
+        ValueType::AudioSource {
+            value: sound_queue::push_sound(
+                SawToothWave::new(props.get_float("frequency")?).as_generic(None),
+            ),
+        },
+    )]))
 }

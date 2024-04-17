@@ -8,6 +8,8 @@ use egui_node_graph_2::InputParamKind;
 use rodio::Source;
 use std::collections::HashMap;
 
+use super::{SoundNodeProps, SoundNodeResult};
+
 pub fn duration_node() -> SoundNode {
     SoundNode {
         name: "Take Duration".to_string(),
@@ -38,17 +40,18 @@ pub fn duration_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
-        operation: |props| {
-            Ok(HashMap::from([(
-                "out".to_string(),
-                ValueType::AudioSource {
-                    value: sound_queue::push_sound(
-                        sound_queue::clone_sound(props.get_source("audio 1")?)?
-                            .take_duration(props.get_duration("duration")?)
-                            .as_generic(None),
-                    ),
-                },
-            )]))
-        },
     }
+}
+
+pub fn duration_logic(props: SoundNodeProps) -> SoundNodeResult {
+    Ok(HashMap::from([(
+        "out".to_string(),
+        ValueType::AudioSource {
+            value: sound_queue::push_sound(
+                sound_queue::clone_sound(props.get_source("audio 1")?)?
+                    .take_duration(props.get_duration("duration")?)
+                    .as_generic(None),
+            ),
+        },
+    )]))
 }

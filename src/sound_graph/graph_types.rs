@@ -5,15 +5,17 @@ pub use self::data_types::*;
 mod data_types {
     use std::fmt::Debug;
 
+    use serde::{Deserialize, Serialize};
+
     use super::*;
-    #[derive(Copy, Clone, PartialEq, Eq, Debug)]
+    #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
     pub enum DataType {
         AudioSource,
         Float,
         Duration,
     }
 
-    #[derive(Clone, Default)]
+    #[derive(Clone, Default, Serialize, Deserialize)]
     pub enum ValueType {
         #[default]
         None,
@@ -34,7 +36,7 @@ mod data_types {
         }
     }
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Serialize, Deserialize)]
     pub enum InputValueConfig {
         AudioSource {},
         Float { value: f32 },
@@ -44,7 +46,7 @@ mod data_types {
     impl Debug for ValueType {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             match self {
-                Self::AudioSource { value } => f
+                Self::AudioSource { value: _ } => f
                     .debug_struct("Source")
                     .field("value", &"Anonymous AudioSource")
                     .finish(),
@@ -86,15 +88,17 @@ mod data_types {
 pub use self::input_output::*;
 
 mod input_output {
+    use serde::{Deserialize, Serialize};
+
     use super::*;
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct InputParameter {
         pub name: String,
         pub data_type: DataType,
         pub kind: InputParamKind,
         pub value: InputValueConfig,
     }
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct Output {
         pub name: String,
         pub data_type: DataType,
