@@ -39,29 +39,16 @@ pub fn delay_node() -> SoundNode {
             },
         )]),
         operation: |props| {
-            let duration = props
-                .inputs
-                .get("delay")
-                .unwrap()
-                .clone()
-                .try_to_duration()
-                .unwrap();
-
-            let first = props
-                .inputs
-                .get("audio 1")
-                .unwrap()
-                .clone()
-                .try_to_source()
-                .unwrap();
-
-            let idx = sound_queue::push_sound(
-                sound_queue::clone_sound(first)
-                    .delay(duration)
-                    .as_generic(None),
-            );
-
-            HashMap::from([("out".to_string(), ValueType::AudioSource { value: idx })])
+            Ok(HashMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: sound_queue::push_sound(
+                        sound_queue::clone_sound(props.get_source("audio 1")?)?
+                            .delay(props.get_duration("delay")?)
+                            .as_generic(None),
+                    ),
+                },
+            )]))
         },
     }
 }

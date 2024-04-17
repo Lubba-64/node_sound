@@ -38,31 +38,16 @@ pub fn mix_node() -> SoundNode {
             },
         )]),
         operation: |props| {
-            let first = props
-                .inputs
-                .get("audio 1")
-                .unwrap()
-                .clone()
-                .try_to_source()
-                .unwrap();
-            let second = props
-                .inputs
-                .get("audio 2")
-                .unwrap()
-                .clone()
-                .try_to_source()
-                .unwrap();
-
-            let new_sound = sound_queue::push_sound(
-                (sound_queue::clone_sound(first))
-                    .mix(sound_queue::clone_sound(second))
-                    .as_generic(None),
-            );
-
-            HashMap::from([(
+            Ok(HashMap::from([(
                 "out".to_string(),
-                ValueType::AudioSource { value: new_sound },
-            )])
+                ValueType::AudioSource {
+                    value: sound_queue::push_sound(
+                        (sound_queue::clone_sound(props.get_source("audio 1")?)?)
+                            .mix(sound_queue::clone_sound(props.get_source("audio 2")?)?)
+                            .as_generic(None),
+                    ),
+                },
+            )]))
         },
     }
 }
