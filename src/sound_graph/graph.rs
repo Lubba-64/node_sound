@@ -273,6 +273,13 @@ impl eframe::App for SoundNodeGraph {
                 egui::ComboBox::from_label("")
                     .selected_text("File")
                     .show_ui(ui, |ui| {
+                        if ui.add(egui::Button::new("New Project")).clicked() {
+                            self.settings_state.latest_saved_file = None;
+                            self.state = SoundNodeGraphSavedState {
+                                editor_state: SoundGraphEditorState::new(1.0),
+                                user_state: SoundGraphState::default(),
+                            };
+                        }
                         if ui.add(egui::Button::new("Save")).clicked() {
                             match &self.settings_state.latest_saved_file {
                                 None => match save_project_file_as(ProjectFile {
