@@ -31,11 +31,8 @@ pub struct ProjectFile {
 pub fn get_current_working_settings(
     app_path: &str,
 ) -> Result<WorkingFileSettings, Box<dyn std::error::Error>> {
-    let settings_file = format!("{}/settings.ron", app_path);
-    if std::path::Path::new(settings_file.as_str()).exists() {
-        return Ok(ron::de::from_str(
-            fs::read_to_string(settings_file)?.as_str(),
-        )?);
+    if std::path::Path::new(app_path).exists() {
+        return Ok(ron::de::from_str(fs::read_to_string(app_path)?.as_str())?);
     } else {
         return Err(Box::new(Error::new(
             ErrorKind::Other,
@@ -96,16 +93,14 @@ pub fn save_project_file(
     Ok(())
 }
 
-pub fn open_project_file() -> Result<ProjectFile, Box<dyn std::error::Error>> {
-    get_project_file(
-        convert_option_pathbuf(
-            FileDialog::new()
-                .add_filter("text", &["ron"])
-                .set_directory("./")
-                .pick_file(),
-        )?
-        .as_str(),
-    )
+pub fn open_project_file() -> Result<(String, ProjectFile), Box<dyn std::error::Error>> {
+    let file = convert_option_pathbuf(
+        FileDialog::new()
+            .add_filter("text", &["ron"])
+            .set_directory("./")
+            .pick_file(),
+    )?;
+    Ok((file.clone(), get_project_file(file.as_str())?))
 }
 
 pub fn get_project_file(path: &str) -> Result<ProjectFile, Box<dyn std::error::Error>> {
