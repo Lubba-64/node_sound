@@ -1,20 +1,21 @@
 use rodio::Source;
 
 use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use rodio::source::UniformSourceIterator;
 use std::time::Duration;
 
-#[derive(Clone, Debug)]
-pub struct Lfo<I1, I2> {
-    input1: I1,
-    input2: I2,
+#[derive(Clone)]
+pub struct Lfo<I1: Source<Item = f32>, I2: Source<Item = f32>> {
+    input1: UniformSourceIterator<I1, I1::Item>,
+    input2: UniformSourceIterator<I2, I2::Item>,
 }
 
 impl<I1: Source<Item = f32>, I2: Source<Item = f32>> Lfo<I1, I2> {
     #[inline]
     pub fn new(source1: I1, source2: I2) -> Self {
         Self {
-            input1: source1,
-            input2: source2,
+            input1: UniformSourceIterator::new(source1, 1, DEFAULT_SAMPLE_RATE),
+            input2: UniformSourceIterator::new(source2, 1, DEFAULT_SAMPLE_RATE),
         }
     }
 }
