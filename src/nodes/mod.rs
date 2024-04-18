@@ -22,6 +22,8 @@ mod repeat_infinite;
 use repeat_infinite::{repeat_infinite_logic, repeat_infinite_node};
 mod speed_node;
 use speed_node::{speed_logic, speed_node};
+mod lfo_node;
+use lfo_node::{lfo_logic, lfo_node};
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -65,7 +67,7 @@ type SoundNodeResult = Result<HashMap<String, ValueType>, Box<dyn std::error::Er
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: [(SoundNode, Box<SoundNodeOp>); 10] = [
+    let nodes: [(SoundNode, Box<SoundNodeOp>); 11] = [
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -76,6 +78,7 @@ pub fn get_nodes() -> NodeDefinitions {
         (triangle_node(), Box::new(triangle_logic)),
         (square_node(), Box::new(square_logic)),
         (speed_node(), Box::new(speed_logic)),
+        (lfo_node(), Box::new(lfo_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
