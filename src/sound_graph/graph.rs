@@ -7,6 +7,7 @@ use super::save_management::{
 use super::DEFAULT_SAMPLE_RATE;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
+use crate::sound_graph::save_management::get_project_file;
 use crate::sound_queue;
 use crate::sounds::AsGenericSource;
 use eframe::egui::{self, DragValue, TextStyle};
@@ -214,6 +215,7 @@ pub struct SoundNodeGraph {
     pub stream: (OutputStream, OutputStreamHandle),
     pub sink: Sink,
     pub exe_dir: String,
+    settings_path: String,
 }
 
 impl SoundNodeGraph {
@@ -221,17 +223,29 @@ impl SoundNodeGraph {
         let (stream, stream_handle) =
             OutputStream::try_default().expect("could not initialize audio subsystem");
         let exe_dir = get_current_exe_dir().expect("could not get app directory");
-        let settings_state = match get_current_working_settings(&exe_dir) {
+        let settings_path = std::path::Path::new(&exe_dir).join("node_settings.ron");
+        println!("{:#?}", settings_path.to_str().unwrap());
+        let settings_state = match get_current_working_settings(&settings_path.to_str().unwrap()) {
             Err(_) => WorkingFileSettings::default(),
             Ok(x) => x,
         };
         Self {
+            settings_path: settings_path.to_str().unwrap().to_string(),
             exe_dir: exe_dir,
-            settings_state: settings_state,
-            state: SoundNodeGraphSavedState {
-                editor_state: SoundGraphEditorState::new(1.0),
-                user_state: SoundGraphState::default(),
+            state: match &settings_state.latest_saved_file {
+                None => SoundNodeGraphSavedState {
+                    editor_state: SoundGraphEditorState::new(1.0),
+                    user_state: SoundGraphState::default(),
+                },
+                Some(x) => match get_project_file(&x) {
+                    Ok(y) => y.graph_state,
+                    Err(_) => SoundNodeGraphSavedState {
+                        editor_state: SoundGraphEditorState::new(1.0),
+                        user_state: SoundGraphState::default(),
+                    },
+                },
             },
+            settings_state: settings_state,
             node_definitions: get_nodes(),
             sink: Sink::try_new(&stream_handle).expect("could not create audio sink"),
             stream: (stream, stream_handle),
@@ -255,7 +269,7 @@ impl eframe::App for SoundNodeGraph {
                                     Ok(x) => {
                                         self.settings_state.latest_saved_file = Some(x);
                                         let _ = save_current_working_settings(
-                                            &self.exe_dir,
+                                            &self.settings_path,
                                             self.settings_state.clone(),
                                         );
                                     }
@@ -278,7 +292,7 @@ impl eframe::App for SoundNodeGraph {
                                 Ok(x) => {
                                     self.settings_state.latest_saved_file = Some(x);
                                     let _ = save_current_working_settings(
-                                        &self.exe_dir,
+                                        &self.settings_path,
                                         self.settings_state.clone(),
                                     );
                                 }
@@ -287,7 +301,14 @@ impl eframe::App for SoundNodeGraph {
                         }
                         if ui.add(egui::Button::new("Open")).clicked() {
                             match open_project_file() {
-                                Ok(x) => self.state = x.graph_state,
+                                Ok(x) => {
+                                    self.state = x.1.graph_state;
+                                    self.settings_state.latest_saved_file = Some(x.0);
+                                    let _ = save_current_working_settings(
+                                        &format!("{}/node_settings.ron", self.exe_dir),
+                                        self.settings_state.clone(),
+                                    );
+                                }
                                 Err(_) => {}
                             }
                         }
