@@ -32,9 +32,6 @@ impl<I1: Source<Item = f32>, I2: Source<Item = f32>> Iterator for Lfo<I1, I2> {
             Some(x) => x,
             None => return Some(0.0),
         };
-        if x == 0.0 || y == 0.0 {
-            return Some(0.0);
-        }
         Some(x * y)
     }
 }
