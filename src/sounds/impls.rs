@@ -1,7 +1,6 @@
 use super::{
-    lfo::{Lfo, SourceToLfo},
-    source_wrapper::DynCloneIter,
-    AsGenericSource, GenericSource, SawToothWave, SquareWave, TriangleWave,
+    lfo::Lfo, source_wrapper::DynCloneIter, AsGenericSource, GenericSource, SawToothWave,
+    SquareWave, TriangleWave,
 };
 
 use rodio::{
