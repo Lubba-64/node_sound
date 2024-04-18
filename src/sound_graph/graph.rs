@@ -15,6 +15,8 @@ use egui_node_graph_2::*;
 use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
+use std::ffi::OsStr;
+use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -258,6 +260,16 @@ impl eframe::App for SoundNodeGraph {
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::widgets::global_dark_light_mode_switch(ui);
+                ui.add(egui::Label::new(
+                    match &self.settings_state.latest_saved_file {
+                        Some(x) => Path::new(x)
+                            .file_name()
+                            .unwrap_or(&OsStr::new(""))
+                            .to_str()
+                            .unwrap_or(""),
+                        None => "<new project>",
+                    },
+                ));
                 egui::ComboBox::from_label("")
                     .selected_text("File")
                     .show_ui(ui, |ui| {
