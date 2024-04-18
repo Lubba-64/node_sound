@@ -65,7 +65,7 @@ pub fn convert_option_pathbuf(
     };
     let path = match path_buf.into_os_string().into_string() {
         Ok(x) => x,
-        Err(x) => {
+        Err(_) => {
             return Err(Box::new(Error::new(
                 ErrorKind::Other,
                 "conversion into string from os string failed",
