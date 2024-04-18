@@ -1,6 +1,6 @@
 [package]
 name = "node_sound"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Lubba64"]
 edition = "2021"
 rust-version = "1.56"

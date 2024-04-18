@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 mod nodes;
 mod sound_graph;
 mod sound_queue;
