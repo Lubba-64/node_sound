@@ -204,7 +204,7 @@ type MyGraph = Graph<NodeData, DataType, ValueType>;
 type SoundGraphEditorState =
     GraphEditorState<NodeData, DataType, ValueType, NodeDefinitionUi, SoundGraphState>;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct SoundNodeGraphSavedState {
     pub user_state: SoundGraphState,
     pub editor_state: SoundGraphEditorState,
@@ -226,7 +226,6 @@ impl SoundNodeGraph {
             OutputStream::try_default().expect("could not initialize audio subsystem");
         let exe_dir = get_current_exe_dir().expect("could not get app directory");
         let settings_path = std::path::Path::new(&exe_dir).join("node_settings.ron");
-        println!("{:#?}", settings_path.to_str().unwrap());
         let settings_state = match get_current_working_settings(&settings_path.to_str().unwrap()) {
             Err(_) => WorkingFileSettings::default(),
             Ok(x) => x,
@@ -235,16 +234,10 @@ impl SoundNodeGraph {
             settings_path: settings_path.to_str().unwrap().to_string(),
             exe_dir: exe_dir,
             state: match &settings_state.latest_saved_file {
-                None => SoundNodeGraphSavedState {
-                    editor_state: SoundGraphEditorState::new(1.0),
-                    user_state: SoundGraphState::default(),
-                },
+                None => SoundNodeGraphSavedState::default(),
                 Some(x) => match get_project_file(&x) {
                     Ok(y) => y.graph_state,
-                    Err(_) => SoundNodeGraphSavedState {
-                        editor_state: SoundGraphEditorState::new(1.0),
-                        user_state: SoundGraphState::default(),
-                    },
+                    Err(_) => SoundNodeGraphSavedState::default(),
                 },
             },
             settings_state: settings_state,
@@ -252,6 +245,52 @@ impl SoundNodeGraph {
             sink: Sink::try_new(&stream_handle).expect("could not create audio sink"),
             stream: (stream, stream_handle),
         }
+    }
+
+    fn save_project_file(&self, path: &str) {
+        let _ = save_project_file(
+            ProjectFile {
+                graph_state: self.state.clone(),
+            },
+            &path,
+        );
+    }
+
+    fn save_project_settings(&mut self, new_file: String) {
+        self.settings_state.latest_saved_file = Some(new_file);
+        let _ = save_current_working_settings(&self.settings_path, self.settings_state.clone());
+    }
+
+    fn save_project_settings_as(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        self.save_project_settings(save_project_file_as(ProjectFile {
+            graph_state: self.state.clone(),
+        })?);
+        Ok(())
+    }
+
+    fn combobox(&mut self, ui: &mut egui::Ui) {
+        let combobox = egui::ComboBox::from_label("").selected_text("File");
+        let _ = combobox.show_ui(ui, |ui| -> Result<(), Box<dyn std::error::Error>> {
+            if ui.add(egui::Button::new("New Project")).clicked() {
+                self.settings_state.latest_saved_file = None;
+                self.state = SoundNodeGraphSavedState::default();
+            }
+            if ui.add(egui::Button::new("Save")).clicked() {
+                match &self.settings_state.latest_saved_file {
+                    Some(x) => self.save_project_file(x),
+                    None => self.save_project_settings_as()?,
+                }
+            }
+            if ui.add(egui::Button::new("Save As")).clicked() {
+                self.save_project_settings_as()?;
+            }
+            if ui.add(egui::Button::new("Open")).clicked() {
+                let file = open_project_file()?;
+                self.state = file.1.graph_state;
+                self.save_project_settings(file.0);
+            }
+            Ok(())
+        });
     }
 }
 
@@ -270,68 +309,7 @@ impl eframe::App for SoundNodeGraph {
                         None => "<new project>",
                     },
                 ));
-                egui::ComboBox::from_label("")
-                    .selected_text("File")
-                    .show_ui(ui, |ui| {
-                        if ui.add(egui::Button::new("New Project")).clicked() {
-                            self.settings_state.latest_saved_file = None;
-                            self.state = SoundNodeGraphSavedState {
-                                editor_state: SoundGraphEditorState::new(1.0),
-                                user_state: SoundGraphState::default(),
-                            };
-                        }
-                        if ui.add(egui::Button::new("Save")).clicked() {
-                            match &self.settings_state.latest_saved_file {
-                                None => match save_project_file_as(ProjectFile {
-                                    graph_state: self.state.clone(),
-                                }) {
-                                    Ok(x) => {
-                                        self.settings_state.latest_saved_file = Some(x);
-                                        let _ = save_current_working_settings(
-                                            &self.settings_path,
-                                            self.settings_state.clone(),
-                                        );
-                                    }
-                                    Err(_) => {}
-                                },
-                                Some(x) => {
-                                    let _ = save_project_file(
-                                        ProjectFile {
-                                            graph_state: self.state.clone(),
-                                        },
-                                        &x,
-                                    );
-                                }
-                            }
-                        }
-                        if ui.add(egui::Button::new("Save As")).clicked() {
-                            match save_project_file_as(ProjectFile {
-                                graph_state: self.state.clone(),
-                            }) {
-                                Ok(x) => {
-                                    self.settings_state.latest_saved_file = Some(x);
-                                    let _ = save_current_working_settings(
-                                        &self.settings_path,
-                                        self.settings_state.clone(),
-                                    );
-                                }
-                                Err(_) => {}
-                            }
-                        }
-                        if ui.add(egui::Button::new("Open")).clicked() {
-                            match open_project_file() {
-                                Ok(x) => {
-                                    self.state = x.1.graph_state;
-                                    self.settings_state.latest_saved_file = Some(x.0);
-                                    let _ = save_current_working_settings(
-                                        &format!("{}/node_settings.ron", self.exe_dir),
-                                        self.settings_state.clone(),
-                                    );
-                                }
-                                Err(_) => {}
-                            }
-                        }
-                    })
+                self.combobox(ui)
             });
         });
         let graph_response = egui::CentralPanel::default()
