@@ -1,14 +1,7 @@
 use std::time::Duration;
 
-use super::{SawToothWave, SquareWave, TriangleWave};
 use dyn_clone::DynClone;
-use rodio::{
-    source::{
-        Amplify, BltFilter, Delay, FadeIn, Mix, Repeat, SineWave, SkipDuration, Spatial, Speed,
-        TakeDuration, Zero,
-    },
-    Sample, Source,
-};
+use rodio::{Sample, Source};
 
 pub trait DynCloneIter<T>: Iterator<Item = T> + Send + DynClone {}
 
