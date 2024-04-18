@@ -26,11 +26,11 @@ impl<I1: Source<Item = f32>, I2: Source<Item = f32>> Iterator for Lfo<I1, I2> {
     fn next(&mut self) -> Option<f32> {
         let x = match self.input1.next() {
             Some(x) => x,
-            None => return Some(0.0),
+            None => 0.0,
         };
         let y = match self.input2.next() {
             Some(x) => x,
-            None => return Some(0.0),
+            None => 0.0,
         };
         Some(x * y)
     }
