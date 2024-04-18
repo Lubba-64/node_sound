@@ -1,5 +1,5 @@
 # node_sound
 
-This project is now back in action and is under development as long as I am having fun and learning something.
+The scope of this project for me is done, so if others would like to contribute feel free, but I acheived everything I set out to do.
 
-can be run and built on windows using `cargo run`
+A node based sound construction program written in rust. install the project, cargo and run cargo run in the root directory.
