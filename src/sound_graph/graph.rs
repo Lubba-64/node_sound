@@ -1,4 +1,9 @@
 use super::graph_types::InputValueConfig;
+use super::save_management::{
+    get_current_exe_dir, get_current_working_settings, open_project_file,
+    save_current_working_settings, save_project_file, save_project_file_as, ProjectFile,
+    WorkingFileSettings,
+};
 use super::DEFAULT_SAMPLE_RATE;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
@@ -8,9 +13,10 @@ use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph_2::*;
 use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
+use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct NodeData {
     pub name: String,
 }
@@ -21,7 +27,7 @@ pub enum MyResponse {
     ClearActiveNode,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct SoundGraphState {
     pub active_node: Option<NodeId>,
     pub active_modified: bool,
@@ -46,7 +52,7 @@ impl DataTypeTrait<SoundGraphState> for DataType {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct NodeDefinitionUi(pub SoundNode);
 impl NodeTemplateTrait for NodeDefinitionUi {
     type NodeData = NodeData;
@@ -183,6 +189,7 @@ impl NodeDataTrait for NodeData {
                     .fill(egui::Color32::GOLD);
             if ui.add(button).clicked() {
                 responses.push(NodeResponse::User(MyResponse::ClearActiveNode));
+                user_state.active_modified = true;
             }
         }
         responses
@@ -191,32 +198,48 @@ impl NodeDataTrait for NodeData {
 
 type MyGraph = Graph<NodeData, DataType, ValueType>;
 
-type MyEditorState =
+type SoundGraphEditorState =
     GraphEditorState<NodeData, DataType, ValueType, NodeDefinitionUi, SoundGraphState>;
 
-pub struct NodeGraphExample {
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SoundNodeGraphSavedState {
     pub user_state: SoundGraphState,
-    pub state: MyEditorState,
+    pub editor_state: SoundGraphEditorState,
+}
+
+pub struct SoundNodeGraph {
+    pub settings_state: WorkingFileSettings,
+    pub state: SoundNodeGraphSavedState,
     pub node_definitions: NodeDefinitions,
     pub stream: (OutputStream, OutputStreamHandle),
     pub sink: Sink,
+    pub exe_dir: String,
 }
 
-impl NodeGraphExample {
+impl SoundNodeGraph {
     pub fn new() -> Self {
         let (stream, stream_handle) =
             OutputStream::try_default().expect("could not initialize audio subsystem");
+        let exe_dir = get_current_exe_dir().expect("could not get app directory");
+        let settings_state = match get_current_working_settings(&exe_dir) {
+            Err(_) => WorkingFileSettings::default(),
+            Ok(x) => x,
+        };
         Self {
-            state: MyEditorState::new(1.0),
+            exe_dir: exe_dir,
+            settings_state: settings_state,
+            state: SoundNodeGraphSavedState {
+                editor_state: SoundGraphEditorState::new(1.0),
+                user_state: SoundGraphState::default(),
+            },
             node_definitions: get_nodes(),
             sink: Sink::try_new(&stream_handle).expect("could not create audio sink"),
             stream: (stream, stream_handle),
-            user_state: SoundGraphState::default(),
         }
     }
 }
 
-impl eframe::App for NodeGraphExample {
+impl eframe::App for SoundNodeGraph {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -224,18 +247,59 @@ impl eframe::App for NodeGraphExample {
                 egui::ComboBox::from_label("")
                     .selected_text("File")
                     .show_ui(ui, |ui| {
-                        if ui.add(egui::Button::new("Save")).clicked() {}
-                        if ui.add(egui::Button::new("Save As")).clicked() {}
-                        if ui.add(egui::Button::new("Open")).clicked() {}
+                        if ui.add(egui::Button::new("Save")).clicked() {
+                            match &self.settings_state.latest_saved_file {
+                                None => match save_project_file_as(ProjectFile {
+                                    graph_state: self.state.clone(),
+                                }) {
+                                    Ok(x) => {
+                                        self.settings_state.latest_saved_file = Some(x);
+                                        let _ = save_current_working_settings(
+                                            &self.exe_dir,
+                                            self.settings_state.clone(),
+                                        );
+                                    }
+                                    Err(_) => {}
+                                },
+                                Some(x) => {
+                                    let _ = save_project_file(
+                                        ProjectFile {
+                                            graph_state: self.state.clone(),
+                                        },
+                                        &x,
+                                    );
+                                }
+                            }
+                        }
+                        if ui.add(egui::Button::new("Save As")).clicked() {
+                            match save_project_file_as(ProjectFile {
+                                graph_state: self.state.clone(),
+                            }) {
+                                Ok(x) => {
+                                    self.settings_state.latest_saved_file = Some(x);
+                                    let _ = save_current_working_settings(
+                                        &self.exe_dir,
+                                        self.settings_state.clone(),
+                                    );
+                                }
+                                Err(_) => {}
+                            }
+                        }
+                        if ui.add(egui::Button::new("Open")).clicked() {
+                            match open_project_file() {
+                                Ok(x) => self.state = x.graph_state,
+                                Err(_) => {}
+                            }
+                        }
                     })
             });
         });
         let graph_response = egui::CentralPanel::default()
             .show(ctx, |ui| {
-                self.state.draw_graph_editor(
+                self.state.editor_state.draw_graph_editor(
                     ui,
                     NodeDefinitionsUi(&self.node_definitions),
-                    &mut self.user_state,
+                    &mut self.state.user_state,
                     Vec::default(),
                 )
             })
@@ -244,21 +308,23 @@ impl eframe::App for NodeGraphExample {
         for node_response in graph_response.node_responses {
             if let NodeResponse::User(user_event) = node_response {
                 match user_event {
-                    MyResponse::SetActiveNode(node) => self.user_state.active_node = Some(node),
-                    MyResponse::ClearActiveNode => self.user_state.active_node = None,
+                    MyResponse::SetActiveNode(node) => {
+                        self.state.user_state.active_node = Some(node)
+                    }
+                    MyResponse::ClearActiveNode => self.state.user_state.active_node = None,
                 }
             }
         }
 
         let mut sound_result = None;
 
-        if self.user_state.active_modified {
-            if let Some(node) = self.user_state.active_node {
-                if self.state.graph.nodes.contains_key(node) {
+        if self.state.user_state.active_modified {
+            if let Some(node) = self.state.user_state.active_node {
+                if self.state.editor_state.graph.nodes.contains_key(node) {
                     let text;
 
                     match evaluate_node(
-                        &self.state.graph,
+                        &self.state.editor_state.graph,
                         node,
                         &mut HashMap::new(),
                         &self.node_definitions,
@@ -282,26 +348,28 @@ impl eframe::App for NodeGraphExample {
                         egui::Color32::WHITE,
                     );
                 } else {
-                    self.user_state.active_node = None;
+                    self.state.user_state.active_node = None;
                 }
             }
         }
-
         match sound_result {
             Some(x) => {
-                if self.user_state.active_modified {
+                if self.state.user_state.active_modified {
                     self.sink.append(match sound_queue::clone_sound(x) {
                         Err(_) => Zero::new(1, DEFAULT_SAMPLE_RATE).as_generic(None),
                         Ok(x) => x,
                     });
                     self.sink.play();
                     self.sink.set_volume(1.0);
-                    self.user_state.active_modified = false;
+                    self.state.user_state.active_modified = false;
                 }
             }
             None => {
-                self.sink.clear();
-                sound_queue::clear();
+                if self.state.user_state.active_modified {
+                    self.sink.clear();
+                    sound_queue::clear();
+                    self.state.user_state.active_modified = false;
+                }
             }
         }
     }
