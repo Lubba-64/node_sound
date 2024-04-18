@@ -10,7 +10,7 @@ fn main() {
         eframe::NativeOptions::default(),
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(Visuals::dark());
-            Box::new(sound_graph::graph::NodeGraphExample::new())
+            Box::new(sound_graph::graph::SoundNodeGraph::new())
         }),
     )
     .expect("eframe failed to run");
