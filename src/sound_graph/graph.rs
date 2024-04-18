@@ -1,6 +1,6 @@
 use super::graph_types::InputValueConfig;
 use super::save_management::{
-    get_current_exe_dir, get_current_working_settings, open_project_file,
+    convert_option_pathbuf, get_current_exe_dir, get_current_working_settings, open_project_file,
     save_current_working_settings, save_project_file, save_project_file_as, ProjectFile,
     WorkingFileSettings,
 };
@@ -12,6 +12,7 @@ use crate::sound_queue;
 use crate::sounds::AsGenericSource;
 use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph_2::*;
+use rfd::FileDialog;
 use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
@@ -42,7 +43,9 @@ impl DataTypeTrait<SoundGraphState> for DataType {
         match self {
             DataType::Duration => egui::Color32::from_rgb(38, 109, 211),
             DataType::Float => egui::Color32::from_rgb(238, 207, 109),
-            DataType::AudioSource => egui::Color32::from_rgb(100, 100, 100),
+            DataType::AudioSource => egui::Color32::from_rgb(100, 150, 100),
+            DataType::File => egui::Color32::from_rgb(100, 100, 150),
+            DataType::None => egui::Color32::from_rgb(100, 100, 100),
         }
     }
 
@@ -51,6 +54,8 @@ impl DataTypeTrait<SoundGraphState> for DataType {
             DataType::Duration => Cow::Borrowed("Duration"),
             DataType::Float => Cow::Borrowed("Float"),
             DataType::AudioSource => Cow::Borrowed("AudioSource"),
+            DataType::File => Cow::Borrowed("File"),
+            DataType::None => Cow::Borrowed("None"),
         }
     }
 }
@@ -89,11 +94,14 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                 node_id,
                 input.0.clone(),
                 input.1.data_type,
-                match input.1.value {
+                match &input.1.value {
                     InputValueConfig::AudioSource {} => ValueType::AudioSource { value: 0 },
-                    InputValueConfig::Float { value } => ValueType::Float { value },
+                    InputValueConfig::Float { value } => ValueType::Float { value: *value },
                     InputValueConfig::Duration { value } => ValueType::Duration {
-                        value: Duration::from_secs_f32(value),
+                        value: Duration::from_secs_f32(*value),
+                    },
+                    InputValueConfig::File { value } => ValueType::File {
+                        value: value.clone(),
                     },
                 },
                 input.1.kind,
@@ -153,6 +161,29 @@ impl WidgetValueTrait for ValueType {
             }
             ValueType::None => {
                 ui.label("None");
+            }
+            ValueType::File { value } => {
+                let y = &value.clone();
+                let file_name = match y {
+                    Some(x) => std::path::Path::new(x)
+                        .file_name()
+                        .unwrap_or(OsStr::new(""))
+                        .to_str()
+                        .unwrap_or(""),
+                    None => "",
+                };
+                if ui.button(format!("{}...", file_name)).clicked() {
+                    let file = match convert_option_pathbuf(
+                        FileDialog::new()
+                            .add_filter("sound", &["ogg", "mp3", "wav"])
+                            .set_directory("./")
+                            .pick_file(),
+                    ) {
+                        Ok(x) => Some(x),
+                        Err(_) => None,
+                    };
+                    *value = file
+                }
             }
         }
         Vec::new()
@@ -299,6 +330,7 @@ impl eframe::App for SoundNodeGraph {
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::widgets::global_dark_light_mode_switch(ui);
+                self.combobox(ui);
                 ui.add(egui::Label::new(
                     match &self.settings_state.latest_saved_file {
                         Some(x) => Path::new(x)
@@ -309,7 +341,6 @@ impl eframe::App for SoundNodeGraph {
                         None => "<new project>",
                     },
                 ));
-                self.combobox(ui)
             });
         });
         let graph_response = egui::CentralPanel::default()

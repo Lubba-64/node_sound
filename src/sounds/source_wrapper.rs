@@ -49,15 +49,15 @@ where
     }
 }
 
-impl<'a> Iterator for GenericSource<f32> {
-    type Item = f32;
+impl<'a, S: Sample> Iterator for GenericSource<S> {
+    type Item = S;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.sound.next()
     }
 }
 
-impl<'a> Source for GenericSource<f32> {
+impl<'a, S: Sample> Source for GenericSource<S> {
     fn current_frame_len(&self) -> Option<usize> {
         None
     }
@@ -78,9 +78,13 @@ impl<'a> Source for GenericSource<f32> {
 pub use as_finite_source_impls::*;
 pub mod as_finite_source_impls {
     impl DynCloneIter<f32> for std::vec::IntoIter<f32> {}
+    impl DynCloneIter<u16> for std::vec::IntoIter<u16> {}
+    impl DynCloneIter<i16> for std::vec::IntoIter<i16> {}
     use super::*;
-    pub trait AsGenericSource: Source + DynCloneIter<f32> + Sized + Send + Clone + 'static {
-        fn as_generic(&self, duration: Option<Duration>) -> GenericSource<f32>
+    pub trait AsGenericSource<S: Sample>:
+        Source + DynCloneIter<S> + Sized + Send + Clone + 'static
+    {
+        fn as_generic(&self, duration: Option<Duration>) -> GenericSource<S>
         where
             Self: Sized,
         {
