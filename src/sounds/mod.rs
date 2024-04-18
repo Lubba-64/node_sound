@@ -7,6 +7,5 @@ pub use sawtooth::SawToothWave;
 mod source_wrapper;
 pub use source_wrapper::{AsGenericSource, GenericSource};
 mod lfo;
-pub use lfo::{Lfo, SourceToLfo};
+pub use lfo::Lfo;
 mod impls;
-use impls::*;
