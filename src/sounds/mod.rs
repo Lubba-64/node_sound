@@ -8,4 +8,6 @@ mod source_wrapper;
 pub use source_wrapper::{AsGenericSource, GenericSource};
 mod lfo;
 pub use lfo::Lfo;
+mod cloneable_decoder;
 mod impls;
+pub use cloneable_decoder::CloneableDecoder;

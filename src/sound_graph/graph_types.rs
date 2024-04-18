@@ -10,9 +10,11 @@ mod data_types {
     use super::*;
     #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
     pub enum DataType {
+        None,
         AudioSource,
         Float,
         Duration,
+        File,
     }
 
     #[derive(Clone, Default, Serialize, Deserialize)]
@@ -28,6 +30,9 @@ mod data_types {
         Duration {
             value: Duration,
         },
+        File {
+            value: Option<String>,
+        },
     }
 
     impl Default for &ValueType {
@@ -41,6 +46,7 @@ mod data_types {
         AudioSource {},
         Float { value: f32 },
         Duration { value: f32 },
+        File { value: Option<String> },
     }
 
     impl Debug for ValueType {
@@ -55,6 +61,9 @@ mod data_types {
                     f.debug_struct("Duration").field("value", value).finish()
                 }
                 Self::None => f.debug_struct("None").finish(),
+                Self::File { value } => f
+                    .debug_struct(&value.clone().unwrap_or("None".to_string()))
+                    .finish(),
             }
         }
     }
@@ -79,6 +88,13 @@ mod data_types {
         pub fn try_to_duration(self) -> Result<Duration, String> {
             match self {
                 ValueType::Duration { value } => Ok(value),
+                _ => Err("invalid cast".to_string()),
+            }
+        }
+
+        pub fn try_to_file(self) -> Result<Option<String>, String> {
+            match self {
+                ValueType::File { value } => Ok(value),
                 _ => Err("invalid cast".to_string()),
             }
         }
