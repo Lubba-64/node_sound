@@ -15,3 +15,5 @@ dyn-clone = "1.0.17"
 serde = {version = "1.0.198", features = ["derive"]}
 rfd = "0.14.1"
 ron = "0.8.1"
+seeded-random = "0.6.0"
+rand = "0.8.5"

@@ -2147,9 +2147,11 @@ dependencies = [
  "dyn-clone",
  "eframe",
  "egui_node_graph_2",
+ "rand",
  "rfd",
  "rodio",
  "ron",
+ "seeded-random",
  "serde",
 ]
 
@@ -2771,6 +2773,17 @@ dependencies = [
  "memmap2",
  "smithay-client-toolkit",
  "tiny-skia",
+]
+
+[[package]]
+name = "seeded-random"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "237b344c25622ede58b1196b3c9d5387cad2743b2b86c450f886100d8751f256"
+dependencies = [
+ "parking_lot",
+ "rand",
+ "rand_chacha",
 ]
 
 [[package]]
