@@ -26,6 +26,12 @@ mod lfo_node;
 use lfo_node::{lfo_logic, lfo_node};
 mod file_node;
 use file_node::{file_logic, file_node};
+mod clamp_node;
+use clamp_node::{clamp_logic, clamp_node};
+mod abs_node;
+use abs_node::{abs_logic, abs_node};
+mod noise_node;
+use noise_node::{noise_logic, noise_node};
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -77,7 +83,7 @@ type SoundNodeResult = Result<HashMap<String, ValueType>, Box<dyn std::error::Er
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: [(SoundNode, Box<SoundNodeOp>); 12] = [
+    let nodes: [(SoundNode, Box<SoundNodeOp>); 15] = [
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -90,6 +96,9 @@ pub fn get_nodes() -> NodeDefinitions {
         (speed_node(), Box::new(speed_logic)),
         (lfo_node(), Box::new(lfo_logic)),
         (file_node(), Box::new(file_logic)),
+        (clamp_node(), Box::new(clamp_logic)),
+        (abs_node(), Box::new(abs_logic)),
+        (noise_node(), Box::new(noise_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

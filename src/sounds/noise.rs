@@ -1,0 +1,50 @@
+use rodio::Source;
+
+use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use rand::prelude::*;
+use rodio::source::UniformSourceIterator;
+use std::time::Duration;
+
+#[derive(Clone)]
+pub struct Noise {
+    min: f32,
+    max: f32,
+}
+
+impl Noise {
+    #[inline]
+    pub fn new(min: f32, max: f32) -> Self {
+        Self { min: min, max: max }
+    }
+}
+
+impl Iterator for Noise {
+    type Item = f32;
+
+    #[inline]
+    fn next(&mut self) -> Option<f32> {
+        Some(thread_rng().gen_range(self.min..self.max))
+    }
+}
+
+impl Source for Noise {
+    #[inline]
+    fn current_frame_len(&self) -> Option<usize> {
+        None
+    }
+
+    #[inline]
+    fn channels(&self) -> u16 {
+        1
+    }
+
+    #[inline]
+    fn sample_rate(&self) -> u32 {
+        DEFAULT_SAMPLE_RATE
+    }
+
+    #[inline]
+    fn total_duration(&self) -> Option<Duration> {
+        None
+    }
+}

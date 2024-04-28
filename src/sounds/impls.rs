@@ -1,6 +1,6 @@
 use super::{
-    cloneable_decoder::CloneableDecoder, lfo::Lfo, source_wrapper::DynCloneIter, AsGenericSource,
-    GenericSource, SawToothWave, SquareWave, TriangleWave,
+    cloneable_decoder::CloneableDecoder, lfo::Lfo, source_wrapper::DynCloneIter, Abs,
+    AsGenericSource, Clamp, GenericSource, Noise, SawToothWave, SquareWave, TriangleWave,
 };
 
 use rodio::{
@@ -101,3 +101,12 @@ impl<I> StaticSource<f32> for SamplesConverter<I, f32> where I: StaticSource<f32
 impl DynCloneIter<f32> for CloneableDecoder {}
 impl AsGenericSource<f32> for CloneableDecoder {}
 impl StaticSource<f32> for CloneableDecoder {}
+impl<I> DynCloneIter<f32> for Clamp<I> where I: StaticSource<f32> {}
+impl<I> AsGenericSource<f32> for Clamp<I> where I: StaticSource<f32> {}
+impl<I> StaticSource<f32> for Clamp<I> where I: StaticSource<f32> {}
+impl<I> DynCloneIter<f32> for Abs<I> where I: StaticSource<f32> {}
+impl<I> AsGenericSource<f32> for Abs<I> where I: StaticSource<f32> {}
+impl<I> StaticSource<f32> for Abs<I> where I: StaticSource<f32> {}
+impl DynCloneIter<f32> for Noise {}
+impl AsGenericSource<f32> for Noise {}
+impl StaticSource<f32> for Noise {}
