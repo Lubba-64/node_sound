@@ -50,13 +50,3 @@ impl<I1: Source<Item = f32>, I2: Source<Item = f32>> Source for Lfo<I1, I2> {
         None
     }
 }
-
-pub trait SourceToLfo {
-    fn lfo<T2>(self, source2: T2) -> Lfo<Self, T2>
-    where
-        Self: Source<Item = f32> + Sized,
-        T2: Source<Item = f32> + Sized,
-    {
-        Lfo::new(self, source2)
-    }
-}
