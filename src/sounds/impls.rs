@@ -1,6 +1,7 @@
 use super::{
     cloneable_decoder::CloneableDecoder, lfo::Lfo, source_wrapper::DynCloneIter, Abs,
-    AsGenericSource, Clamp, GenericSource, Noise, SawToothWave, SquareWave, TriangleWave,
+    AdvancedDelay, AsGenericSource, Clamp, GenericSource, Noise, SawToothWave, SquareWave,
+    TriangleWave,
 };
 
 use rodio::{
@@ -10,8 +11,8 @@ use rodio::{
     },
     Sample, Source,
 };
-trait StaticSample: Sample + Send + Clone + 'static {}
-trait StaticSource<S: StaticSample>: Source<Item = S> + Send + Clone + 'static {}
+pub trait StaticSample: Sample + Send + Clone + 'static {}
+pub trait StaticSource<S: StaticSample>: Source<Item = S> + Send + Clone + 'static {}
 impl StaticSample for f32 {}
 impl StaticSample for u16 {}
 impl StaticSample for i16 {}
@@ -110,3 +111,6 @@ impl<I> StaticSource<f32> for Abs<I> where I: StaticSource<f32> {}
 impl DynCloneIter<f32> for Noise {}
 impl AsGenericSource<f32> for Noise {}
 impl StaticSource<f32> for Noise {}
+impl DynCloneIter<f32> for AdvancedDelay {}
+impl AsGenericSource<f32> for AdvancedDelay {}
+impl StaticSource<f32> for AdvancedDelay {}

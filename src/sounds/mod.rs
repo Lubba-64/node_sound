@@ -17,3 +17,5 @@ mod abs;
 pub use abs::Abs;
 mod noise;
 pub use noise::Noise;
+mod advanced_delay;
+pub use advanced_delay::AdvancedDelay;
