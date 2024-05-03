@@ -32,6 +32,9 @@ mod abs_node;
 use abs_node::{abs_logic, abs_node};
 mod noise_node;
 use noise_node::{noise_logic, noise_node};
+
+use self::advanced_delay_node::{advanced_delay_logic, advanced_delay_node};
+mod advanced_delay_node;
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -83,7 +86,7 @@ type SoundNodeResult = Result<HashMap<String, ValueType>, Box<dyn std::error::Er
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: [(SoundNode, Box<SoundNodeOp>); 15] = [
+    let nodes: [(SoundNode, Box<SoundNodeOp>); 16] = [
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -99,6 +102,7 @@ pub fn get_nodes() -> NodeDefinitions {
         (clamp_node(), Box::new(clamp_logic)),
         (abs_node(), Box::new(abs_logic)),
         (noise_node(), Box::new(noise_logic)),
+        (advanced_delay_node(), Box::new(advanced_delay_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
