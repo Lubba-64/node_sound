@@ -1,13 +1,13 @@
 use super::{
     cloneable_decoder::CloneableDecoder, lfo::Lfo, source_wrapper::DynCloneIter, Abs,
-    AdvancedDelay, AsGenericSource, Clamp, GenericSource, Noise, SawToothWave, SquareWave,
-    TriangleWave,
+    AdvancedDelay, AsGenericSource, Clamp, GenericSource, MergeChannels, Noise, SawToothWave,
+    SplitChannels, SquareWave, TriangleWave,
 };
 
 use rodio::{
     source::{
-        Amplify, BltFilter, Delay, FadeIn, Mix, Repeat, SamplesConverter, SineWave, SkipDuration,
-        Spatial, Speed, TakeDuration, Zero,
+        Amplify, BltFilter, ChannelVolume, Delay, FadeIn, Mix, Repeat, SamplesConverter, SineWave,
+        SkipDuration, Spatial, Speed, TakeDuration, Zero,
     },
     Sample, Source,
 };
@@ -80,6 +80,27 @@ where
     I2: StaticSource<f32>,
 {
 }
+impl<I1, I2> DynCloneIter<f32> for MergeChannels<I1, I2>
+where
+    I1: StaticSource<f32>,
+    I2: StaticSource<f32>,
+{
+}
+impl<I1, I2> AsGenericSource<f32> for MergeChannels<I1, I2>
+where
+    I1: StaticSource<f32>,
+    I2: StaticSource<f32>,
+{
+}
+impl<I1, I2> StaticSource<f32> for MergeChannels<I1, I2>
+where
+    I1: StaticSource<f32>,
+    I2: StaticSource<f32>,
+{
+}
+impl<I> DynCloneIter<f32> for SplitChannels<I> where I: StaticSource<f32> {}
+impl<I> AsGenericSource<f32> for SplitChannels<I> where I: StaticSource<f32> {}
+impl<I> StaticSource<f32> for SplitChannels<I> where I: StaticSource<f32> {}
 impl<I> DynCloneIter<f32> for Repeat<I> where I: StaticSource<f32> {}
 impl<I> AsGenericSource<f32> for Repeat<I> where I: StaticSource<f32> {}
 impl<I> StaticSource<f32> for Repeat<I> where I: StaticSource<f32> {}
@@ -114,3 +135,6 @@ impl StaticSource<f32> for Noise {}
 impl DynCloneIter<f32> for AdvancedDelay {}
 impl AsGenericSource<f32> for AdvancedDelay {}
 impl StaticSource<f32> for AdvancedDelay {}
+impl<I> DynCloneIter<f32> for ChannelVolume<I> where I: StaticSource<f32> {}
+impl<I> AsGenericSource<f32> for ChannelVolume<I> where I: StaticSource<f32> {}
+impl<I> StaticSource<f32> for ChannelVolume<I> where I: StaticSource<f32> {}

@@ -19,3 +19,7 @@ mod noise;
 pub use noise::Noise;
 mod advanced_delay;
 pub use advanced_delay::AdvancedDelay;
+mod merge_channels;
+mod split_channels;
+pub use merge_channels::MergeChannels;
+pub use split_channels::SplitChannels;
