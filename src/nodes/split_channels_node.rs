@@ -3,10 +3,9 @@ use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
 use crate::sound_queue;
-use crate::sounds::{AsGenericSource, MergeChannels, SplitChannels};
+use crate::sounds::{AsGenericSource, SplitChannels};
 use egui_node_graph_2::InputParamKind;
 use rodio::source::ChannelVolume;
-use rodio::Source;
 use std::collections::HashMap;
 
 use super::{SoundNodeProps, SoundNodeResult};

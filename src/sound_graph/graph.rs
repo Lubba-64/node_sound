@@ -205,7 +205,7 @@ impl NodeDataTrait for NodeData {
         &self,
         ui: &mut egui::Ui,
         node_id: NodeId,
-        graph: &Graph<NodeData, DataType, Self::ValueType>,
+        _graph: &Graph<NodeData, DataType, Self::ValueType>,
         user_state: &mut Self::UserState,
     ) -> Vec<NodeResponse<MyResponse, NodeData>>
     where
