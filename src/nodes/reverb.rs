@@ -7,6 +7,7 @@ use crate::sounds::AsGenericSource;
 use egui_node_graph_2::InputParamKind;
 use rodio::Source;
 use std::collections::HashMap;
+use std::time::Duration;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
@@ -17,7 +18,7 @@ pub fn reverb_node() -> SoundNode {
             (
                 "duration".to_string(),
                 InputParameter {
-                    data_type: DataType::Duration,
+                    data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "duration".to_string(),
                     value: InputValueConfig::Float { value: 1.0 },
@@ -52,16 +53,14 @@ pub fn reverb_node() -> SoundNode {
     }
 }
 pub fn reverb_logic(props: SoundNodeProps) -> SoundNodeResult {
+    let duration = Duration::from_millis(props.get_float("duration")?.round() as u64);
     Ok(HashMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_queue::push_sound(
                 sound_queue::clone_sound(props.get_source("audio 1")?)?
-                    .reverb(
-                        props.get_duration("duration")?,
-                        props.get_float("amplification")?,
-                    )
-                    .as_generic(Some(props.get_duration("duration")?)),
+                    .reverb(duration.clone(), props.get_float("amplification")?)
+                    .as_generic(Some(duration)),
             ),
         },
     )]))

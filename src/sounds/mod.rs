@@ -23,3 +23,5 @@ mod merge_channels;
 mod split_channels;
 pub use merge_channels::MergeChannels;
 pub use split_channels::SplitChannels;
+mod pop;
+pub use pop::Pop;
