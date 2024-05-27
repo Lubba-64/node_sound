@@ -1,6 +1,6 @@
 use super::{
     cloneable_decoder::CloneableDecoder, lfo::Lfo, source_wrapper::DynCloneIter, Abs,
-    AdvancedDelay, AsGenericSource, Clamp, GenericSource, MergeChannels, Noise, SawToothWave,
+    AdvancedDelay, AsGenericSource, Clamp, GenericSource, MergeChannels, Noise, Pop, SawToothWave,
     SplitChannels, SquareWave, TriangleWave,
 };
 
@@ -132,6 +132,9 @@ impl<I> StaticSource<f32> for Abs<I> where I: StaticSource<f32> {}
 impl DynCloneIter<f32> for Noise {}
 impl AsGenericSource<f32> for Noise {}
 impl StaticSource<f32> for Noise {}
+impl DynCloneIter<f32> for Pop {}
+impl AsGenericSource<f32> for Pop {}
+impl StaticSource<f32> for Pop {}
 impl DynCloneIter<f32> for AdvancedDelay {}
 impl AsGenericSource<f32> for AdvancedDelay {}
 impl StaticSource<f32> for AdvancedDelay {}

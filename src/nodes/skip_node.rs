@@ -28,7 +28,7 @@ pub fn skip_node() -> SoundNode {
                 InputParameter {
                     data_type: DataType::Duration,
                     kind: InputParamKind::ConstantOnly,
-                    name: "duration2".to_string(),
+                    name: "duration".to_string(),
                     value: InputValueConfig::Duration { value: 1.0 },
                 },
             ),
