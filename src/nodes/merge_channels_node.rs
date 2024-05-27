@@ -5,7 +5,6 @@ use crate::sound_graph::graph_types::{
 use crate::sound_queue;
 use crate::sounds::{AsGenericSource, MergeChannels};
 use egui_node_graph_2::InputParamKind;
-use rodio::Source;
 use std::collections::HashMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
@@ -49,7 +48,7 @@ pub fn merge_channels_logic(props: SoundNodeProps) -> SoundNodeResult {
             value: sound_queue::push_sound(
                 MergeChannels::new(
                     sound_queue::clone_sound(props.get_source("audio 1")?)?,
-                     sound_queue::clone_sound(props.get_source("audio 2")?)?,
+                    sound_queue::clone_sound(props.get_source("audio 2")?)?,
                 )
                 .as_generic(None),
             ),
