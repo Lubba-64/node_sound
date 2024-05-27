@@ -1,8 +1,8 @@
 use super::graph_types::InputValueConfig;
 use super::save_management::{
     convert_option_pathbuf, get_current_exe_dir, get_current_working_settings, open_project_file,
-    save_current_working_settings, save_project_file, save_project_file_as, ProjectFile,
-    WorkingFileSettings,
+    save_current_working_settings, save_project_file, save_project_file_as,
+    set_output_sound_destination, ProjectFile, WorkingFileSettings,
 };
 use super::DEFAULT_SAMPLE_RATE;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
@@ -14,6 +14,7 @@ use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph_2::*;
 use rfd::FileDialog;
 use rodio::source::Zero;
+use rodio::Source;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
@@ -27,15 +28,18 @@ pub struct NodeData {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MyResponse {
-    SetActiveNode(NodeId),
-    ClearActiveNode,
+    SetPlayingNode(NodeId),
+    SetRecordingNode(NodeId),
+    ClearNodeInteractions,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub struct SoundGraphState {
-    pub active_node: Option<NodeId>,
+    pub playing_node: Option<NodeId>,
+    pub recording_node: Option<NodeId>,
     pub active_modified: bool,
     pub sound_result_evaluated: bool,
+    pub recording_length: usize,
 }
 
 impl DataTypeTrait<SoundGraphState> for DataType {
@@ -201,20 +205,20 @@ impl NodeDataTrait for NodeData {
         &self,
         ui: &mut egui::Ui,
         node_id: NodeId,
-        _graph: &Graph<NodeData, DataType, Self::ValueType>,
+        graph: &Graph<NodeData, DataType, Self::ValueType>,
         user_state: &mut Self::UserState,
     ) -> Vec<NodeResponse<MyResponse, NodeData>>
     where
         MyResponse: UserResponseTrait,
     {
         let mut responses = vec![];
-        let is_active = user_state
-            .active_node
+        let is_playing = user_state
+            .playing_node
             .map(|id| id == node_id)
             .unwrap_or(false);
-        if !is_active {
+        if !is_playing {
             if ui.button("▶ Play").clicked() {
-                responses.push(NodeResponse::User(MyResponse::SetActiveNode(node_id)));
+                responses.push(NodeResponse::User(MyResponse::SetPlayingNode(node_id)));
                 user_state.active_modified = true;
             }
         } else {
@@ -222,10 +226,31 @@ impl NodeDataTrait for NodeData {
                 egui::Button::new(egui::RichText::new("⏹ Stop").color(egui::Color32::BLACK))
                     .fill(egui::Color32::GOLD);
             if ui.add(button).clicked() {
-                responses.push(NodeResponse::User(MyResponse::ClearActiveNode));
+                responses.push(NodeResponse::User(MyResponse::ClearNodeInteractions));
                 user_state.active_modified = true;
             }
         }
+        let is_recording = user_state
+            .recording_node
+            .map(|id| id == node_id)
+            .unwrap_or(false);
+        if !is_recording {
+            if ui.button("⬤ Record").clicked() {
+                responses.push(NodeResponse::User(MyResponse::SetRecordingNode(node_id)));
+                user_state.active_modified = true;
+            }
+            ui.label("Recording Duration");
+            ui.add(DragValue::new(&mut user_state.recording_length));
+        } else {
+            let button =
+                egui::Button::new(egui::RichText::new("Recording...").color(egui::Color32::BLACK))
+                    .fill(egui::Color32::GOLD);
+            if ui.add(button).clicked() {
+                responses.push(NodeResponse::User(MyResponse::ClearNodeInteractions));
+                user_state.active_modified = true;
+            }
+        }
+
         responses
     }
 }
@@ -357,18 +382,27 @@ impl eframe::App for SoundNodeGraph {
         for node_response in graph_response.node_responses {
             if let NodeResponse::User(user_event) = node_response {
                 match user_event {
-                    MyResponse::SetActiveNode(node) => {
-                        self.state.user_state.active_node = Some(node)
+                    MyResponse::SetPlayingNode(node) => {
+                        self.state.user_state.playing_node = Some(node);
+                        self.state.user_state.recording_node = None;
                     }
-                    MyResponse::ClearActiveNode => self.state.user_state.active_node = None,
+                    MyResponse::SetRecordingNode(node) => {
+                        self.state.user_state.recording_node = Some(node);
+                        self.state.user_state.playing_node = None;
+                    }
+                    MyResponse::ClearNodeInteractions => {
+                        self.state.user_state.playing_node = None;
+                        self.state.user_state.recording_node = None;
+                    }
                 }
             }
         }
 
         let mut sound_result = None;
+        let mut file_path = None;
 
         if self.state.user_state.active_modified {
-            if let Some(node) = self.state.user_state.active_node {
+            if let Some(node) = self.state.user_state.playing_node {
                 if self.state.editor_state.graph.nodes.contains_key(node) {
                     let text;
 
@@ -397,20 +431,88 @@ impl eframe::App for SoundNodeGraph {
                         egui::Color32::WHITE,
                     );
                 } else {
-                    self.state.user_state.active_node = None;
+                    self.state.user_state.playing_node = None;
+                }
+            }
+
+            if let Some(node) = self.state.user_state.recording_node {
+                if self.state.editor_state.graph.nodes.contains_key(node) {
+                    let text;
+
+                    match evaluate_node(
+                        &self.state.editor_state.graph,
+                        node,
+                        &mut HashMap::new(),
+                        &self.node_definitions,
+                    ) {
+                        Ok(value) => match set_output_sound_destination() {
+                            Ok(_file_path) => {
+                                let sound =
+                                    value.try_to_source().expect("expected valid audio source");
+                                sound_result = Some(sound.clone());
+                                file_path = Some(_file_path);
+                                text = "Recording Anonymous audio source.";
+                            }
+                            Err(_err) => {
+                                sound_result = None;
+                                text = "An error occured trying to record the audio source.";
+                            }
+                        },
+                        Err(_err) => {
+                            sound_result = None;
+                            text = "An error occured trying to record the audio source.";
+                        }
+                    };
+
+                    ctx.debug_painter().text(
+                        egui::pos2(10.0, 35.0),
+                        egui::Align2::LEFT_TOP,
+                        text,
+                        TextStyle::Button.resolve(&ctx.style()),
+                        egui::Color32::WHITE,
+                    );
+                } else {
+                    self.state.user_state.playing_node = None;
                 }
             }
         }
         match sound_result {
             Some(x) => {
-                if self.state.user_state.active_modified {
-                    self.sink.append(match sound_queue::clone_sound(x) {
-                        Err(_) => Zero::new(1, DEFAULT_SAMPLE_RATE).as_generic(None),
-                        Ok(x) => x,
-                    });
-                    self.sink.play();
-                    self.sink.set_volume(1.0);
-                    self.state.user_state.active_modified = false;
+                if self.state.user_state.playing_node.is_some() {
+                    if self.state.user_state.active_modified {
+                        self.sink.append(match sound_queue::clone_sound(x) {
+                            Err(_) => Zero::new(1, DEFAULT_SAMPLE_RATE).as_generic(None),
+                            Ok(x) => x,
+                        });
+                        self.sink.play();
+                        self.sink.set_volume(1.0);
+                        self.state.user_state.active_modified = false;
+                    }
+                } else if self.state.user_state.recording_node.is_some() {
+                    if self.state.user_state.active_modified {
+                        let file_path = file_path.unwrap();
+                        let source = match sound_queue::clone_sound(x) {
+                            Err(_) => Zero::new(1, DEFAULT_SAMPLE_RATE).as_generic(None),
+                            Ok(x) => x,
+                        };
+                        let spec = hound::WavSpec {
+                            channels: source.channels(),
+                            sample_rate: DEFAULT_SAMPLE_RATE,
+                            bits_per_sample: 32,
+                            sample_format: hound::SampleFormat::Float,
+                        };
+                        let mut writer = hound::WavWriter::create(file_path, spec).unwrap();
+                        for (idx, sample) in source.enumerate() {
+                            if idx / DEFAULT_SAMPLE_RATE as usize
+                                > self.state.user_state.recording_length
+                            {
+                                break;
+                            }
+                            let _ = writer.write_sample(sample).unwrap();
+                        }
+                        let _ = writer.finalize().unwrap();
+                        self.state.user_state.recording_node = None;
+                    }
                 }
             }
             None => {

@@ -1760,9 +1760,9 @@ dependencies = [
 
 [[package]]
 name = "hound"
-version = "3.4.0"
+version = "3.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a164bb2ceaeff4f42542bdb847c41517c78a60f5649671b2a07312b6e117549"
+checksum = "62adaabb884c94955b19907d60019f4e145d091c75345379e70d1ee696f7854f"
 
 [[package]]
 name = "icrate"
@@ -2147,6 +2147,7 @@ dependencies = [
  "dyn-clone",
  "eframe",
  "egui_node_graph_2",
+ "hound",
  "rand",
  "rfd",
  "rodio",
