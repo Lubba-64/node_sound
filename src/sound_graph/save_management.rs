@@ -103,6 +103,16 @@ pub fn open_project_file() -> Result<(String, ProjectFile), Box<dyn std::error::
     Ok((file.clone(), get_project_file(file.as_str())?))
 }
 
+pub fn set_output_sound_destination() -> Result<String, Box<dyn std::error::Error>> {
+    let file = convert_option_pathbuf(
+        FileDialog::new()
+            .add_filter("audio", &["wav"])
+            .set_directory("./")
+            .save_file(),
+    )?;
+    Ok(file)
+}
+
 pub fn get_project_file(path: &str) -> Result<ProjectFile, Box<dyn std::error::Error>> {
     Ok(ron::de::from_str(&fs::read_to_string(path)?)?)
 }
