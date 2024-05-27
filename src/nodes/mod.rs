@@ -32,9 +32,19 @@ mod abs_node;
 use abs_node::{abs_logic, abs_node};
 mod noise_node;
 use noise_node::{noise_logic, noise_node};
-
-use self::advanced_delay_node::{advanced_delay_logic, advanced_delay_node};
+mod merge_channels_node;
+mod skip_node;
+mod split_channels_node;
+use advanced_delay_node::{advanced_delay_logic, advanced_delay_node};
+use merge_channels_node::{merge_channels_logic, merge_channels_node};
+use skip_node::{skip_logic, skip_node};
+use split_channels_node::{split_channels_logic, split_channels_node};
 mod advanced_delay_node;
+mod reverb;
+use reverb::{reverb_logic, reverb_node};
+mod pop_node;
+use pop_node::{pop_logic, pop_node};
+
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -86,7 +96,7 @@ type SoundNodeResult = Result<HashMap<String, ValueType>, Box<dyn std::error::Er
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: [(SoundNode, Box<SoundNodeOp>); 16] = [
+    let nodes: [(SoundNode, Box<SoundNodeOp>); 21] = [
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -103,6 +113,11 @@ pub fn get_nodes() -> NodeDefinitions {
         (abs_node(), Box::new(abs_logic)),
         (noise_node(), Box::new(noise_logic)),
         (advanced_delay_node(), Box::new(advanced_delay_logic)),
+        (skip_node(), Box::new(skip_logic)),
+        (split_channels_node(), Box::new(split_channels_logic)),
+        (merge_channels_node(), Box::new(merge_channels_logic)),
+        (reverb_node(), Box::new(reverb_logic)),
+        (pop_node(), Box::new(pop_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
