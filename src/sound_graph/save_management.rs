@@ -7,7 +7,7 @@ use std::{
 use rfd::FileDialog;
 use serde::{Deserialize, Serialize};
 
-use super::graph::SoundNodeGraphSavedState;
+use super::graph::SoundGraphEditorState;
 
 pub fn get_current_exe_dir() -> Option<String> {
     Some(
@@ -25,7 +25,7 @@ pub struct WorkingFileSettings {
 
 #[derive(Serialize, Deserialize)]
 pub struct ProjectFile {
-    pub graph_state: SoundNodeGraphSavedState,
+    pub graph_state: SoundGraphEditorState,
 }
 
 pub fn get_current_working_settings(
