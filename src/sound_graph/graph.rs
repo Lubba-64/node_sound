@@ -10,7 +10,7 @@ use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::save_management::get_project_file;
 use crate::sound_queue;
 use crate::sounds::AsGenericSource;
-use eframe::egui::{self, DragValue, TextStyle};
+use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers, TextStyle};
 use egui_node_graph_2::*;
 use rfd::FileDialog;
 use rodio::source::Zero;
@@ -40,6 +40,7 @@ pub struct SoundGraphState {
     pub active_modified: bool,
     pub sound_result_evaluated: bool,
     pub recording_length: usize,
+    pub is_saved: bool,
 }
 
 impl DataTypeTrait<SoundGraphState> for DataType {
@@ -90,9 +91,10 @@ impl NodeTemplateTrait for NodeDefinitionUi {
     fn build_node(
         &self,
         graph: &mut Graph<Self::NodeData, Self::DataType, Self::ValueType>,
-        _user_state: &mut Self::UserState,
+        user_state: &mut Self::UserState,
         node_id: NodeId,
     ) {
+        user_state.is_saved = false;
         for input in self.0.inputs.iter() {
             graph.add_input_param(
                 node_id,
@@ -257,7 +259,7 @@ impl NodeDataTrait for NodeData {
 
 type MyGraph = Graph<NodeData, DataType, ValueType>;
 
-type SoundGraphEditorState =
+pub type SoundGraphEditorState =
     GraphEditorState<NodeData, DataType, ValueType, NodeDefinitionUi, SoundGraphState>;
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -289,12 +291,15 @@ impl SoundNodeGraph {
         Self {
             settings_path: settings_path.to_str().unwrap().to_string(),
             exe_dir: exe_dir,
-            state: match &settings_state.latest_saved_file {
-                None => SoundNodeGraphSavedState::default(),
-                Some(x) => match get_project_file(&x) {
-                    Ok(y) => y.graph_state,
-                    Err(_) => SoundNodeGraphSavedState::default(),
+            state: SoundNodeGraphSavedState {
+                editor_state: match &settings_state.latest_saved_file {
+                    None => SoundGraphEditorState::default(),
+                    Some(x) => match get_project_file(&x) {
+                        Ok(y) => y.graph_state,
+                        Err(_) => SoundGraphEditorState::default(),
+                    },
                 },
+                user_state: SoundGraphState::default(),
             },
             settings_state: settings_state,
             node_definitions: get_nodes(),
@@ -303,13 +308,22 @@ impl SoundNodeGraph {
         }
     }
 
-    fn save_project_file(&self, path: &str) {
+    fn save_project_file(&mut self, path: &str) {
         let _ = save_project_file(
             ProjectFile {
-                graph_state: self.state.clone(),
+                graph_state: self.state.editor_state.clone(),
             },
             &path,
         );
+        if path
+            == self
+                .settings_state
+                .latest_saved_file
+                .clone()
+                .unwrap_or("".to_string())
+        {
+            self.state.user_state.is_saved = true;
+        }
     }
 
     fn save_project_settings(&mut self, new_file: String) {
@@ -319,7 +333,7 @@ impl SoundNodeGraph {
 
     fn save_project_settings_as(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self.save_project_settings(save_project_file_as(ProjectFile {
-            graph_state: self.state.clone(),
+            graph_state: self.state.editor_state.clone(),
         })?);
         Ok(())
     }
@@ -332,8 +346,8 @@ impl SoundNodeGraph {
                 self.state = SoundNodeGraphSavedState::default();
             }
             if ui.add(egui::Button::new("Save")).clicked() {
-                match &self.settings_state.latest_saved_file {
-                    Some(x) => self.save_project_file(x),
+                match self.settings_state.latest_saved_file.clone() {
+                    Some(x) => self.save_project_file(&x),
                     None => self.save_project_settings_as()?,
                 }
             }
@@ -342,7 +356,10 @@ impl SoundNodeGraph {
             }
             if ui.add(egui::Button::new("Open")).clicked() {
                 let file = open_project_file()?;
-                self.state = file.1.graph_state;
+                self.state = SoundNodeGraphSavedState {
+                    editor_state: file.1.graph_state,
+                    user_state: SoundGraphState::default(),
+                };
                 self.save_project_settings(file.0);
             }
             Ok(())
@@ -352,11 +369,24 @@ impl SoundNodeGraph {
 
 impl eframe::App for SoundNodeGraph {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        ctx.input_mut(|i| {
+            if i.consume_shortcut(&KeyboardShortcut::new(Modifiers::CTRL, egui::Key::S)) {
+                match self.settings_state.latest_saved_file.clone() {
+                    Some(x) => self.save_project_file(&x),
+                    None => {
+                        let _ = save_project_file_as(ProjectFile {
+                            graph_state: self.state.editor_state.clone(),
+                        });
+                    }
+                }
+            }
+        });
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::widgets::global_dark_light_mode_switch(ui);
                 self.combobox(ui);
-                ui.add(egui::Label::new(
+                ui.add(egui::Label::new(format!(
+                    "{}{}",
                     match &self.settings_state.latest_saved_file {
                         Some(x) => Path::new(x)
                             .file_name()
@@ -365,7 +395,11 @@ impl eframe::App for SoundNodeGraph {
                             .unwrap_or(""),
                         None => "<new project>",
                     },
-                ));
+                    match self.state.user_state.is_saved {
+                        true => "",
+                        false => "*",
+                    }
+                )));
             });
         });
         let graph_response = egui::CentralPanel::default()
