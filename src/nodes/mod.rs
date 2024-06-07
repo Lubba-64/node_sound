@@ -44,7 +44,8 @@ mod reverb;
 use reverb::{reverb_logic, reverb_node};
 mod pop_node;
 use pop_node::{pop_logic, pop_node};
-
+mod mod_node;
+use mod_node::{mod_logic, mod_node};
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -96,7 +97,7 @@ type SoundNodeResult = Result<HashMap<String, ValueType>, Box<dyn std::error::Er
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: [(SoundNode, Box<SoundNodeOp>); 21] = [
+    let nodes: [(SoundNode, Box<SoundNodeOp>); 22] = [
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -118,6 +119,7 @@ pub fn get_nodes() -> NodeDefinitions {
         (merge_channels_node(), Box::new(merge_channels_logic)),
         (reverb_node(), Box::new(reverb_logic)),
         (pop_node(), Box::new(pop_logic)),
+        (mod_node(), Box::new(mod_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
