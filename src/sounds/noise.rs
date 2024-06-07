@@ -34,7 +34,7 @@ impl Source for Noise {
 
     #[inline]
     fn channels(&self) -> u16 {
-        1
+        2
     }
 
     #[inline]

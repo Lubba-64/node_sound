@@ -13,7 +13,7 @@ impl<I: Source<Item = f32>> Abs<I> {
     #[inline]
     pub fn new(source: I) -> Self {
         Self {
-            source: UniformSourceIterator::new(source, 1, DEFAULT_SAMPLE_RATE),
+            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
         }
     }
 }
@@ -35,7 +35,7 @@ impl<I: Source<Item = f32>> Source for Abs<I> {
 
     #[inline]
     fn channels(&self) -> u16 {
-        1
+        2
     }
 
     #[inline]

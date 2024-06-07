@@ -7,7 +7,7 @@ use eframe::egui::Visuals;
 
 fn main() {
     eframe::run_native(
-        "Egui node graph example",
+        "Sound node graph",
         eframe::NativeOptions::default(),
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(Visuals::dark());

@@ -14,8 +14,8 @@ impl<I1: Source<Item = f32>, I2: Source<Item = f32>> Lfo<I1, I2> {
     #[inline]
     pub fn new(source1: I1, source2: I2) -> Self {
         Self {
-            input1: UniformSourceIterator::new(source1, 1, DEFAULT_SAMPLE_RATE),
-            input2: UniformSourceIterator::new(source2, 1, DEFAULT_SAMPLE_RATE),
+            input1: UniformSourceIterator::new(source1, 2, DEFAULT_SAMPLE_RATE),
+            input2: UniformSourceIterator::new(source2, 2, DEFAULT_SAMPLE_RATE),
         }
     }
 }
@@ -37,7 +37,7 @@ impl<I1: Source<Item = f32>, I2: Source<Item = f32>> Source for Lfo<I1, I2> {
 
     #[inline]
     fn channels(&self) -> u16 {
-        1
+        2
     }
 
     #[inline]

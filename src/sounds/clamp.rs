@@ -15,7 +15,7 @@ impl<I: Source<Item = f32>> Clamp<I> {
     #[inline]
     pub fn new(source: I, min: Option<f32>, max: Option<f32>) -> Self {
         Self {
-            source: UniformSourceIterator::new(source, 1, DEFAULT_SAMPLE_RATE),
+            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
             max: max,
             min: min,
         }
@@ -44,7 +44,7 @@ impl<I: Source<Item = f32>> Source for Clamp<I> {
 
     #[inline]
     fn channels(&self) -> u16 {
-        1
+        2
     }
 
     #[inline]
