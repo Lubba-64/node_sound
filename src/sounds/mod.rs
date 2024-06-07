@@ -26,4 +26,4 @@ pub use split_channels::SplitChannels;
 mod pop;
 pub use pop::Pop;
 mod mod_source;
-use mod_source::Mod;
+pub use mod_source::Mod;

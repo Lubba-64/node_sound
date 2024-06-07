@@ -1,7 +1,7 @@
 use super::{
     cloneable_decoder::CloneableDecoder, lfo::Lfo, source_wrapper::DynCloneIter, Abs,
-    AdvancedDelay, AsGenericSource, Clamp, GenericSource, MergeChannels, Noise, Pop, SawToothWave,
-    SplitChannels, SquareWave, TriangleWave,
+    AdvancedDelay, AsGenericSource, Clamp, GenericSource, MergeChannels, Mod, Noise, Pop,
+    SawToothWave, SplitChannels, SquareWave, TriangleWave,
 };
 
 use rodio::{
@@ -141,3 +141,6 @@ impl StaticSource<f32> for AdvancedDelay {}
 impl<I> DynCloneIter<f32> for ChannelVolume<I> where I: StaticSource<f32> {}
 impl<I> AsGenericSource<f32> for ChannelVolume<I> where I: StaticSource<f32> {}
 impl<I> StaticSource<f32> for ChannelVolume<I> where I: StaticSource<f32> {}
+impl<I> DynCloneIter<f32> for Mod<I> where I: StaticSource<f32> {}
+impl<I> AsGenericSource<f32> for Mod<I> where I: StaticSource<f32> {}
+impl<I> StaticSource<f32> for Mod<I> where I: StaticSource<f32> {}
