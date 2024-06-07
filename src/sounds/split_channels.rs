@@ -13,8 +13,9 @@ pub struct SplitChannels<I: Source<Item = f32>> {
 impl<I: Source<Item = f32>> SplitChannels<I> {
     #[inline]
     pub fn new(source: I, channel: u16) -> Self {
+        let channels = source.channels();
         Self {
-            source: UniformSourceIterator::new(source, 1, DEFAULT_SAMPLE_RATE),
+            source: UniformSourceIterator::new(source, channels, DEFAULT_SAMPLE_RATE),
             channel: channel,
         }
     }
@@ -25,7 +26,7 @@ impl<I: Source<Item = f32>> Iterator for SplitChannels<I> {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        if self.source.channels() - 1 > self.channel {
+        if self.source.channels() - 1 < self.channel {
             return None;
         }
         for _ in 0..self.channel {

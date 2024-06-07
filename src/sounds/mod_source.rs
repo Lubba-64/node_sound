@@ -1,38 +1,36 @@
 use rodio::Source;
 
 use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use rodio::source::UniformSourceIterator;
 use std::time::Duration;
 
 #[derive(Clone)]
-pub struct Pop {
-    amplitude: f32,
-    done: u32,
+pub struct Mod<I: Source<Item = f32>> {
+    source: UniformSourceIterator<I, I::Item>,
+    mod_by: f32,
 }
 
-impl Pop {
+impl<I: Source<Item = f32>> Mod<I> {
     #[inline]
-    pub fn new(amplitude: f32) -> Self {
+    pub fn new(source: I, mod_by: f32) -> Self {
         Self {
-            amplitude: amplitude,
-            done: 0,
+            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
+            mod_by: mod_by,
         }
     }
 }
 
-impl Iterator for Pop {
+impl<I: Source<Item = f32>> Iterator for Mod<I> {
     type Item = f32;
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        if self.done > 1 {
-            self.done += 1;
-            return Some(self.amplitude);
-        }
-        Some(0.0)
+        let _next = self.source.next().unwrap_or(0.0);
+        Some(_next - (_next % self.mod_by))
     }
 }
 
-impl Source for Pop {
+impl<I: Source<Item = f32>> Source for Mod<I> {
     #[inline]
     fn current_frame_len(&self) -> Option<usize> {
         None

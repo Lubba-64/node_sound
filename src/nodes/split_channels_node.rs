@@ -47,12 +47,9 @@ pub fn split_channels_logic(props: SoundNodeProps) -> SoundNodeResult {
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_queue::push_sound(
-                ChannelVolume::new(
-                    SplitChannels::new(
-                        sound_queue::clone_sound(props.get_source("audio 1")?)?,
-                        props.get_float("channel")?.round() as u16,
-                    ),
-                    vec![0.0, 0.0],
+                SplitChannels::new(
+                    sound_queue::clone_sound(props.get_source("audio 1")?)?,
+                    props.get_float("channel")?.round() as u16,
                 )
                 .as_generic(None),
             ),

@@ -21,7 +21,7 @@ impl AdvancedDelay {
         falloff: f32,
     ) -> Self {
         let mut amplitude = 1.0f32;
-        let mut mixin: GenericSource<f32> = Zero::new(1, DEFAULT_SAMPLE_RATE).as_generic(None);
+        let mut mixin: GenericSource<f32> = Zero::new(2, DEFAULT_SAMPLE_RATE).as_generic(None);
         for i in 0..delays {
             amplitude -= falloff;
             if amplitude < 0.0 {
@@ -57,7 +57,7 @@ impl Source for AdvancedDelay {
 
     #[inline]
     fn channels(&self) -> u16 {
-        1
+        2
     }
 
     #[inline]
