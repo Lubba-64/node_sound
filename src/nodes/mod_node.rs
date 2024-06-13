@@ -3,7 +3,6 @@ use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
 use crate::sound_queue;
-use crate::sounds::Clamp;
 use crate::sounds::{AsGenericSource, Mod};
 use egui_node_graph_2::InputParamKind;
 use std::collections::HashMap;
