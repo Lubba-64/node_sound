@@ -3,7 +3,13 @@ use realfft::{
     num_complex::{Complex, ComplexFloat},
     RealFftPlanner,
 };
+use rodio::Source;
 use std::{f32::consts::PI, ops::Div};
+
+use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use rodio::source::UniformSourceIterator;
+use std::time::Duration;
+
 const H: f32 = 2.0 * 2.0 * 2.0 * 2.0 * 2.0 * 2.0 * 2.0 * 2.0 * 2.0 * 2.0 * 2.0; // 2^11
 
 fn hanning(n: f32, m: f32) -> f32 {
@@ -86,4 +92,63 @@ fn pitch_shift(sound: Vec<f32>, n: f32, window_size: usize) -> Vec<f32> {
     let factor = 2_f32.powf(1.0 * n / 12.0);
     let stretched = stretch(sound, factor, window_size, H);
     return speedx(stretched[window_size..].to_vec(), factor);
+}
+
+#[derive(Clone)]
+pub struct PitchShifter<I: Source<Item = f32>> {
+    source: UniformSourceIterator<I, I::Item>,
+    shift: f32,
+    in_buffer: Vec<f32>,
+    out_buffer: Vec<f32>,
+    buffer_size: usize,
+}
+
+impl<I: Source<Item = f32>> PitchShifter<I> {
+    #[inline]
+    pub fn new(source: I, shift: f32, buffer_size: usize) -> Self {
+        Self {
+            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
+            shift,
+            buffer_size: buffer_size * DEFAULT_SAMPLE_RATE as usize,
+            in_buffer: vec![],
+            out_buffer: vec![],
+        }
+    }
+}
+
+impl<I: Source<Item = f32>> Iterator for PitchShifter<I> {
+    type Item = f32;
+
+    #[inline]
+    fn next(&mut self) -> Option<f32> {
+        if self.out_buffer.len() > 0 {
+            self.in_buffer.push(self.source.next().unwrap_or(0.0));
+            return Some(self.out_buffer.pop().unwrap());
+        } else {
+            self.out_buffer = pitch_shift(self.in_buffer.clone(), self.shift, self.buffer_size / 3);
+            return Some(self.out_buffer.pop().unwrap());
+        }
+    }
+}
+
+impl<I: Source<Item = f32>> Source for PitchShifter<I> {
+    #[inline]
+    fn current_frame_len(&self) -> Option<usize> {
+        None
+    }
+
+    #[inline]
+    fn channels(&self) -> u16 {
+        2
+    }
+
+    #[inline]
+    fn sample_rate(&self) -> u32 {
+        DEFAULT_SAMPLE_RATE
+    }
+
+    #[inline]
+    fn total_duration(&self) -> Option<Duration> {
+        None
+    }
 }
