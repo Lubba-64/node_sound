@@ -1,7 +1,7 @@
 #![windows_subsystem = "windows"]
 mod nodes;
 mod sound_graph;
-mod sound_queue;
+mod sound_map;
 mod sounds;
 use eframe::egui::Visuals;
 

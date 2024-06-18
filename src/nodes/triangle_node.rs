@@ -2,8 +2,8 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_queue;
-use crate::sounds::{AsGenericSource, TriangleWave};
+use crate::sound_map;
+use crate::sounds::TriangleWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::HashMap;
 
@@ -34,9 +34,9 @@ pub fn triangle_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(HashMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_queue::push_sound(
-                TriangleWave::new(props.get_float("frequency")?).as_generic(None),
-            ),
+            value: sound_map::push_sound::<TriangleWave>(Box::new(TriangleWave::new(
+                props.get_float("frequency")?,
+            ))),
         },
     )]))
 }

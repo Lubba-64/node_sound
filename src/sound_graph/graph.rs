@@ -8,13 +8,12 @@ use super::DEFAULT_SAMPLE_RATE;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::save_management::get_project_file;
-use crate::sound_queue;
-use crate::sounds::AsGenericSource;
+use crate::sound_map;
 use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers, TextStyle};
 use egui_node_graph_2::*;
 use rfd::FileDialog;
+use rodio::source::Source;
 use rodio::source::Zero;
-use rodio::Source;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
@@ -514,8 +513,13 @@ impl eframe::App for SoundNodeGraph {
             Some(x) => {
                 if self.state.user_state.playing_node.is_some() {
                     if self.state.user_state.active_modified {
-                        self.sink.append(match sound_queue::clone_sound(x) {
-                            Err(_) => Zero::new(1, DEFAULT_SAMPLE_RATE).as_generic(None),
+                        self.sink.append(match sound_map::clone_sound(x) {
+                            Err(_) => {
+                                let x = sound_map::push_sound::<Zero<f32>>(Box::new(
+                                    Zero::<f32>::new(1, DEFAULT_SAMPLE_RATE),
+                                ));
+                                sound_map::clone_sound(x).unwrap()
+                            }
                             Ok(x) => x,
                         });
                         self.sink.play();
@@ -525,8 +529,14 @@ impl eframe::App for SoundNodeGraph {
                 } else if self.state.user_state.recording_node.is_some() {
                     if self.state.user_state.active_modified {
                         let file_path = file_path.unwrap();
-                        let source = match sound_queue::clone_sound(x) {
-                            Err(_) => Zero::new(1, DEFAULT_SAMPLE_RATE).as_generic(None),
+                        let source = match sound_map::clone_sound(x) {
+                            Err(_) => {
+                                let x = sound_map::push_sound::<Zero<f32>>(Box::new(Zero::new(
+                                    1,
+                                    DEFAULT_SAMPLE_RATE,
+                                )));
+                                sound_map::clone_sound(x).unwrap()
+                            }
                             Ok(x) => x,
                         };
                         let spec = hound::WavSpec {
@@ -552,7 +562,7 @@ impl eframe::App for SoundNodeGraph {
             None => {
                 if self.state.user_state.active_modified {
                     self.sink.clear();
-                    sound_queue::clear();
+                    sound_map::clear();
                     self.state.user_state.active_modified = false;
                 }
             }
