@@ -2,8 +2,8 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_queue;
-use crate::sounds::{AsGenericSource, Pop};
+use crate::sound_map;
+use crate::sounds::Pop;
 use egui_node_graph_2::InputParamKind;
 use std::collections::HashMap;
 
@@ -34,9 +34,7 @@ pub fn pop_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(HashMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_queue::push_sound(
-                Pop::new(props.get_float("amplitude")?).as_generic(None),
-            ),
+            value: sound_map::push_sound::<Pop>(Box::new(Pop::new(props.get_float("amplitude")?))),
         },
     )]))
 }
