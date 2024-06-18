@@ -176,3 +176,9 @@ pub fn clone_sound(idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> 
 pub fn clear() {
     unsafe { SOUND_QUEUE.clear() }
 }
+
+pub fn set_repeats(idx: usize, repeats: usize) {
+    unsafe {
+        SOUND_QUEUE[idx].borrow_mut().repeats = repeats;
+    }
+}

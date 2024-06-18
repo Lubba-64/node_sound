@@ -513,6 +513,7 @@ impl eframe::App for SoundNodeGraph {
             Some(x) => {
                 if self.state.user_state.playing_node.is_some() {
                     if self.state.user_state.active_modified {
+                        sound_map::set_repeats(x, 1);
                         self.sink.append(match sound_map::clone_sound(x) {
                             Err(_) => {
                                 let x = sound_map::push_sound::<Zero<f32>>(Box::new(
@@ -529,6 +530,7 @@ impl eframe::App for SoundNodeGraph {
                 } else if self.state.user_state.recording_node.is_some() {
                     if self.state.user_state.active_modified {
                         let file_path = file_path.unwrap();
+                        sound_map::set_repeats(x, 1);
                         let source = match sound_map::clone_sound(x) {
                             Err(_) => {
                                 let x = sound_map::push_sound::<Zero<f32>>(Box::new(Zero::new(
