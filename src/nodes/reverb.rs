@@ -2,9 +2,9 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_queue;
-use crate::sounds::AsGenericSource;
+use crate::sound_map::{self, RefSource};
 use egui_node_graph_2::InputParamKind;
+use rodio::source::{Amplify, Delay, Mix};
 use rodio::Source;
 use std::collections::HashMap;
 use std::time::Duration;
@@ -57,11 +57,10 @@ pub fn reverb_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(HashMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_queue::push_sound(
-                sound_queue::clone_sound(props.get_source("audio 1")?)?
-                    .reverb(duration.clone(), props.get_float("amplification")?)
-                    .as_generic(Some(duration)),
-            ),
+            value: sound_map::push_sound::<Mix<RefSource, Delay<Amplify<RefSource>>>>(Box::new(
+                sound_map::clone_sound(props.get_source("audio 1")?)?
+                    .reverb(duration.clone(), props.get_float("amplification")?),
+            )),
         },
     )]))
 }

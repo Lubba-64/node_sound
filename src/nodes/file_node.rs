@@ -2,8 +2,8 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_queue;
-use crate::sounds::{AsGenericSource, CloneableDecoder};
+use crate::sound_map;
+use crate::sounds::CloneableDecoder;
 use egui_node_graph_2::InputParamKind;
 use rodio::{Decoder, Source};
 use std::collections::HashMap;
@@ -46,14 +46,11 @@ pub fn file_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(HashMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_queue::push_sound(
-                CloneableDecoder {
-                    path: file.clone().unwrap(),
-                    decoder: Decoder::new(BufReader::new(File::open(&file.unwrap())?))?
-                        .convert_samples::<f32>(),
-                }
-                .as_generic(None),
-            ),
+            value: sound_map::push_sound::<CloneableDecoder>(Box::new(CloneableDecoder {
+                path: file.clone().unwrap(),
+                decoder: Decoder::new(BufReader::new(File::open(&file.unwrap())?))?
+                    .convert_samples::<f32>(),
+            })),
         },
     )]))
 }
