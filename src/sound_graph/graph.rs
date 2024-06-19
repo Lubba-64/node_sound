@@ -1,19 +1,8 @@
-#[cfg(target_arch = "wasm32")]
-use super::async_helpers::Task;
 use super::graph_types::InputValueConfig;
 use super::save_management::{
-    get_current_exe_dir, get_current_working_settings, save_current_working_settings,
-    save_project_file, ProjectFile, WorkingFileSettings,
-};
-#[cfg(not(target_arch = "wasm32"))]
-use super::save_management::{
-    open_project_file, save_project_file_as, set_input_sound_destination,
-    set_output_sound_destination,
-};
-#[cfg(target_arch = "wasm32")]
-use super::save_management::{
-    open_project_file_async, save_project_file_as_async, set_input_sound_destination_async,
-    set_output_sound_destination_async,
+    get_current_exe_dir, get_current_working_settings, open_project_file,
+    save_current_working_settings, save_project_file, save_project_file_as,
+    set_input_sound_destination, set_output_sound_destination, ProjectFile, WorkingFileSettings,
 };
 use super::DEFAULT_SAMPLE_RATE;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
@@ -27,8 +16,6 @@ use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
-use std::io::Error;
-use std::io::ErrorKind;
 use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 
@@ -146,33 +133,6 @@ impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
     }
 }
 
-fn set_input_sound_destination_both() -> Result<std::string::String, Box<(dyn std::error::Error)>> {
-    #[cfg(target_arch = "wasm32")]
-    {
-        let path = Task::<Result<String, Box<dyn std::error::Error>>>::spawn(
-            set_input_sound_destination_async(),
-        )
-        .take_output()
-        .unwrap();
-
-        let path_unwrapped = match path {
-            Err(x) => {
-                return Err(Box::new(Error::new(
-                    ErrorKind::Other,
-                    "file pick did not work",
-                )));
-            }
-            Ok(x) => x,
-        }?;
-
-        Ok(path_unwrapped)
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        return set_input_sound_destination();
-    }
-}
-
 impl WidgetValueTrait for ValueType {
     type Response = ActiveNodeState;
     type UserState = SoundGraphState;
@@ -217,7 +177,7 @@ impl WidgetValueTrait for ValueType {
                     None => "",
                 };
                 if ui.button(format!("{}...", file_name)).clicked() {
-                    *value = match set_input_sound_destination_both() {
+                    *value = match set_input_sound_destination() {
                         Ok(x) => Some(x),
                         Err(_) => None,
                     };
@@ -304,28 +264,52 @@ pub struct SoundNodeGraphSavedState {
     pub editor_state: SoundGraphEditorState,
 }
 
-pub struct SoundNodeGraph {
-    pub settings_state: WorkingFileSettings,
-    pub state: SoundNodeGraphSavedState,
+struct UnserializeableState {
     pub node_definitions: NodeDefinitions,
     pub stream: (OutputStream, OutputStreamHandle),
     pub sink: Sink,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct SoundNodeGraph {
+    pub settings_state: WorkingFileSettings,
+    pub state: SoundNodeGraphSavedState,
+    #[serde(skip)]
+    pub _unserializeable_state: Option<UnserializeableState>,
     pub exe_dir: String,
     settings_path: String,
 }
 
+fn get_unserializeable_state() -> Option<UnserializeableState> {
+    let (stream, stream_handle) =
+        OutputStream::try_default().expect("could not initialize audio subsystem");
+    return Some(UnserializeableState {
+        node_definitions: get_nodes(),
+        sink: Sink::try_new(&stream_handle).expect("could not create audio sink"),
+        stream: (stream, stream_handle),
+    });
+}
+
 impl SoundNodeGraph {
-    pub fn new() -> Self {
-        let (stream, stream_handle) =
-            OutputStream::try_default().expect("could not initialize audio subsystem");
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        if let Some(storage) = cc.storage {
+            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        }
+
         let exe_dir = get_current_exe_dir().expect("could not get app directory");
         let settings_path = std::path::Path::new(&exe_dir).join("node_settings.ron");
-        let settings_state = match get_current_working_settings(&settings_path.to_str().unwrap()) {
-            Err(_) => WorkingFileSettings::default(),
-            Ok(x) => x,
+
+        let settings_state = {
+            #[cfg(not(target_arch = "wasm32"))]
+            match get_current_working_settings(&settings_path.to_str().unwrap_or("")) {
+                Err(_) => WorkingFileSettings::default(),
+                Ok(x) => x,
+            }
+            #[cfg(target_arch = "wasm32")]
+            WorkingFileSettings::default()
         };
         Self {
-            settings_path: settings_path.to_str().unwrap().to_string(),
+            settings_path: settings_path.to_str().unwrap_or("").to_string(),
             exe_dir: exe_dir,
             state: SoundNodeGraphSavedState {
                 editor_state: match &settings_state.latest_saved_file {
@@ -338,10 +322,15 @@ impl SoundNodeGraph {
                 user_state: SoundGraphState::default(),
             },
             settings_state: settings_state,
-            node_definitions: get_nodes(),
-            sink: Sink::try_new(&stream_handle).expect("could not create audio sink"),
-            stream: (stream, stream_handle),
+            _unserializeable_state: get_unserializeable_state(),
         }
+    }
+
+    fn unserializeable_state(&mut self) -> &mut UnserializeableState {
+        if self._unserializeable_state.is_none() {
+            self._unserializeable_state = get_unserializeable_state();
+        }
+        return self._unserializeable_state.as_mut().unwrap();
     }
 
     fn save_project_file(&mut self, path: &str) {
@@ -368,85 +357,10 @@ impl SoundNodeGraph {
     }
 
     fn save_project_settings_as(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        #[cfg(target_arch = "wasm32")]
-        {
-            let path = Task::<Result<String, Box<dyn std::error::Error>>>::spawn(
-                save_project_file_as_async(ProjectFile {
-                    graph_state: self.state.editor_state.clone(),
-                }),
-            )
-            .take_output()
-            .unwrap();
-
-            let path_unwrapped = match path {
-                Err(x) => {
-                    return Err(Box::new(Error::new(
-                        ErrorKind::Other,
-                        "file pick did not work",
-                    )));
-                }
-                Ok(x) => x,
-            }?;
-
-            self.save_project_settings(path_unwrapped);
-            Ok(())
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            self.save_project_settings(save_project_file_as(ProjectFile {
-                graph_state: self.state.editor_state.clone(),
-            })?);
-            Ok(())
-        }
-    }
-
-    fn open_project_file(
-        &mut self,
-    ) -> Result<(std::string::String, ProjectFile), Box<(dyn std::error::Error)>> {
-        #[cfg(target_arch = "wasm32")]
-        {
-            let path =
-                Task::<Result<(String, ProjectFile), Box<dyn std::error::Error>>>::spawn(async {
-                    open_project_file_async().await
-                })
-                .take_output()
-                .unwrap();
-
-            let project_file_unwrapped = match path {
-                Err(x) => {
-                    return Err(Box::new(Error::new(
-                        ErrorKind::Other,
-                        "file pick did not work",
-                    )));
-                }
-                Ok(x) => x,
-            }?;
-
-            return Ok(project_file_unwrapped);
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            open_project_file()
-        }
-    }
-
-    fn set_output_sound_destination(
-        &mut self,
-    ) -> Result<std::string::String, Box<(dyn std::error::Error)>> {
-        #[cfg(target_arch = "wasm32")]
-        {
-            let path = Task::<Result<String, Box<dyn std::error::Error>>>::spawn(async {
-                set_output_sound_destination_async().await
-            })
-            .take_output()
-            .unwrap();
-
-            return path.unwrap_or(Err(Box::new(Error::new(ErrorKind::Other, ""))));
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            set_output_sound_destination()
-        }
+        self.save_project_settings(save_project_file_as(ProjectFile {
+            graph_state: self.state.editor_state.clone(),
+        })?);
+        Ok(())
     }
 
     fn combobox(&mut self, ui: &mut egui::Ui) {
@@ -466,7 +380,7 @@ impl SoundNodeGraph {
                 self.save_project_settings_as()?;
             }
             if ui.add(egui::Button::new("Open")).clicked() {
-                let file = self.open_project_file()?;
+                let file = open_project_file()?;
                 self.state = SoundNodeGraphSavedState {
                     editor_state: file.1.graph_state,
                     user_state: SoundGraphState::default(),
@@ -480,6 +394,7 @@ impl SoundNodeGraph {
 
 impl eframe::App for SoundNodeGraph {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let _ = self.unserializeable_state();
         ctx.input_mut(|i| {
             if i.consume_shortcut(&KeyboardShortcut::new(Modifiers::CTRL, egui::Key::S)) {
                 match self.settings_state.latest_saved_file.clone() {
@@ -513,7 +428,13 @@ impl eframe::App for SoundNodeGraph {
             .show(ctx, |ui| {
                 self.state.editor_state.draw_graph_editor(
                     ui,
-                    NodeDefinitionsUi(&self.node_definitions),
+                    NodeDefinitionsUi(
+                        &self
+                            ._unserializeable_state
+                            .as_ref()
+                            .unwrap()
+                            .node_definitions,
+                    ),
                     &mut self.state.user_state,
                     Vec::default(),
                 )
@@ -539,7 +460,11 @@ impl eframe::App for SoundNodeGraph {
                             &self.state.editor_state.graph,
                             node,
                             &mut HashMap::new(),
-                            &self.node_definitions,
+                            &self
+                                ._unserializeable_state
+                                .as_ref()
+                                .unwrap()
+                                .node_definitions,
                         ) {
                             Ok(value) => {
                                 let sound =
@@ -572,10 +497,14 @@ impl eframe::App for SoundNodeGraph {
                             &self.state.editor_state.graph,
                             node,
                             &mut HashMap::new(),
-                            &self.node_definitions,
+                            &self
+                                ._unserializeable_state
+                                .as_ref()
+                                .unwrap()
+                                .node_definitions,
                         ) {
                             Ok(value) => {
-                                let _ = match self.set_output_sound_destination() {
+                                let _ = match set_output_sound_destination() {
                                     Ok(_file_path) => {
                                         let sound = value
                                             .try_to_source()
@@ -617,17 +546,19 @@ impl eframe::App for SoundNodeGraph {
                 ActiveNodeState::PlayingNode(_) => {
                     if self.state.user_state.active_modified {
                         sound_map::set_repeats(x, 1);
-                        self.sink.append(match sound_map::clone_sound(x) {
-                            Err(_) => {
-                                let x = sound_map::push_sound::<Zero<f32>>(Box::new(
-                                    Zero::<f32>::new(1, DEFAULT_SAMPLE_RATE),
-                                ));
-                                sound_map::clone_sound(x).unwrap()
-                            }
-                            Ok(x) => x,
-                        });
-                        self.sink.play();
-                        self.sink.set_volume(1.0);
+                        self.unserializeable_state()
+                            .sink
+                            .append(match sound_map::clone_sound(x) {
+                                Err(_) => {
+                                    let x = sound_map::push_sound::<Zero<f32>>(Box::new(
+                                        Zero::<f32>::new(1, DEFAULT_SAMPLE_RATE),
+                                    ));
+                                    sound_map::clone_sound(x).unwrap()
+                                }
+                                Ok(x) => x,
+                            });
+                        self.unserializeable_state().sink.play();
+                        self.unserializeable_state().sink.set_volume(1.0);
                         self.state.user_state.active_modified = false;
                     }
                 }
@@ -665,7 +596,7 @@ impl eframe::App for SoundNodeGraph {
                 }
                 ActiveNodeState::NoNode => {
                     if self.state.user_state.active_modified == true {
-                        self.sink.clear();
+                        self.unserializeable_state().sink.clear();
                         sound_map::clear();
                         self.state.user_state.active_modified = false;
                     }
@@ -673,7 +604,7 @@ impl eframe::App for SoundNodeGraph {
             },
             None => {
                 if self.state.user_state.active_modified == true {
-                    self.sink.clear();
+                    self.unserializeable_state().sink.clear();
                     sound_map::clear();
                     self.state.user_state.active_modified = false;
                 }

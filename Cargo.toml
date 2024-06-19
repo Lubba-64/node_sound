@@ -8,12 +8,12 @@ rust-version = "1.56"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rodio = "0.17.3"
-eframe = "0.27.2"
+rodio = {version = "0.17.3", features = ["wasm-bindgen"]}
+eframe = {version = "0.27.2", features = ["ron", "serde"]}
 egui_node_graph_2 = {version = "0.4.1", git="https://github.com/Lubba-64/egui_node_graph_2.git", features = ["persistence"]}
 dyn-clone = "1.0.17"
 serde = {version = "1.0.198", features = ["derive"]}
-rfd = "0.14.1"
+rfd = {version = "0.14.1", features = ["file-handle-inner"]}
 ron = "0.8.1"
 seeded-random = "0.6.0"
 rand = "0.8.5"
