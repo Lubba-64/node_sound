@@ -1,11 +1,14 @@
+#[cfg(target_arch = "wasm32")]
+use rfd::{AsyncFileDialog, FileHandle};
+#[cfg(not(target_arch = "wasm32"))]
+use rfd::{FileDialog, FileHandle};
+
+use serde::{Deserialize, Serialize};
 use std::{
     fs,
     io::{Error, ErrorKind},
     path::PathBuf,
 };
-
-use rfd::FileDialog;
-use serde::{Deserialize, Serialize};
 
 use super::graph::SoundGraphEditorState;
 
@@ -72,6 +75,90 @@ pub fn convert_option_pathbuf(
     Ok(path)
 }
 
+async fn convert_file_handle(
+    fh_op: Option<FileHandle>,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let fh = match fh_op {
+        None => {
+            return Err(Box::new(Error::new(
+                ErrorKind::Other,
+                "file pick did not work",
+            )));
+        }
+        Some(x) => x,
+    };
+    let path = fh.read().await;
+    Ok(String::from_utf8(path)?)
+}
+
+pub fn save_project_file(
+    project_file: ProjectFile,
+    path: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    fs::write(&path, ron::ser::to_string(&project_file)?)?;
+    Ok(())
+}
+
+#[cfg(target_arch = "wasm32")]
+pub async fn save_project_file_as_async(
+    project_file: ProjectFile,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let path = convert_file_handle(
+        AsyncFileDialog::new()
+            .add_filter("text", &["ron"])
+            .set_directory("./")
+            .save_file()
+            .await,
+    )
+    .await?;
+    save_project_file(project_file, &path)?;
+    Ok(path)
+}
+
+#[cfg(target_arch = "wasm32")]
+pub async fn open_project_file_async() -> Result<(String, ProjectFile), Box<dyn std::error::Error>>
+{
+    let file = convert_file_handle(
+        AsyncFileDialog::new()
+            .add_filter("text", &["ron"])
+            .set_directory("./")
+            .pick_file()
+            .await,
+    )
+    .await?;
+    Ok((file.clone(), get_project_file(file.as_str())?))
+}
+#[cfg(target_arch = "wasm32")]
+pub async fn set_output_sound_destination_async() -> Result<String, Box<dyn std::error::Error>> {
+    let file = convert_file_handle(
+        AsyncFileDialog::new()
+            .add_filter("audio", &["wav"])
+            .set_directory("./")
+            .save_file()
+            .await,
+    )
+    .await?;
+    Ok(file)
+}
+
+#[cfg(target_arch = "wasm32")]
+pub async fn set_input_sound_destination_async() -> Result<String, Box<dyn std::error::Error>> {
+    let file = convert_file_handle(
+        AsyncFileDialog::new()
+            .add_filter("sound", &["ogg", "mp3", "wav"])
+            .set_directory("./")
+            .pick_file()
+            .await,
+    )
+    .await?;
+    Ok(file)
+}
+
+pub fn get_project_file(path: &str) -> Result<ProjectFile, Box<dyn std::error::Error>> {
+    Ok(ron::de::from_str(&fs::read_to_string(path)?)?)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 pub fn save_project_file_as(
     project_file: ProjectFile,
 ) -> Result<String, Box<dyn std::error::Error>> {
@@ -85,14 +172,7 @@ pub fn save_project_file_as(
     Ok(path)
 }
 
-pub fn save_project_file(
-    project_file: ProjectFile,
-    path: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
-    fs::write(&path, ron::ser::to_string(&project_file)?)?;
-    Ok(())
-}
-
+#[cfg(not(target_arch = "wasm32"))]
 pub fn open_project_file() -> Result<(String, ProjectFile), Box<dyn std::error::Error>> {
     let file = convert_option_pathbuf(
         FileDialog::new()
@@ -103,6 +183,7 @@ pub fn open_project_file() -> Result<(String, ProjectFile), Box<dyn std::error::
     Ok((file.clone(), get_project_file(file.as_str())?))
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn set_output_sound_destination() -> Result<String, Box<dyn std::error::Error>> {
     let file = convert_option_pathbuf(
         FileDialog::new()
@@ -113,6 +194,13 @@ pub fn set_output_sound_destination() -> Result<String, Box<dyn std::error::Erro
     Ok(file)
 }
 
-pub fn get_project_file(path: &str) -> Result<ProjectFile, Box<dyn std::error::Error>> {
-    Ok(ron::de::from_str(&fs::read_to_string(path)?)?)
+#[cfg(not(target_arch = "wasm32"))]
+pub fn set_input_sound_destination() -> Result<String, Box<dyn std::error::Error>> {
+    let file = convert_option_pathbuf(
+        FileDialog::new()
+            .add_filter("sound", &["ogg", "mp3", "wav"])
+            .set_directory("./")
+            .pick_file(),
+    )?;
+    Ok(file)
 }

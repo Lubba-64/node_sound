@@ -3,9 +3,6 @@ use rodio::Source;
 use std::f32::consts::PI;
 use std::time::Duration;
 
-/// An infinite source that produces a sine.
-///
-/// Always has a rate of 48kHz and one channel.
 #[derive(Clone, Debug)]
 pub struct SquareWave {
     freq: f32,
@@ -13,7 +10,6 @@ pub struct SquareWave {
 }
 
 impl SquareWave {
-    /// The frequency of the sine.
     #[inline]
     pub fn new(freq: f32) -> Self {
         Self {
