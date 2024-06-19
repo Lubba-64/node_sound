@@ -1,8 +1,19 @@
+#[cfg(target_arch = "wasm32")]
+use super::async_helpers::Task;
 use super::graph_types::InputValueConfig;
 use super::save_management::{
-    convert_option_pathbuf, get_current_exe_dir, get_current_working_settings, open_project_file,
-    save_current_working_settings, save_project_file, save_project_file_as,
-    set_output_sound_destination, ProjectFile, WorkingFileSettings,
+    get_current_exe_dir, get_current_working_settings, save_current_working_settings,
+    save_project_file, ProjectFile, WorkingFileSettings,
+};
+#[cfg(not(target_arch = "wasm32"))]
+use super::save_management::{
+    open_project_file, save_project_file_as, set_input_sound_destination,
+    set_output_sound_destination,
+};
+#[cfg(target_arch = "wasm32")]
+use super::save_management::{
+    open_project_file_async, save_project_file_as_async, set_input_sound_destination_async,
+    set_output_sound_destination_async,
 };
 use super::DEFAULT_SAMPLE_RATE;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
@@ -11,12 +22,13 @@ use crate::sound_graph::save_management::get_project_file;
 use crate::sound_map;
 use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers, TextStyle};
 use egui_node_graph_2::*;
-use rfd::FileDialog;
 use rodio::source::Source;
 use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
+use std::io::Error;
+use std::io::ErrorKind;
 use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 
@@ -134,6 +146,33 @@ impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
     }
 }
 
+fn set_input_sound_destination_both() -> Result<std::string::String, Box<(dyn std::error::Error)>> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let path = Task::<Result<String, Box<dyn std::error::Error>>>::spawn(
+            set_input_sound_destination_async(),
+        )
+        .take_output()
+        .unwrap();
+
+        let path_unwrapped = match path {
+            Err(x) => {
+                return Err(Box::new(Error::new(
+                    ErrorKind::Other,
+                    "file pick did not work",
+                )));
+            }
+            Ok(x) => x,
+        }?;
+
+        Ok(path_unwrapped)
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        return set_input_sound_destination();
+    }
+}
+
 impl WidgetValueTrait for ValueType {
     type Response = ActiveNodeState;
     type UserState = SoundGraphState;
@@ -178,16 +217,10 @@ impl WidgetValueTrait for ValueType {
                     None => "",
                 };
                 if ui.button(format!("{}...", file_name)).clicked() {
-                    let file = match convert_option_pathbuf(
-                        FileDialog::new()
-                            .add_filter("sound", &["ogg", "mp3", "wav"])
-                            .set_directory("./")
-                            .pick_file(),
-                    ) {
+                    *value = match set_input_sound_destination_both() {
                         Ok(x) => Some(x),
                         Err(_) => None,
                     };
-                    *value = file
                 }
             }
         }
@@ -335,10 +368,85 @@ impl SoundNodeGraph {
     }
 
     fn save_project_settings_as(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        self.save_project_settings(save_project_file_as(ProjectFile {
-            graph_state: self.state.editor_state.clone(),
-        })?);
-        Ok(())
+        #[cfg(target_arch = "wasm32")]
+        {
+            let path = Task::<Result<String, Box<dyn std::error::Error>>>::spawn(
+                save_project_file_as_async(ProjectFile {
+                    graph_state: self.state.editor_state.clone(),
+                }),
+            )
+            .take_output()
+            .unwrap();
+
+            let path_unwrapped = match path {
+                Err(x) => {
+                    return Err(Box::new(Error::new(
+                        ErrorKind::Other,
+                        "file pick did not work",
+                    )));
+                }
+                Ok(x) => x,
+            }?;
+
+            self.save_project_settings(path_unwrapped);
+            Ok(())
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            self.save_project_settings(save_project_file_as(ProjectFile {
+                graph_state: self.state.editor_state.clone(),
+            })?);
+            Ok(())
+        }
+    }
+
+    fn open_project_file(
+        &mut self,
+    ) -> Result<(std::string::String, ProjectFile), Box<(dyn std::error::Error)>> {
+        #[cfg(target_arch = "wasm32")]
+        {
+            let path =
+                Task::<Result<(String, ProjectFile), Box<dyn std::error::Error>>>::spawn(async {
+                    open_project_file_async().await
+                })
+                .take_output()
+                .unwrap();
+
+            let project_file_unwrapped = match path {
+                Err(x) => {
+                    return Err(Box::new(Error::new(
+                        ErrorKind::Other,
+                        "file pick did not work",
+                    )));
+                }
+                Ok(x) => x,
+            }?;
+
+            return Ok(project_file_unwrapped);
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            open_project_file()
+        }
+    }
+
+    fn set_output_sound_destination(
+        &mut self,
+    ) -> Result<std::string::String, Box<(dyn std::error::Error)>> {
+        #[cfg(target_arch = "wasm32")]
+        {
+            let path = Task::<Result<String, Box<dyn std::error::Error>>>::spawn(async {
+                set_output_sound_destination_async().await
+            })
+            .take_output()
+            .unwrap();
+
+            return path.unwrap_or(Err(Box::new(Error::new(ErrorKind::Other, ""))));
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            set_output_sound_destination()
+        }
     }
 
     fn combobox(&mut self, ui: &mut egui::Ui) {
@@ -358,7 +466,7 @@ impl SoundNodeGraph {
                 self.save_project_settings_as()?;
             }
             if ui.add(egui::Button::new("Open")).clicked() {
-                let file = open_project_file()?;
+                let file = self.open_project_file()?;
                 self.state = SoundNodeGraphSavedState {
                     editor_state: file.1.graph_state,
                     user_state: SoundGraphState::default(),
@@ -376,11 +484,7 @@ impl eframe::App for SoundNodeGraph {
             if i.consume_shortcut(&KeyboardShortcut::new(Modifiers::CTRL, egui::Key::S)) {
                 match self.settings_state.latest_saved_file.clone() {
                     Some(x) => self.save_project_file(&x),
-                    None => {
-                        let _ = save_project_file_as(ProjectFile {
-                            graph_state: self.state.editor_state.clone(),
-                        });
-                    }
+                    None => {}
                 }
             }
         });
@@ -470,19 +574,23 @@ impl eframe::App for SoundNodeGraph {
                             &mut HashMap::new(),
                             &self.node_definitions,
                         ) {
-                            Ok(value) => match set_output_sound_destination() {
-                                Ok(_file_path) => {
-                                    let sound =
-                                        value.try_to_source().expect("expected valid audio source");
-                                    sound_result = Some(sound.clone());
-                                    file_path = Some(_file_path);
-                                    text = "Recording Anonymous audio source.";
-                                }
-                                Err(_err) => {
-                                    sound_result = None;
-                                    text = "An error occured trying to record the audio source.";
-                                }
-                            },
+                            Ok(value) => {
+                                let _ = match self.set_output_sound_destination() {
+                                    Ok(_file_path) => {
+                                        let sound = value
+                                            .try_to_source()
+                                            .expect("expected valid audio source");
+                                        sound_result = Some(sound.clone());
+                                        file_path = Some(_file_path);
+                                        text = "Recording Anonymous audio source.";
+                                    }
+                                    Err(_err) => {
+                                        sound_result = None;
+                                        text =
+                                            "An error occured trying to record the audio source.";
+                                    }
+                                };
+                            }
                             Err(_err) => {
                                 sound_result = None;
                                 text = "An error occured trying to record the audio source.";

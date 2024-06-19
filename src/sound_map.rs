@@ -1,9 +1,59 @@
-use std::io::ErrorKind;
-
 use rodio::source::Source;
 use rodio::Sample;
 use std::cell::RefCell;
+use std::io::ErrorKind;
 use std::rc::Rc;
+
+pub struct AutomationChannelF32(Box<dyn Iterator<Item = f32> + 'static>);
+
+impl Iterator for AutomationChannelF32 {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        return self.0.next();
+    }
+}
+
+impl AutomationChannelF32 {
+    fn from_source(source: impl RefSourceIter<f32>) -> Self {
+        Self(Box::new(source))
+    }
+}
+
+pub trait RefSourceIter<Item: Sample>:
+    Source<Item = Item> + Iterator<Item = Item> + 'static
+{
+}
+
+pub struct RepeatN<I: Iterator<Item = f32>> {
+    iter: I,
+    repeats: usize,
+    repeat: usize,
+    last: Option<f32>,
+}
+
+impl<I: Iterator<Item = f32>> RepeatN<I> {
+    fn new(iter: I, repeats: usize) -> Self {
+        Self {
+            repeats,
+            iter,
+            repeat: 0,
+            last: None,
+        }
+    }
+}
+
+impl<I: Iterator<Item = f32>> Iterator for RepeatN<I> {
+    type Item = f32;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.repeat == 0 {
+            self.repeat = self.repeats;
+            self.last = self.iter.next();
+        }
+        self.repeat -= 1;
+        return self.last;
+    }
+}
 
 pub struct GenericSource<T>
 where
@@ -49,11 +99,6 @@ impl<'a, S: Sample> Source for GenericSource<S> {
     fn total_duration(&self) -> Option<std::time::Duration> {
         self.sound.total_duration()
     }
-}
-
-pub trait RefSourceIter<Item: Sample>:
-    Source<Item = Item> + Iterator<Item = Item> + 'static
-{
 }
 
 pub struct RepeatSource<I: RefSourceIter<f32>> {
@@ -180,5 +225,39 @@ pub fn clear() {
 pub fn set_repeats(idx: usize, repeats: usize) {
     unsafe {
         SOUND_QUEUE[idx].borrow_mut().repeats = repeats;
+    }
+}
+
+static mut AUTOMATION_QUEUE: Vec<Rc<RefCell<RepeatN<AutomationChannelF32>>>> = vec![];
+
+pub fn push_automation(automation: AutomationChannelF32) -> usize {
+    unsafe {
+        AUTOMATION_QUEUE.push(Rc::new(RefCell::new(RepeatN::new(automation, 0))));
+        return AUTOMATION_QUEUE.len() - 1;
+    }
+}
+
+pub fn clone_automation(
+    idx: usize,
+) -> Result<Rc<RefCell<RepeatN<AutomationChannelF32>>>, Box<dyn std::error::Error>> {
+    if idx >= unsafe { AUTOMATION_QUEUE.len() } {
+        return Err(Box::new(std::io::Error::new(
+            ErrorKind::Other,
+            "Sound queue accessed an out of bounds element",
+        )));
+    }
+    unsafe {
+        AUTOMATION_QUEUE[idx].borrow_mut().repeats += 1;
+    }
+    return unsafe { Ok(AUTOMATION_QUEUE[idx].clone()) };
+}
+
+pub fn automation_clear() {
+    unsafe { AUTOMATION_QUEUE.clear() }
+}
+
+pub fn set_automation_repeats(idx: usize, repeats: usize) {
+    unsafe {
+        AUTOMATION_QUEUE[idx].borrow_mut().repeats = repeats;
     }
 }
