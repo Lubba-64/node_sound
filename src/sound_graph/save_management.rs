@@ -228,7 +228,7 @@ mod output_sound_destination {
                 .await,
         )
         .await?;
-        Ok(file)
+        Ok(file.1)
     }
 
     pub fn set_output_sound_destination(
@@ -269,7 +269,7 @@ mod input_sound_destination {
                 .await,
         )
         .await?;
-        Ok(file)
+        Ok(file.1)
     }
 
     pub fn set_input_sound_destination() -> Result<std::string::String, Box<(dyn std::error::Error)>>
