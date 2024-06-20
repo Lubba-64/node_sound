@@ -10,6 +10,8 @@ use rfd::{AsyncFileDialog, FileHandle};
 use std::cell::Cell;
 #[cfg(target_arch = "wasm32")]
 use std::panic;
+#[cfg(not(target_arch = "wasm32"))]
+use std::path::Path;
 #[cfg(target_arch = "wasm32")]
 use std::rc::Rc;
 #[cfg(target_arch = "wasm32")]
@@ -25,6 +27,11 @@ use std::{
 };
 
 use super::graph::SoundGraphEditorState;
+
+#[cfg(not(target_arch = "wasm32"))]
+fn get_file_name(path: &str) -> Option<String> {
+    return Some(Path::new(path).file_name()?.to_str()?.to_string());
+}
 
 pub fn get_current_exe_dir() -> Option<String> {
     Some(
@@ -125,7 +132,7 @@ impl<T: 'static> Task<T> {
 #[cfg(target_arch = "wasm32")]
 async fn convert_file_handle(
     fh_op: Option<FileHandle>,
-) -> Result<(String, String), Box<dyn std::error::Error>> {
+) -> Result<FileHandle, Box<dyn std::error::Error>> {
     let fh = match fh_op {
         None => {
             return Err(Box::new(Error::new(
@@ -135,7 +142,7 @@ async fn convert_file_handle(
         }
         Some(x) => x,
     };
-    Ok((String::from_utf8(fh.read())?, fh.name()))
+    Ok(fh)
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -173,7 +180,10 @@ mod open_project_file {
                 .set_directory("./")
                 .pick_file(),
         )?;
-        Ok((file.clone(), get_project_file(file.as_str())?))
+        Ok((
+            get_file_name(&file).unwrap(),
+            get_project_file(file.as_str())?,
+        ))
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -187,7 +197,11 @@ mod open_project_file {
                 .await,
         )
         .await?;
-        Ok((file.clone(), get_project_file(file.as_str())?))
+
+        Ok((
+            file.file_name(),
+            ron::de::from_str(&String::from_utf8(file.read().await)?)?,
+        ))
     }
 
     pub fn open_project_file(
@@ -203,23 +217,24 @@ mod open_project_file {
     }
 }
 
-pub use output_sound_destination::set_output_sound_destination;
+pub use output_sound_destination::write_output_sound;
 
 mod output_sound_destination {
     use super::*;
     #[cfg(not(target_arch = "wasm32"))]
-    fn set_output_sound_destination_sync() -> Result<String, Box<dyn std::error::Error>> {
+    fn write_output_sound_sync(sound: Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
         let file = convert_option_pathbuf(
             FileDialog::new()
                 .add_filter("audio", &["wav"])
                 .set_directory("./")
                 .save_file(),
         )?;
-        Ok(file)
+        std::fs::write(file, sound)?;
+        Ok(())
     }
 
     #[cfg(target_arch = "wasm32")]
-    async fn set_output_sound_destination_async() -> Result<String, Box<dyn std::error::Error>> {
+    async fn write_output_sound_async(sound: Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
         let file = convert_file_handle(
             AsyncFileDialog::new()
                 .add_filter("audio", &["wav"])
@@ -228,39 +243,40 @@ mod output_sound_destination {
                 .await,
         )
         .await?;
-        Ok(file.1)
+        file.write(&sound).await?;
+        Ok(())
     }
 
-    pub fn set_output_sound_destination(
-    ) -> Result<std::string::String, Box<(dyn std::error::Error)>> {
+    pub fn write_output_sound(sound: Vec<u8>) -> Result<(), Box<(dyn std::error::Error)>> {
         #[cfg(target_arch = "wasm32")]
         {
-            do_wasm_task(set_output_sound_destination_async())
+            do_wasm_task(write_output_sound_async(sound))
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            set_output_sound_destination_sync()
+            write_output_sound_sync(sound)
         }
     }
 }
 
-pub use input_sound_destination::set_input_sound_destination;
+pub use input_sound::get_input_sound;
 
-mod input_sound_destination {
+mod input_sound {
     use super::*;
     #[cfg(not(target_arch = "wasm32"))]
-    fn set_input_sound_destination_sync() -> Result<String, Box<dyn std::error::Error>> {
+    fn get_input_sound_sync<'a>() -> Result<(Vec<u8>, String), Box<dyn std::error::Error>> {
         let file = convert_option_pathbuf(
             FileDialog::new()
                 .add_filter("sound", &["ogg", "mp3", "wav"])
                 .set_directory("./")
                 .pick_file(),
         )?;
-        Ok(file)
+        Ok((std::fs::read(&file)?, get_file_name(&file).unwrap()))
     }
 
     #[cfg(target_arch = "wasm32")]
-    async fn set_input_sound_destination_async() -> Result<String, Box<dyn std::error::Error>> {
+    async fn set_input_sound_destination_async(
+    ) -> Result<(Vec<u8>, String), Box<dyn std::error::Error>> {
         let file = convert_file_handle(
             AsyncFileDialog::new()
                 .add_filter("sound", &["ogg", "mp3", "wav"])
@@ -269,18 +285,17 @@ mod input_sound_destination {
                 .await,
         )
         .await?;
-        Ok(file.1)
+        Ok((Vec::from(file.read().await), file.file_name()))
     }
 
-    pub fn set_input_sound_destination() -> Result<std::string::String, Box<(dyn std::error::Error)>>
-    {
+    pub fn get_input_sound<'a>() -> Result<(Vec<u8>, String), Box<(dyn std::error::Error)>> {
         #[cfg(target_arch = "wasm32")]
         {
             do_wasm_task(set_input_sound_destination_async())
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            return set_input_sound_destination_sync();
+            return get_input_sound_sync();
         }
     }
 }
@@ -307,7 +322,7 @@ mod save_project_file_as {
     async fn save_project_file_as_async(
         project_file: ProjectFile,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let path = convert_file_handle(
+        let fs = convert_file_handle(
             AsyncFileDialog::new()
                 .add_filter("text", &["ron"])
                 .set_directory("./")
@@ -315,8 +330,10 @@ mod save_project_file_as {
                 .await,
         )
         .await?;
-        save_project_file(project_file, &path)?;
-        Ok(path.1)
+
+        fs.write(ron::ser::to_string(&project_file)?.as_bytes())
+            .await?;
+        Ok(fs.file_name())
     }
 
     pub fn save_project_file_as(

@@ -23,4 +23,5 @@ itertools = "0.13.0"
 futures = "0.3.30"
 wasm-bindgen-futures = "0.4.42"
 getrandom = { version = "0.2.15", features = ["js"] }
+wasm-bindgen = "0.2.92"
 
