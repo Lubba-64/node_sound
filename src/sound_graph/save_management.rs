@@ -47,7 +47,7 @@ pub struct WorkingFileSettings {
     pub latest_saved_file: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ProjectFile {
     pub graph_state: SoundGraphEditorState,
 }
@@ -94,6 +94,37 @@ pub fn convert_option_pathbuf(
         }
     };
     Ok(path)
+}
+
+// welcome to hell.
+pub struct WasmAsyncResolver<T: 'static>(
+    Option<T>,
+    #[cfg(target_arch = "wasm32")] Task<T>,
+    #[cfg(target_arch = "wasm32")] Option<T>,
+);
+
+impl<T: 'static> WasmAsyncResolver<T> {
+    #[cfg(not(target_arch = "wasm32"))]
+    fn new_sync(item: T) -> WasmAsyncResolver<T> {
+        return Self(Some(item));
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn new(task: Task<T>) -> WasmAsyncResolver<T> {
+        return Self(None::<T>, task, None::<T>);
+    }
+
+    pub fn poll(&mut self) -> &Option<T> {
+        #[cfg(target_arch = "wasm32")]
+        {
+            self.2 = self.1.take_output().map(|x| x.unwrap());
+            &self.2
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            &self.0
+        }
+    }
 }
 
 pub fn save_project_file(
@@ -145,31 +176,6 @@ async fn convert_file_handle(
     Ok(fh)
 }
 
-#[cfg(target_arch = "wasm32")]
-fn do_wasm_task<T: 'static, F: Future<Output = Result<T, Box<dyn std::error::Error>>> + 'static>(
-    future: F,
-) -> Result<T, Box<dyn std::error::Error>> {
-    let path = match Task::<Result<T, Box<dyn std::error::Error>>>::spawn(future).take_output() {
-        Some(x) => x,
-        None => {
-            return Err(Box::new(Error::new(
-                ErrorKind::Other,
-                "file pick did not work",
-            )));
-        }
-    };
-    let project_file_unwrapped = match path {
-        Err(x) => {
-            return Err(Box::new(Error::new(
-                ErrorKind::Other,
-                "file pick did not work",
-            )));
-        }
-        Ok(x) => x,
-    }?;
-    return Ok(project_file_unwrapped);
-}
-
 mod open_project_file {
     use super::*;
     #[cfg(not(target_arch = "wasm32"))]
@@ -205,14 +211,15 @@ mod open_project_file {
     }
 
     pub fn open_project_file(
-    ) -> Result<(std::string::String, ProjectFile), Box<(dyn std::error::Error)>> {
+    ) -> WasmAsyncResolver<Result<(std::string::String, ProjectFile), Box<(dyn std::error::Error)>>>
+    {
         #[cfg(target_arch = "wasm32")]
         {
-            do_wasm_task(open_project_file_async())
+            WasmAsyncResolver::new(Task::spawn(open_project_file_async()))
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            open_project_file_sync()
+            WasmAsyncResolver::new_sync(open_project_file_sync())
         }
     }
 }
@@ -247,14 +254,16 @@ mod output_sound_destination {
         Ok(())
     }
 
-    pub fn write_output_sound(sound: Vec<u8>) -> Result<(), Box<(dyn std::error::Error)>> {
+    pub fn write_output_sound(
+        sound: Vec<u8>,
+    ) -> WasmAsyncResolver<Result<(), Box<dyn std::error::Error>>> {
         #[cfg(target_arch = "wasm32")]
         {
-            do_wasm_task(write_output_sound_async(sound))
+            WasmAsyncResolver::new(Task::spawn(write_output_sound_async(sound)))
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            write_output_sound_sync(sound)
+            WasmAsyncResolver::new_sync(write_output_sound_sync(sound))
         }
     }
 }
@@ -275,8 +284,7 @@ mod input_sound {
     }
 
     #[cfg(target_arch = "wasm32")]
-    async fn set_input_sound_destination_async(
-    ) -> Result<(Vec<u8>, String), Box<dyn std::error::Error>> {
+    async fn set_input_sound_async() -> Result<(Vec<u8>, String), Box<dyn std::error::Error>> {
         let file = convert_file_handle(
             AsyncFileDialog::new()
                 .add_filter("sound", &["ogg", "mp3", "wav"])
@@ -288,14 +296,15 @@ mod input_sound {
         Ok((Vec::from(file.read().await), file.file_name()))
     }
 
-    pub fn get_input_sound<'a>() -> Result<(Vec<u8>, String), Box<(dyn std::error::Error)>> {
+    pub fn get_input_sound<'a>(
+    ) -> WasmAsyncResolver<Result<(Vec<u8>, String), Box<dyn std::error::Error>>> {
         #[cfg(target_arch = "wasm32")]
         {
-            do_wasm_task(set_input_sound_destination_async())
+            WasmAsyncResolver::new(Task::spawn(set_input_sound_async()))
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            return get_input_sound_sync();
+            WasmAsyncResolver::new_sync(get_input_sound_sync())
         }
     }
 }
@@ -338,14 +347,14 @@ mod save_project_file_as {
 
     pub fn save_project_file_as(
         project_file: ProjectFile,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> WasmAsyncResolver<Result<std::string::String, Box<dyn std::error::Error>>> {
         #[cfg(target_arch = "wasm32")]
         {
-            do_wasm_task(save_project_file_as_async(project_file))
+            WasmAsyncResolver::new(Task::spawn(save_project_file_as_async(project_file)))
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            save_project_file_as_sync(project_file)
+            WasmAsyncResolver::new_sync(save_project_file_as_sync(project_file))
         }
     }
 }
