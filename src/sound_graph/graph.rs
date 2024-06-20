@@ -1,8 +1,8 @@
 use super::graph_types::InputValueConfig;
 use super::save_management::{
-    convert_option_pathbuf, get_current_exe_dir, get_current_working_settings, open_project_file,
-    save_current_working_settings, save_project_file, save_project_file_as,
-    set_output_sound_destination, ProjectFile, WorkingFileSettings,
+    get_current_exe_dir, get_current_working_settings, get_input_sound, open_project_file,
+    save_current_working_settings, save_project_file, save_project_file_as, write_output_sound,
+    ProjectFile, WorkingFileSettings,
 };
 use super::DEFAULT_SAMPLE_RATE;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
@@ -11,14 +11,15 @@ use crate::sound_graph::save_management::get_project_file;
 use crate::sound_map;
 use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers, TextStyle};
 use egui_node_graph_2::*;
-use rfd::FileDialog;
 use rodio::source::Source;
 use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
+use std::io::{BufWriter, Cursor, Read};
 use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
+use wasm_bindgen::prelude::*;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct NodeData {
@@ -40,6 +41,7 @@ pub struct SoundGraphState {
     pub sound_result_evaluated: bool,
     pub recording_length: usize,
     pub is_saved: bool,
+    pub is_done_showing_recording_dialogue: bool,
 }
 
 impl DataTypeTrait<SoundGraphState> for DataType {
@@ -178,16 +180,10 @@ impl WidgetValueTrait for ValueType {
                     None => "",
                 };
                 if ui.button(format!("{}...", file_name)).clicked() {
-                    let file = match convert_option_pathbuf(
-                        FileDialog::new()
-                            .add_filter("sound", &["ogg", "mp3", "wav"])
-                            .set_directory("./")
-                            .pick_file(),
-                    ) {
-                        Ok(x) => Some(x),
+                    *value = match get_input_sound() {
+                        Ok(x) => Some(x.1),
                         Err(_) => None,
                     };
-                    *value = file
                 }
             }
         }
@@ -271,28 +267,52 @@ pub struct SoundNodeGraphSavedState {
     pub editor_state: SoundGraphEditorState,
 }
 
+pub struct UnserializeableState {
+    pub node_definitions: NodeDefinitions,
+    pub _stream: (OutputStream, OutputStreamHandle),
+    pub sink: Sink,
+}
+
+#[derive(Serialize, Deserialize, Default)]
 pub struct SoundNodeGraph {
     pub settings_state: WorkingFileSettings,
     pub state: SoundNodeGraphSavedState,
-    pub node_definitions: NodeDefinitions,
-    pub stream: (OutputStream, OutputStreamHandle),
-    pub sink: Sink,
+    #[serde(skip)]
+    pub _unserializeable_state: Option<UnserializeableState>,
     pub exe_dir: String,
     settings_path: String,
 }
 
+fn get_unserializeable_state() -> Option<UnserializeableState> {
+    let (stream, stream_handle) =
+        OutputStream::try_default().expect("could not initialize audio subsystem");
+    return Some(UnserializeableState {
+        node_definitions: get_nodes(),
+        sink: Sink::try_new(&stream_handle).expect("could not create audio sink"),
+        _stream: (stream, stream_handle),
+    });
+}
+
 impl SoundNodeGraph {
-    pub fn new() -> Self {
-        let (stream, stream_handle) =
-            OutputStream::try_default().expect("could not initialize audio subsystem");
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        if let Some(storage) = cc.storage {
+            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        }
+
         let exe_dir = get_current_exe_dir().expect("could not get app directory");
         let settings_path = std::path::Path::new(&exe_dir).join("node_settings.ron");
-        let settings_state = match get_current_working_settings(&settings_path.to_str().unwrap()) {
-            Err(_) => WorkingFileSettings::default(),
-            Ok(x) => x,
+
+        let settings_state = {
+            #[cfg(not(target_arch = "wasm32"))]
+            match get_current_working_settings(&settings_path.to_str().unwrap_or("")) {
+                Err(_) => WorkingFileSettings::default(),
+                Ok(x) => x,
+            }
+            #[cfg(target_arch = "wasm32")]
+            WorkingFileSettings::default()
         };
         Self {
-            settings_path: settings_path.to_str().unwrap().to_string(),
+            settings_path: settings_path.to_str().unwrap_or("").to_string(),
             exe_dir: exe_dir,
             state: SoundNodeGraphSavedState {
                 editor_state: match &settings_state.latest_saved_file {
@@ -305,10 +325,15 @@ impl SoundNodeGraph {
                 user_state: SoundGraphState::default(),
             },
             settings_state: settings_state,
-            node_definitions: get_nodes(),
-            sink: Sink::try_new(&stream_handle).expect("could not create audio sink"),
-            stream: (stream, stream_handle),
+            _unserializeable_state: get_unserializeable_state(),
         }
+    }
+
+    fn unserializeable_state(&mut self) -> &mut UnserializeableState {
+        if self._unserializeable_state.is_none() {
+            self._unserializeable_state = get_unserializeable_state();
+        }
+        return self._unserializeable_state.as_mut().unwrap();
     }
 
     fn save_project_file(&mut self, path: &str) {
@@ -372,15 +397,12 @@ impl SoundNodeGraph {
 
 impl eframe::App for SoundNodeGraph {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let _ = self.unserializeable_state();
         ctx.input_mut(|i| {
             if i.consume_shortcut(&KeyboardShortcut::new(Modifiers::CTRL, egui::Key::S)) {
                 match self.settings_state.latest_saved_file.clone() {
                     Some(x) => self.save_project_file(&x),
-                    None => {
-                        let _ = save_project_file_as(ProjectFile {
-                            graph_state: self.state.editor_state.clone(),
-                        });
-                    }
+                    None => {}
                 }
             }
         });
@@ -409,7 +431,13 @@ impl eframe::App for SoundNodeGraph {
             .show(ctx, |ui| {
                 self.state.editor_state.draw_graph_editor(
                     ui,
-                    NodeDefinitionsUi(&self.node_definitions),
+                    NodeDefinitionsUi(
+                        &self
+                            ._unserializeable_state
+                            .as_ref()
+                            .unwrap()
+                            .node_definitions,
+                    ),
                     &mut self.state.user_state,
                     Vec::default(),
                 )
@@ -423,7 +451,6 @@ impl eframe::App for SoundNodeGraph {
         }
 
         let mut sound_result = None;
-        let mut file_path = None;
 
         if self.state.user_state.active_modified {
             match self.state.user_state.active_node {
@@ -435,7 +462,11 @@ impl eframe::App for SoundNodeGraph {
                             &self.state.editor_state.graph,
                             node,
                             &mut HashMap::new(),
-                            &self.node_definitions,
+                            &self
+                                ._unserializeable_state
+                                .as_ref()
+                                .unwrap()
+                                .node_definitions,
                         ) {
                             Ok(value) => {
                                 let sound =
@@ -468,21 +499,18 @@ impl eframe::App for SoundNodeGraph {
                             &self.state.editor_state.graph,
                             node,
                             &mut HashMap::new(),
-                            &self.node_definitions,
+                            &self
+                                ._unserializeable_state
+                                .as_ref()
+                                .unwrap()
+                                .node_definitions,
                         ) {
-                            Ok(value) => match set_output_sound_destination() {
-                                Ok(_file_path) => {
-                                    let sound =
-                                        value.try_to_source().expect("expected valid audio source");
-                                    sound_result = Some(sound.clone());
-                                    file_path = Some(_file_path);
-                                    text = "Recording Anonymous audio source.";
-                                }
-                                Err(_err) => {
-                                    sound_result = None;
-                                    text = "An error occured trying to record the audio source.";
-                                }
-                            },
+                            Ok(value) => {
+                                let sound =
+                                    value.try_to_source().expect("expected valid audio source");
+                                sound_result = Some(sound.clone());
+                                text = "Recording Anonymous audio source.";
+                            }
                             Err(_err) => {
                                 sound_result = None;
                                 text = "An error occured trying to record the audio source.";
@@ -509,23 +537,26 @@ impl eframe::App for SoundNodeGraph {
                 ActiveNodeState::PlayingNode(_) => {
                     if self.state.user_state.active_modified {
                         sound_map::set_repeats(x, 1);
-                        self.sink.append(match sound_map::clone_sound(x) {
-                            Err(_) => {
-                                let x = sound_map::push_sound::<Zero<f32>>(Box::new(
-                                    Zero::<f32>::new(1, DEFAULT_SAMPLE_RATE),
-                                ));
-                                sound_map::clone_sound(x).unwrap()
-                            }
-                            Ok(x) => x,
-                        });
-                        self.sink.play();
-                        self.sink.set_volume(1.0);
+                        self.unserializeable_state()
+                            .sink
+                            .append(match sound_map::clone_sound(x) {
+                                Err(_) => {
+                                    let x = sound_map::push_sound::<Zero<f32>>(Box::new(
+                                        Zero::<f32>::new(1, DEFAULT_SAMPLE_RATE),
+                                    ));
+                                    sound_map::clone_sound(x).unwrap()
+                                }
+                                Ok(x) => x,
+                            });
+                        self.unserializeable_state().sink.play();
+                        self.unserializeable_state().sink.set_volume(1.0);
                         self.state.user_state.active_modified = false;
                     }
                 }
                 ActiveNodeState::RecordingNode(_) => {
-                    if self.state.user_state.active_modified {
-                        let file_path = file_path.unwrap();
+                    if self.state.user_state.active_modified
+                        && !self.state.user_state.is_done_showing_recording_dialogue
+                    {
                         sound_map::set_repeats(x, 1);
                         let source = match sound_map::clone_sound(x) {
                             Err(_) => {
@@ -543,7 +574,12 @@ impl eframe::App for SoundNodeGraph {
                             bits_per_sample: 32,
                             sample_format: hound::SampleFormat::Float,
                         };
-                        let mut writer = hound::WavWriter::create(file_path, spec).unwrap();
+                        let recording_len =
+                            self.state.user_state.recording_length * DEFAULT_SAMPLE_RATE as usize;
+                        let mut vec = Vec::with_capacity(recording_len);
+                        let cursor = Cursor::new(&mut vec);
+                        let stream = BufWriter::new(cursor);
+                        let mut writer = hound::WavWriter::new(stream, spec).unwrap();
                         for (idx, sample) in source.enumerate() {
                             if idx / DEFAULT_SAMPLE_RATE as usize
                                 > self.state.user_state.recording_length
@@ -553,21 +589,25 @@ impl eframe::App for SoundNodeGraph {
                             let _ = writer.write_sample(sample).unwrap();
                         }
                         let _ = writer.finalize().unwrap();
+                        let _ = write_output_sound(vec);
+                        self.state.user_state.is_done_showing_recording_dialogue = true;
                     }
                 }
                 ActiveNodeState::NoNode => {
                     if self.state.user_state.active_modified == true {
-                        self.sink.clear();
+                        self.unserializeable_state().sink.clear();
                         sound_map::clear();
                         self.state.user_state.active_modified = false;
+                        self.state.user_state.is_done_showing_recording_dialogue = false;
                     }
                 }
             },
             None => {
                 if self.state.user_state.active_modified == true {
-                    self.sink.clear();
+                    self.unserializeable_state().sink.clear();
                     sound_map::clear();
                     self.state.user_state.active_modified = false;
+                    self.state.user_state.is_done_showing_recording_dialogue = false;
                 }
             }
         }
