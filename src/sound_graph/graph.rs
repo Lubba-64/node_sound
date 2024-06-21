@@ -9,9 +9,13 @@ use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::save_management::get_project_file;
 use crate::sound_map;
+#[cfg(target_arch = "wasm32")]
+use crate::sound_map::RefSource;
 use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers, TextStyle};
 use egui_node_graph_2::*;
 use rodio::source::Source;
+#[cfg(target_arch = "wasm32")]
+use rodio::source::UniformSourceIterator;
 use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
@@ -19,10 +23,9 @@ use std::ffi::OsStr;
 use std::io::{BufWriter, Cursor};
 use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
+
 #[cfg(target_arch = "wasm32")]
-use web_audio_api::context::{AudioContext, BaseAudioContext};
-#[cfg(target_arch = "wasm32")]
-use web_audio_api::node::{AudioNode, AudioScheduledSourceNode};
+use web_sys::AudioContext;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct NodeData {
@@ -621,10 +624,47 @@ impl eframe::App for SoundNodeGraph {
                             self.unserializeable_state().sink.append(sound);
                             self.unserializeable_state().sink.play();
                             self.unserializeable_state().sink.set_volume(1.0);
-                            self.state.user_state.active_modified = false;
                         }
                         #[cfg(target_arch = "wasm32")]
-                        {}
+                        {
+                            let context = AudioContext::new().expect("wasm audio failed");
+                            let sample_rate = context.sample_rate().round() as u32;
+                            let mut translated_sound: UniformSourceIterator<RefSource, f32> =
+                                UniformSourceIterator::new(sound, 1, sample_rate);
+                            context.destination().set_channel_count(1);
+
+                            let mut buffer = context
+                                .create_buffer(
+                                    1,
+                                    sample_rate * self.state.user_state.recording_length as u32,
+                                    sample_rate as f32,
+                                )
+                                .expect("wasm audio failed");
+                            let mut buffer_values_0 = vec![];
+                            for i in 0..sample_rate * self.state.user_state.recording_length as u32
+                            {
+                                match translated_sound.next() {
+                                    Some(f) => {
+                                        buffer_values_0.push(f);
+                                    }
+                                    None => {
+                                        break;
+                                    }
+                                }
+                            }
+                            buffer
+                                .copy_to_channel(&buffer_values_0, 0)
+                                .expect("wasm audio failed");
+
+                            let mut src =
+                                context.create_buffer_source().expect("wasm audio failed");
+                            src.set_buffer(Some(&buffer));
+                            src.connect_with_audio_node(&context.destination())
+                                .expect("wasm audio failed");
+                            src.start().expect("wasm audio failed");
+                            let _ = context.resume().expect("wasm audio failed");
+                        }
+                        self.state.user_state.active_modified = false;
                     }
                 }
                 ActiveNodeState::RecordingNode(_) => {
