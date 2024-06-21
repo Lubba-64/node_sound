@@ -629,7 +629,7 @@ impl eframe::App for SoundNodeGraph {
                         #[cfg(target_arch = "wasm32")]
                         {
                             let channels = 2;
-                            let mut length = 1;
+                            let mut length = 1 + self.state.user_state.recording_length as u32;
                             let context = AudioContext::new().expect("wasm audio failed");
                             let sample_rate = context.sample_rate().round() as u32;
                             let mut translated_sound: UniformSourceIterator<RefSource, f32> =
@@ -663,6 +663,9 @@ impl eframe::App for SoundNodeGraph {
                             }
                             buffer
                                 .copy_to_channel(&buffer_values_0, 0)
+                                .expect("wasm audio failed");
+                            buffer
+                                .copy_to_channel(&buffer_values_1, 1)
                                 .expect("wasm audio failed");
 
                             let mut src =
