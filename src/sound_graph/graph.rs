@@ -625,27 +625,36 @@ impl eframe::App for SoundNodeGraph {
                             self.unserializeable_state().sink.play();
                             self.unserializeable_state().sink.set_volume(1.0);
                         }
+
                         #[cfg(target_arch = "wasm32")]
                         {
+                            let channels = 2;
+                            let mut length = 1;
                             let context = AudioContext::new().expect("wasm audio failed");
                             let sample_rate = context.sample_rate().round() as u32;
                             let mut translated_sound: UniformSourceIterator<RefSource, f32> =
-                                UniformSourceIterator::new(sound, 1, sample_rate);
-                            context.destination().set_channel_count(1);
+                                UniformSourceIterator::new(sound, channels, sample_rate);
+                            context.destination().set_channel_count(channels.into());
 
                             let mut buffer = context
                                 .create_buffer(
-                                    1,
-                                    sample_rate * self.state.user_state.recording_length as u32,
+                                    channels.into(),
+                                    sample_rate * length,
                                     sample_rate as f32,
                                 )
                                 .expect("wasm audio failed");
                             let mut buffer_values_0 = vec![];
-                            for i in 0..sample_rate * self.state.user_state.recording_length as u32
-                            {
+                            let mut buffer_values_1 = vec![];
+                            let mut flip: bool = false;
+                            for i in 0..sample_rate * length * channels as u32 {
                                 match translated_sound.next() {
                                     Some(f) => {
-                                        buffer_values_0.push(f);
+                                        flip = !flip;
+                                        if flip {
+                                            buffer_values_0.push(f);
+                                        } else {
+                                            buffer_values_1.push(f);
+                                        }
                                     }
                                     None => {
                                         break;
@@ -664,6 +673,7 @@ impl eframe::App for SoundNodeGraph {
                             src.start().expect("wasm audio failed");
                             let _ = context.resume().expect("wasm audio failed");
                         }
+
                         self.state.user_state.active_modified = false;
                     }
                 }
