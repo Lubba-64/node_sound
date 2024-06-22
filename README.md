@@ -1,6 +1,6 @@
 # node_sound
 
-The scope of this project for me is done, so if others would like to contribute feel free, but I acheived everything I set out to do.
+I reserve the right to quit this project whenever, that said I am still finding fun new things to add every now and then...
 
 A node based sound construction program written in rust. install the project, and run `cargo run` in the root directory.
 
