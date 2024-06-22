@@ -3,7 +3,10 @@ use super::{
     cloneable_decoder::CloneableDecoder, lfo::Lfo, Abs, Clamp, MergeChannels, Mod, Noise, Pop,
     SawToothWave, SplitChannels, SquareWave, TriangleWave,
 };
-use super::{AutomatedSawToothWave, AutomatedSineWave, TranslateWave};
+use super::{
+    AutomatedSawToothWave, AutomatedSineWave, AutomatedSquareWave, AutomatedTriangleWave, Signum,
+    TranslateWave,
+};
 
 use rodio::source::{
     Amplify, BltFilter, ChannelVolume, Delay, FadeIn, Mix, Repeat, SamplesConverter, SineWave,
@@ -51,6 +54,9 @@ impl RefSourceIter<f32> for Noise {}
 impl RefSourceIter<f32> for Pop {}
 impl<I> RefSourceIter<f32> for ChannelVolume<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for Mod<I> where I: RefSourceIter<f32> {}
-impl<I> RefSourceIter<f32> for AutomatedSawToothWave<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for TranslateWave<I> where I: RefSourceIter<f32> {}
+impl<I> RefSourceIter<f32> for Signum<I> where I: RefSourceIter<f32> {}
+impl<I> RefSourceIter<f32> for AutomatedSawToothWave<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for AutomatedSineWave<I> where I: RefSourceIter<f32> {}
+impl<I> RefSourceIter<f32> for AutomatedSquareWave<I> where I: RefSourceIter<f32> {}
+impl<I> RefSourceIter<f32> for AutomatedTriangleWave<I> where I: RefSourceIter<f32> {}

@@ -50,6 +50,12 @@ mod translate_node;
 use translate_node::{translate_logic, translate_node};
 mod automated_sine_node;
 use automated_sine_node::{automated_sine_logic, automated_sine_node};
+mod automated_square_node;
+use automated_square_node::{automated_square_logic, automated_square_node};
+mod automated_triangle_node;
+use automated_triangle_node::{automated_triangle_logic, automated_triangle_node};
+mod signum_node;
+use signum_node::{signum_logic, signum_node};
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -101,7 +107,7 @@ type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::E
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: [(SoundNode, Box<SoundNodeOp>); 24] = [
+    let nodes: [(SoundNode, Box<SoundNodeOp>); 27] = [
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -129,6 +135,12 @@ pub fn get_nodes() -> NodeDefinitions {
             Box::new(automated_sawtooth_logic),
         ),
         (automated_sine_node(), Box::new(automated_sine_logic)),
+        (automated_square_node(), Box::new(automated_square_logic)),
+        (
+            automated_triangle_node(),
+            Box::new(automated_triangle_logic),
+        ),
+        (signum_node(), Box::new(signum_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
