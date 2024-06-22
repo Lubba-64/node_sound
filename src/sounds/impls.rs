@@ -4,8 +4,8 @@ use super::{
     SawToothWave, SplitChannels, SquareWave, TriangleWave,
 };
 use super::{
-    AutomatedSawToothWave, AutomatedSineWave, AutomatedSquareWave, AutomatedTriangleWave, Signum,
-    TranslateWave,
+    AutomatedMod, AutomatedSawToothWave, AutomatedSineWave, AutomatedSquareWave,
+    AutomatedTriangleWave, Signum, TranslateWave,
 };
 
 use rodio::source::{
@@ -35,6 +35,12 @@ where
 {
 }
 impl<I1, I2> RefSourceIter<f32> for MergeChannels<I1, I2>
+where
+    I1: RefSourceIter<f32>,
+    I2: RefSourceIter<f32>,
+{
+}
+impl<I1, I2> RefSourceIter<f32> for AutomatedMod<I1, I2>
 where
     I1: RefSourceIter<f32>,
     I2: RefSourceIter<f32>,
