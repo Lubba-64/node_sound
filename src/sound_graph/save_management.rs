@@ -10,8 +10,6 @@ use rfd::{AsyncFileDialog, FileHandle};
 use std::cell::Cell;
 #[cfg(target_arch = "wasm32")]
 use std::panic;
-#[cfg(not(target_arch = "wasm32"))]
-use std::path::Path;
 #[cfg(target_arch = "wasm32")]
 use std::rc::Rc;
 #[cfg(target_arch = "wasm32")]
@@ -27,11 +25,6 @@ use std::{
 };
 
 use super::graph::SoundGraphEditorState;
-
-#[cfg(not(target_arch = "wasm32"))]
-fn get_file_name(path: &str) -> Option<String> {
-    return Some(Path::new(path).file_name()?.to_str()?.to_string());
-}
 
 pub fn get_current_exe_dir() -> Option<String> {
     Some(
@@ -186,10 +179,7 @@ mod open_project_file {
                 .set_directory("./")
                 .pick_file(),
         )?;
-        Ok((
-            get_file_name(&file).unwrap(),
-            get_project_file(file.as_str())?,
-        ))
+        Ok((file.clone(), get_project_file(file.as_str())?))
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -280,7 +270,7 @@ mod input_sound {
                 .set_directory("./")
                 .pick_file(),
         )?;
-        Ok((std::fs::read(&file)?, get_file_name(&file).unwrap()))
+        Ok((std::fs::read(&file)?, file))
     }
 
     #[cfg(target_arch = "wasm32")]
