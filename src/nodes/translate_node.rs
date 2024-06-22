@@ -3,16 +3,16 @@ use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
 use crate::sound_map::{self, RefSource};
-use crate::sounds::{Clamp, TranslateWave};
+use crate::sounds::TranslateWave;
 use egui_node_graph_2::InputParamKind;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn translate_node() -> SoundNode {
     SoundNode {
         name: "Translate Wave".to_string(),
-        inputs: HashMap::from([
+        inputs: BTreeMap::from([
             (
                 "start_min".to_string(),
                 InputParameter {
@@ -59,7 +59,7 @@ pub fn translate_node() -> SoundNode {
                 },
             ),
         ]),
-        outputs: HashMap::from([(
+        outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
                 data_type: DataType::AudioSource,
@@ -69,7 +69,7 @@ pub fn translate_node() -> SoundNode {
     }
 }
 pub fn translate_logic(props: SoundNodeProps) -> SoundNodeResult {
-    Ok(HashMap::from([(
+    Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<TranslateWave<RefSource>>(Box::new(TranslateWave::new(

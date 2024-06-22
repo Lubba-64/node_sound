@@ -5,13 +5,13 @@ use crate::sound_graph::graph_types::{
 use crate::sound_map;
 use egui_node_graph_2::InputParamKind;
 use rodio::source::SineWave;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 pub fn sine_node() -> SoundNode {
     SoundNode {
         name: "Sine Wave".to_string(),
-        inputs: HashMap::from([(
+        inputs: BTreeMap::from([(
             "frequency".to_string(),
             InputParameter {
                 data_type: DataType::Float,
@@ -20,7 +20,7 @@ pub fn sine_node() -> SoundNode {
                 value: InputValueConfig::Float { value: 0.0 },
             },
         )]),
-        outputs: HashMap::from([(
+        outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
                 data_type: DataType::AudioSource,
@@ -30,10 +30,12 @@ pub fn sine_node() -> SoundNode {
     }
 }
 pub fn sine_logic(props: SoundNodeProps) -> SoundNodeResult {
-    Ok(HashMap::from([(
+    Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<SineWave>(Box::new(SineWave::new(props.get_float("frequency")?))),
+            value: sound_map::push_sound::<SineWave>(Box::new(SineWave::new(
+                props.get_float("frequency")?,
+            ))),
         },
     )]))
 }

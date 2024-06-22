@@ -7,13 +7,13 @@ use crate::sound_map::{self, RefSource};
 use egui_node_graph_2::InputParamKind;
 use rodio::source::Mix;
 use rodio::Source;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 pub fn mix_node() -> SoundNode {
     SoundNode {
         name: "Mix".to_string(),
-        inputs: HashMap::from([
+        inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
                 InputParameter {
@@ -33,7 +33,7 @@ pub fn mix_node() -> SoundNode {
                 },
             ),
         ]),
-        outputs: HashMap::from([(
+        outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
                 data_type: DataType::AudioSource,
@@ -44,7 +44,7 @@ pub fn mix_node() -> SoundNode {
 }
 
 pub fn mix_logic(props: SoundNodeProps) -> SoundNodeResult {
-    Ok(HashMap::from([(
+    Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<Mix<RefSource, RefSource>>(Box::new(

@@ -6,7 +6,7 @@ use crate::sound_map::{self, RefSource};
 use egui_node_graph_2::InputParamKind;
 use rodio::source::{Amplify, Delay, Mix};
 use rodio::Source;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::time::Duration;
 
 use super::{SoundNodeProps, SoundNodeResult};
@@ -14,7 +14,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn reverb_node() -> SoundNode {
     SoundNode {
         name: "Reverb".to_string(),
-        inputs: HashMap::from([
+        inputs: BTreeMap::from([
             (
                 "duration".to_string(),
                 InputParameter {
@@ -43,7 +43,7 @@ pub fn reverb_node() -> SoundNode {
                 },
             ),
         ]),
-        outputs: HashMap::from([(
+        outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
                 data_type: DataType::AudioSource,
@@ -54,7 +54,7 @@ pub fn reverb_node() -> SoundNode {
 }
 pub fn reverb_logic(props: SoundNodeProps) -> SoundNodeResult {
     let duration = Duration::from_millis(props.get_float("duration")?.round() as u64);
-    Ok(HashMap::from([(
+    Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<Mix<RefSource, Delay<Amplify<RefSource>>>>(Box::new(

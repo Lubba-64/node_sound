@@ -44,10 +44,12 @@ mod pop_node;
 use pop_node::{pop_logic, pop_node};
 mod mod_node;
 use mod_node::{mod_logic, mod_node};
-mod automated_sawtooth;
-use automated_sawtooth::{automated_sawtooth_logic, automated_sawtooth_node};
+mod automated_sawtooth_node;
+use automated_sawtooth_node::{automated_sawtooth_logic, automated_sawtooth_node};
 mod translate_node;
 use translate_node::{translate_logic, translate_node};
+mod automated_sine_node;
+use automated_sine_node::{automated_sine_logic, automated_sine_node};
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -90,16 +92,16 @@ impl SoundNodeProps {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SoundNode {
     pub name: String,
-    pub inputs: HashMap<String, InputParameter>,
-    pub outputs: HashMap<String, Output>,
+    pub inputs: BTreeMap<String, InputParameter>,
+    pub outputs: BTreeMap<String, Output>,
 }
 type SoundNodeOp =
-    fn(SoundNodeProps) -> Result<HashMap<String, ValueType>, Box<dyn std::error::Error>>;
-type SoundNodeResult = Result<HashMap<String, ValueType>, Box<dyn std::error::Error>>;
+    fn(SoundNodeProps) -> Result<BTreeMap<String, ValueType>, Box<dyn std::error::Error>>;
+type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::Error>>;
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: [(SoundNode, Box<SoundNodeOp>); 23] = [
+    let nodes: [(SoundNode, Box<SoundNodeOp>); 24] = [
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -126,6 +128,7 @@ pub fn get_nodes() -> NodeDefinitions {
             automated_sawtooth_node(),
             Box::new(automated_sawtooth_logic),
         ),
+        (automated_sine_node(), Box::new(automated_sine_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

@@ -5,14 +5,14 @@ use crate::sound_graph::graph_types::{
 use crate::sound_map::{self, RefSource, RepeatSource};
 use egui_node_graph_2::InputParamKind;
 use rodio::Source;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn repeat_infinite_node() -> SoundNode {
     SoundNode {
         name: "Repeat Infinite".to_string(),
-        inputs: HashMap::from([(
+        inputs: BTreeMap::from([(
             "audio 1".to_string(),
             InputParameter {
                 data_type: DataType::AudioSource,
@@ -21,7 +21,7 @@ pub fn repeat_infinite_node() -> SoundNode {
                 value: InputValueConfig::AudioSource {},
             },
         )]),
-        outputs: HashMap::from([(
+        outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
                 data_type: DataType::AudioSource,
@@ -32,7 +32,7 @@ pub fn repeat_infinite_node() -> SoundNode {
 }
 
 pub fn repeat_infinite_logic(props: SoundNodeProps) -> SoundNodeResult {
-    Ok(HashMap::from([(
+    Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<RepeatSource<RefSource>>(Box::new(
