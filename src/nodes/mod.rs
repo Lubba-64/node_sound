@@ -44,6 +44,10 @@ mod pop_node;
 use pop_node::{pop_logic, pop_node};
 mod mod_node;
 use mod_node::{mod_logic, mod_node};
+mod automated_sawtooth;
+use automated_sawtooth::{automated_sawtooth_logic, automated_sawtooth_node};
+mod translate_node;
+use translate_node::{translate_logic, translate_node};
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -95,7 +99,7 @@ type SoundNodeResult = Result<HashMap<String, ValueType>, Box<dyn std::error::Er
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: [(SoundNode, Box<SoundNodeOp>); 21] = [
+    let nodes: [(SoundNode, Box<SoundNodeOp>); 23] = [
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -117,6 +121,11 @@ pub fn get_nodes() -> NodeDefinitions {
         (reverb_node(), Box::new(reverb_logic)),
         (pop_node(), Box::new(pop_logic)),
         (mod_node(), Box::new(mod_logic)),
+        (translate_node(), Box::new(translate_logic)),
+        (
+            automated_sawtooth_node(),
+            Box::new(automated_sawtooth_logic),
+        ),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

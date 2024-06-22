@@ -3,32 +3,50 @@ use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
 use crate::sound_map::{self, RefSource};
-use crate::sounds::Clamp;
+use crate::sounds::{Clamp, TranslateWave};
 use egui_node_graph_2::InputParamKind;
 use std::collections::HashMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn clamp_node() -> SoundNode {
+pub fn translate_node() -> SoundNode {
     SoundNode {
-        name: "Clamp".to_string(),
+        name: "Translate Wave".to_string(),
         inputs: HashMap::from([
             (
-                "min".to_string(),
+                "start_min".to_string(),
                 InputParameter {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
-                    name: "min".to_string(),
+                    name: "start_min".to_string(),
+                    value: InputValueConfig::Float { value: 1.0 },
+                },
+            ),
+            (
+                "start_max".to_string(),
+                InputParameter {
+                    data_type: DataType::Float,
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "start_max".to_string(),
                     value: InputValueConfig::Float { value: -1.0 },
                 },
             ),
             (
-                "max".to_string(),
+                "end_min".to_string(),
                 InputParameter {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
-                    name: "max".to_string(),
+                    name: "end_min".to_string(),
                     value: InputValueConfig::Float { value: 1.0 },
+                },
+            ),
+            (
+                "end_max".to_string(),
+                InputParameter {
+                    data_type: DataType::Float,
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "end_max".to_string(),
+                    value: InputValueConfig::Float { value: -1.0 },
                 },
             ),
             (
@@ -50,14 +68,16 @@ pub fn clamp_node() -> SoundNode {
         )]),
     }
 }
-pub fn clamp_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn translate_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(HashMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<Clamp<RefSource>>(Box::new(Clamp::new(
+            value: sound_map::push_sound::<TranslateWave<RefSource>>(Box::new(TranslateWave::new(
                 sound_map::clone_sound(props.get_source("audio 1")?)?,
-                Some(props.get_float("min")?),
-                Some(props.get_float("max")?),
+                props.get_float("start_min")?,
+                props.get_float("start_max")?,
+                props.get_float("end_min")?,
+                props.get_float("end_max")?,
             ))),
         },
     )]))

@@ -410,13 +410,16 @@ impl SoundNodeGraph {
         let mut option_res: Option<(String, ProjectFile)> = None;
         if let Some(x) = &mut self.unserializeable_state().open_project_file_wasm_future {
             match x.poll() {
-                Some(x) => match x {
-                    Ok(y) => {
-                        let bruh = (*y).clone();
-                        option_res = Some(bruh);
+                Some(x) => {
+                    match x {
+                        Ok(y) => {
+                            let bruh = (*y).clone();
+                            option_res = Some(bruh);
+                        }
+                        Err(_) => {}
                     }
-                    Err(_) => {}
-                },
+                    self.unserializeable_state().open_project_file_wasm_future = None;
+                }
                 None => {}
             }
         }

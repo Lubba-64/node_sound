@@ -23,4 +23,8 @@ mod pop;
 pub use pop::Pop;
 mod mod_source;
 pub use mod_source::Mod;
+mod automated_sawtooth;
+pub use automated_sawtooth::AutomatedSawToothWave;
 mod pitch_shifter;
+mod translate_wave;
+pub use translate_wave::TranslateWave;
