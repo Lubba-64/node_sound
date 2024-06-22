@@ -5,14 +5,14 @@ use crate::sound_graph::graph_types::{
 use crate::sound_map::{self, RefSource};
 use crate::sounds::AutomatedSawToothWave;
 use egui_node_graph_2::InputParamKind;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn automated_sawtooth_node() -> SoundNode {
     SoundNode {
         name: "Automated Sawtooth Wave".to_string(),
-        inputs: HashMap::from([(
+        inputs: BTreeMap::from([(
             "freq".to_string(),
             InputParameter {
                 data_type: DataType::AudioSource,
@@ -21,7 +21,7 @@ pub fn automated_sawtooth_node() -> SoundNode {
                 value: InputValueConfig::AudioSource {},
             },
         )]),
-        outputs: HashMap::from([(
+        outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
                 data_type: DataType::AudioSource,
@@ -31,7 +31,7 @@ pub fn automated_sawtooth_node() -> SoundNode {
     }
 }
 pub fn automated_sawtooth_logic(props: SoundNodeProps) -> SoundNodeResult {
-    Ok(HashMap::from([(
+    Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<AutomatedSawToothWave<RefSource>>(Box::new(

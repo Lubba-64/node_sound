@@ -6,13 +6,13 @@ use crate::sound_map::{self, RefSource};
 use crate::sounds::Lfo;
 use egui_node_graph_2::InputParamKind;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 pub fn lfo_node() -> SoundNode {
     SoundNode {
         name: "Lfo".to_string(),
-        inputs: HashMap::from([
+        inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
                 InputParameter {
@@ -32,7 +32,7 @@ pub fn lfo_node() -> SoundNode {
                 },
             ),
         ]),
-        outputs: HashMap::from([(
+        outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
                 data_type: DataType::AudioSource,
@@ -43,7 +43,7 @@ pub fn lfo_node() -> SoundNode {
 }
 
 pub fn lfo_logic(props: SoundNodeProps) -> SoundNodeResult {
-    Ok(HashMap::from([(
+    Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<Lfo<RefSource, RefSource>>(Box::new(Lfo::new(

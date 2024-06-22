@@ -5,14 +5,14 @@ use crate::sound_graph::graph_types::{
 use crate::sound_map::{self, RefSource};
 use crate::sounds::Mod;
 use egui_node_graph_2::InputParamKind;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn mod_node() -> SoundNode {
     SoundNode {
         name: "Mod".to_string(),
-        inputs: HashMap::from([
+        inputs: BTreeMap::from([
             (
                 "mod".to_string(),
                 InputParameter {
@@ -32,7 +32,7 @@ pub fn mod_node() -> SoundNode {
                 },
             ),
         ]),
-        outputs: HashMap::from([(
+        outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
                 data_type: DataType::AudioSource,
@@ -42,7 +42,7 @@ pub fn mod_node() -> SoundNode {
     }
 }
 pub fn mod_logic(props: SoundNodeProps) -> SoundNodeResult {
-    Ok(HashMap::from([(
+    Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<Mod<RefSource>>(Box::new(Mod::new(

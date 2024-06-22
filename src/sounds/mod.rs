@@ -28,3 +28,5 @@ pub use automated_sawtooth::AutomatedSawToothWave;
 mod pitch_shifter;
 mod translate_wave;
 pub use translate_wave::TranslateWave;
+mod automated_sine;
+pub use automated_sine::AutomatedSineWave;

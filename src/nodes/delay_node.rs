@@ -6,14 +6,14 @@ use crate::sound_map::{self, RefSource};
 use egui_node_graph_2::InputParamKind;
 use rodio::source::Delay;
 use rodio::Source;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn delay_node() -> SoundNode {
     SoundNode {
         name: "Delay".to_string(),
-        inputs: HashMap::from([
+        inputs: BTreeMap::from([
             (
                 "delay".to_string(),
                 InputParameter {
@@ -33,7 +33,7 @@ pub fn delay_node() -> SoundNode {
                 },
             ),
         ]),
-        outputs: HashMap::from([(
+        outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
                 data_type: DataType::AudioSource,
@@ -44,7 +44,7 @@ pub fn delay_node() -> SoundNode {
 }
 
 pub fn delay_logic(props: SoundNodeProps) -> SoundNodeResult {
-    Ok(HashMap::from([(
+    Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<Delay<RefSource>>(Box::new(

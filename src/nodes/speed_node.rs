@@ -6,14 +6,14 @@ use crate::sound_map::{self, RefSource};
 use egui_node_graph_2::InputParamKind;
 use rodio::source::Speed;
 use rodio::Source;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn speed_node() -> SoundNode {
     SoundNode {
         name: "Speed".to_string(),
-        inputs: HashMap::from([
+        inputs: BTreeMap::from([
             (
                 "speed".to_string(),
                 InputParameter {
@@ -33,7 +33,7 @@ pub fn speed_node() -> SoundNode {
                 },
             ),
         ]),
-        outputs: HashMap::from([(
+        outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
                 data_type: DataType::AudioSource,
@@ -43,7 +43,7 @@ pub fn speed_node() -> SoundNode {
     }
 }
 pub fn speed_logic(props: SoundNodeProps) -> SoundNodeResult {
-    Ok(HashMap::from([(
+    Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<Speed<RefSource>>(Box::new(
