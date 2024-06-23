@@ -3,7 +3,7 @@ use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
 use crate::sound_map::{self, RefSource};
-use crate::sounds::{AutomatedClamp, AutomatedTriangleWave};
+use crate::sounds::AutomatedClamp;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
