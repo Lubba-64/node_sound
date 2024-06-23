@@ -5,6 +5,7 @@ use super::save_management::{
     ProjectFile, WasmAsyncResolver, WorkingFileSettings,
 };
 use super::DEFAULT_SAMPLE_RATE;
+use crate::macros::macros::crate_version;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::save_management::get_project_file;
@@ -23,7 +24,6 @@ use std::ffi::OsStr;
 use std::io::{BufWriter, Cursor};
 use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
-
 #[cfg(target_arch = "wasm32")]
 use web_sys::AudioContext;
 
@@ -486,6 +486,7 @@ impl eframe::App for SoundNodeGraph {
             egui::menu::bar(ui, |ui| {
                 egui::widgets::global_dark_light_mode_switch(ui);
                 self.combobox(ui);
+                ui.add(egui::Label::new(crate_version!()));
                 ui.add(egui::Label::new(format!(
                     "{}{}",
                     match &self.settings_state.latest_saved_file {

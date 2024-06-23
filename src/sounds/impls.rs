@@ -4,8 +4,8 @@ use super::{
     SawToothWave, SplitChannels, SquareWave, TriangleWave,
 };
 use super::{
-    AutomatedMod, AutomatedSawToothWave, AutomatedSineWave, AutomatedSquareWave,
-    AutomatedTriangleWave, Signum, TranslateWave,
+    AutomatedClamp, AutomatedMod, AutomatedSawToothWave, AutomatedSineWave, AutomatedSquareWave,
+    AutomatedTranslateWave, AutomatedTriangleWave, Signum, TranslateWave,
 };
 
 use rodio::source::{
@@ -66,3 +66,19 @@ impl<I> RefSourceIter<f32> for AutomatedSawToothWave<I> where I: RefSourceIter<f
 impl<I> RefSourceIter<f32> for AutomatedSineWave<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for AutomatedSquareWave<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for AutomatedTriangleWave<I> where I: RefSourceIter<f32> {}
+impl<I1, I2, I3> RefSourceIter<f32> for AutomatedClamp<I1, I2, I3>
+where
+    I1: RefSourceIter<f32>,
+    I2: RefSourceIter<f32>,
+    I3: RefSourceIter<f32>,
+{
+}
+impl<I1, I2, I3, I4, I5> RefSourceIter<f32> for AutomatedTranslateWave<I1, I2, I3, I4, I5>
+where
+    I1: RefSourceIter<f32>,
+    I2: RefSourceIter<f32>,
+    I3: RefSourceIter<f32>,
+    I4: RefSourceIter<f32>,
+    I5: RefSourceIter<f32>,
+{
+}
