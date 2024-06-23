@@ -5,6 +5,7 @@ mod sound_map;
 mod sounds;
 use eframe;
 use eframe::egui;
+mod macros;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]

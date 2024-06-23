@@ -1,16 +1,3 @@
-// To translate a point from range A to range B, you can use the following formula:
-//
-// f(t) = c + ((d-c) / (b-a)) * (t-a)
-// f(p) = self.end_min + ((self.end_max - self.end_min) / (self.start_max - self.start_min)) * (p - self.start_min)
-// Where:
-//
-// f(t) is the translated point
-// c is the minimum value of range B
-// d is the maximum value of range B
-// a is the minimum value of range A
-// b is the maximum value of range A
-// t is the point to be translated from range A
-
 use rodio::Source;
 
 use crate::sound_graph::DEFAULT_SAMPLE_RATE;
