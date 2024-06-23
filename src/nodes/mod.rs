@@ -62,7 +62,8 @@ mod automated_clamp;
 use automated_clamp::{automated_clamp_logic, automated_clamp_node};
 mod automated_translate_node;
 use automated_translate_node::{automated_translate_logic, automated_translate_node};
-
+mod const_node;
+use const_node::{const_logic, const_node};
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -114,7 +115,7 @@ type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::E
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: [(SoundNode, Box<SoundNodeOp>); 30] = [
+    let nodes: [(SoundNode, Box<SoundNodeOp>); 31] = [
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -154,6 +155,7 @@ pub fn get_nodes() -> NodeDefinitions {
             automated_translate_node(),
             Box::new(automated_translate_logic),
         ),
+        (const_node(), Box::new(const_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
