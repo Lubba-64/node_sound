@@ -42,3 +42,5 @@ mod automated_clamp;
 pub use automated_clamp::AutomatedClamp;
 mod automated_translate;
 pub use automated_translate::AutomatedTranslateWave;
+mod const_wave;
+pub use const_wave::ConstWave;
