@@ -6,6 +6,7 @@ mod sounds;
 use eframe;
 use eframe::egui;
 mod macros;
+mod mobile_wasm_touch_events;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
