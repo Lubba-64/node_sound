@@ -586,11 +586,11 @@ impl eframe::App for SoundNodeGraph {
                 ui.add(egui::Label::new(crate_version!()));
                 ui.add(egui::Label::new("|"));
                 if ui.add(egui::Link::new("tutorial")).clicked() {
-                    let url = "https://www.youtube.com/watch?v=HQrrGoOnNys";
-                    #[cfg(not(target_arch = "wasm32"))]
-                    let _ = open::that(url);
+                    let _url = "https://www.youtube.com/watch?v=HQrrGoOnNys";
+                    #[cfg(feature = "non-wasm")]
+                    let _ = open::that(_url);
                     #[cfg(target_arch = "wasm32")]
-                    open_url(url);
+                    open_url(_url);
                 }
                 ui.add(egui::Label::new("|"));
                 ui.add(egui::Label::new(format!(
