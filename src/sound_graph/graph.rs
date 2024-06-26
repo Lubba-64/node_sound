@@ -44,11 +44,6 @@ pub enum ActiveNodeState {
 
 #[derive(Default)]
 pub struct UnserializeableState {
-    pub save_as_wasm_future:
-        Option<WasmAsyncResolver<Result<std::string::String, Box<dyn std::error::Error>>>>,
-    pub open_project_file_wasm_future: Option<
-        WasmAsyncResolver<Result<(std::string::String, ProjectFile), Box<(dyn std::error::Error)>>>,
-    >,
     pub input_sound_wasm_future: Option<(
         WasmAsyncResolver<Result<(Vec<u8>, String), Box<dyn std::error::Error>>>,
         NodeId,
@@ -341,6 +336,11 @@ pub struct UnserializeableGraphState {
     pub node_definitions: Option<NodeDefinitions>,
     pub _stream: Option<(OutputStream, OutputStreamHandle)>,
     pub sink: Option<Sink>,
+    pub save_as_wasm_future:
+        Option<WasmAsyncResolver<Result<std::string::String, Box<dyn std::error::Error>>>>,
+    pub open_project_file_wasm_future: Option<
+        WasmAsyncResolver<Result<(std::string::String, ProjectFile), Box<(dyn std::error::Error)>>>,
+    >,
 }
 
 pub fn get_unserializeable_graph_state() -> UnserializeableGraphState {
@@ -350,6 +350,8 @@ pub fn get_unserializeable_graph_state() -> UnserializeableGraphState {
         node_definitions: Some(get_nodes()),
         sink: Some(Sink::try_new(&stream_handle).expect("could not create audio sink")),
         _stream: Some((stream, stream_handle)),
+        open_project_file_wasm_future: None,
+        save_as_wasm_future: None,
     };
 }
 
@@ -365,8 +367,6 @@ pub struct SoundNodeGraph {
 
 fn get_unserializeable_state() -> Option<UnserializeableState> {
     return Some(UnserializeableState {
-        save_as_wasm_future: None,
-        open_project_file_wasm_future: None,
         input_sound_wasm_future: None,
     });
 }
@@ -436,14 +436,7 @@ impl SoundNodeGraph {
 
     fn poll_wasm_futures(&mut self) {
         let mut option_res_2: Option<String> = None;
-        if let Some(future) = &mut self
-            .state
-            .user_state
-            ._unserializeable_state
-            .as_mut()
-            .unwrap()
-            .save_as_wasm_future
-        {
+        if let Some(future) = &mut self._unserializeable_state.save_as_wasm_future {
             match future.poll() {
                 Some(poll) => {
                     match poll {
@@ -452,12 +445,7 @@ impl SoundNodeGraph {
                         }
                         Err(_) => {}
                     }
-                    self.state
-                        .user_state
-                        ._unserializeable_state
-                        .as_mut()
-                        .unwrap()
-                        .save_as_wasm_future = None;
+                    self._unserializeable_state.save_as_wasm_future = None;
                 }
                 None => {}
             }
@@ -470,14 +458,7 @@ impl SoundNodeGraph {
         }
 
         let mut option_res: Option<(String, ProjectFile)> = None;
-        if let Some(future) = &mut self
-            .state
-            .user_state
-            ._unserializeable_state
-            .as_mut()
-            .unwrap()
-            .open_project_file_wasm_future
-        {
+        if let Some(future) = &mut self._unserializeable_state.open_project_file_wasm_future {
             match future.poll() {
                 Some(poll) => {
                     match poll {
@@ -486,12 +467,7 @@ impl SoundNodeGraph {
                         }
                         Err(_) => {}
                     }
-                    self.state
-                        .user_state
-                        ._unserializeable_state
-                        .as_mut()
-                        .unwrap()
-                        .open_project_file_wasm_future = None;
+                    self._unserializeable_state.open_project_file_wasm_future = None;
                 }
                 None => {}
             }
@@ -509,12 +485,7 @@ impl SoundNodeGraph {
     }
 
     fn save_project_settings_as(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        self.state
-            .user_state
-            ._unserializeable_state
-            .as_mut()
-            .unwrap()
-            .save_as_wasm_future = Some(save_project_file_as(ProjectFile {
+        self._unserializeable_state.save_as_wasm_future = Some(save_project_file_as(ProjectFile {
             graph_state: self.state.editor_state.clone(),
         }));
         Ok(())
@@ -537,12 +508,8 @@ impl SoundNodeGraph {
                 self.save_project_settings_as()?;
             }
             if ui.add(egui::Button::new("Open")).clicked() {
-                self.state
-                    .user_state
-                    ._unserializeable_state
-                    .as_mut()
-                    .unwrap()
-                    .open_project_file_wasm_future = Some(open_project_file());
+                self._unserializeable_state.open_project_file_wasm_future =
+                    Some(open_project_file());
             }
             Ok(())
         });
