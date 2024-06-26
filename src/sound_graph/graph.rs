@@ -551,14 +551,8 @@ impl SoundNodeGraph {
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
-extern "C" {
-    fn window() -> web_sys::Window;
-}
-
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
 pub fn open_url(url: &str) {
-    let window = window();
+    let window = web_sys::window().expect("failed to retrieve window");
     let _ = window.open_with_url(url);
 }
 
