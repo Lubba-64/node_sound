@@ -3,12 +3,11 @@ use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
 use crate::sound_map;
-use crate::sounds::CloneableDecoder;
 use egui_node_graph_2::InputParamKind;
+use rodio::source::SamplesConverter;
 use rodio::{Decoder, Source};
 use std::collections::BTreeMap;
-use std::fs::File;
-use std::io::BufReader;
+use std::io::Cursor;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
@@ -21,7 +20,7 @@ pub fn file_node() -> SoundNode {
                 data_type: DataType::File,
                 kind: InputParamKind::ConstantOnly,
                 name: "file".to_string(),
-                value: InputValueConfig::File { value: None },
+                value: InputValueConfig::File {},
             },
         )]),
         outputs: BTreeMap::from([(
@@ -46,11 +45,9 @@ pub fn file_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<CloneableDecoder>(Box::new(CloneableDecoder {
-                path: file.clone().unwrap(),
-                decoder: Decoder::new(BufReader::new(File::open(&file.unwrap())?))?
-                    .convert_samples::<f32>(),
-            })),
+            value: sound_map::push_sound::<SamplesConverter<Decoder<Cursor<&Vec<u8>>>, f32>>(
+                Box::new(Decoder::new(Cursor::new(file.unwrap().1))?.convert_samples()),
+            ),
         },
     )]))
 }

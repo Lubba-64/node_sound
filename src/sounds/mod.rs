@@ -7,8 +7,6 @@ mod sawtooth;
 pub use sawtooth::SawToothWave;
 mod lfo;
 pub use lfo::Lfo;
-mod cloneable_decoder;
-pub use cloneable_decoder::CloneableDecoder;
 mod clamp;
 pub use clamp::Clamp;
 mod abs;

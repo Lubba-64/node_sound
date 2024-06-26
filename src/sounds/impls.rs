@@ -1,7 +1,7 @@
 use super::super::sound_map::RefSourceIter;
 use super::{
-    cloneable_decoder::CloneableDecoder, lfo::Lfo, Abs, Clamp, MergeChannels, Mod, Noise, Pop,
-    SawToothWave, SplitChannels, SquareWave, TriangleWave,
+    Abs, Clamp, Lfo, MergeChannels, Mod, Noise, Pop, SawToothWave, SplitChannels, SquareWave,
+    TriangleWave,
 };
 use super::{
     AutomatedClamp, AutomatedMod, AutomatedSawToothWave, AutomatedSineWave, AutomatedSquareWave,
@@ -12,6 +12,7 @@ use rodio::source::{
     Amplify, BltFilter, ChannelVolume, Delay, FadeIn, Mix, Repeat, SamplesConverter, SineWave,
     SkipDuration, Spatial, Speed, TakeDuration, Zero,
 };
+use rodio::Decoder;
 
 impl RefSourceIter<f32> for SineWave {}
 impl RefSourceIter<f32> for SquareWave {}
@@ -31,8 +32,7 @@ impl<I> RefSourceIter<f32> for SkipDuration<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for Spatial<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for Speed<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for TakeDuration<I> where I: RefSourceIter<f32> {}
-impl<I> RefSourceIter<f32> for SamplesConverter<I, f32> where I: RefSourceIter<f32> {}
-impl RefSourceIter<f32> for CloneableDecoder {}
+impl<I: RefSourceIter<i16>> RefSourceIter<f32> for SamplesConverter<I, f32> {}
 impl<I> RefSourceIter<f32> for Clamp<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for Abs<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for ChannelVolume<I> where I: RefSourceIter<f32> {}
@@ -83,3 +83,4 @@ where
     I5: RefSourceIter<f32>,
 {
 }
+impl<T: std::io::Read + std::io::Seek + 'static> RefSourceIter<i16> for Decoder<T> {}

@@ -93,7 +93,10 @@ impl SoundNodeProps {
             .clone()
             .try_to_duration()?)
     }
-    fn get_file(&self, name: &str) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    fn get_file(
+        &self,
+        name: &str,
+    ) -> Result<Option<(String, Vec<u8>)>, Box<dyn std::error::Error>> {
         Ok(self
             .inputs
             .get(name)

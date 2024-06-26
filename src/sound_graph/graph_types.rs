@@ -31,7 +31,7 @@ mod data_types {
             value: Duration,
         },
         File {
-            value: Option<String>,
+            value: Option<(String, Vec<u8>)>,
         },
     }
 
@@ -46,7 +46,7 @@ mod data_types {
         AudioSource {},
         Float { value: f32 },
         Duration { value: f32 },
-        File { value: Option<String> },
+        File {},
     }
 
     impl Debug for ValueType {
@@ -62,7 +62,7 @@ mod data_types {
                 }
                 Self::None => f.debug_struct("None").finish(),
                 Self::File { value } => f
-                    .debug_struct(&value.clone().unwrap_or("None".to_string()))
+                    .debug_struct(&value.clone().unwrap_or(("None".to_string(), vec![])).0)
                     .finish(),
             }
         }
@@ -92,7 +92,7 @@ mod data_types {
             }
         }
 
-        pub fn try_to_file(self) -> Result<Option<String>, String> {
+        pub fn try_to_file(self) -> Result<Option<(String, Vec<u8>)>, String> {
             match self {
                 ValueType::File { value } => Ok(value),
                 _ => Err("invalid cast".to_string()),
