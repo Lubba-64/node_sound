@@ -25,6 +25,8 @@ use std::io::{BufWriter, Cursor};
 use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 #[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+#[cfg(target_arch = "wasm32")]
 use web_sys::AudioContext;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -547,10 +549,26 @@ impl SoundNodeGraph {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+extern "C" {
+    fn window() -> web_sys::Window;
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn open_url(url: &str) {
+    let window = window();
+    let _ = window.open_with_url(url);
+}
+
 impl eframe::App for SoundNodeGraph {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if self.state.user_state._unserializeable_state.is_none() {
             self.state.user_state._unserializeable_state = get_unserializeable_state();
+        }
+        if self._unserializeable_state.node_definitions.is_none() {
+            self._unserializeable_state = get_unserializeable_graph_state();
         }
         self.poll_wasm_futures();
         ctx.input_mut(|i| {
@@ -566,6 +584,15 @@ impl eframe::App for SoundNodeGraph {
                 egui::widgets::global_dark_light_mode_switch(ui);
                 self.combobox(ui);
                 ui.add(egui::Label::new(crate_version!()));
+                ui.add(egui::Label::new("|"));
+                if ui.add(egui::Link::new("tutorial")).clicked() {
+                    let url = "https://www.youtube.com/watch?v=HQrrGoOnNys";
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let _ = open::that(url);
+                    #[cfg(target_arch = "wasm32")]
+                    open_url(url);
+                }
+                ui.add(egui::Label::new("|"));
                 ui.add(egui::Label::new(format!(
                     "{}{}",
                     match &self.settings_state.latest_saved_file {
