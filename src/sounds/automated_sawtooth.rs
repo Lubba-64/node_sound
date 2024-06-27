@@ -27,7 +27,8 @@ impl<T: rodio::Source<Item = f32>> Iterator for AutomatedSawToothWave<T> {
         self.num_sample = self.num_sample.wrapping_add(1);
         let freq = self.freq.next().unwrap_or(0.0);
 
-        let value = (freq * self.num_sample as f32) / DEFAULT_SAMPLE_RATE as f32;
+        let value = (freq * (self.num_sample as f32 % DEFAULT_SAMPLE_RATE as f32))
+            / DEFAULT_SAMPLE_RATE as f32;
         Some(value % 1.0)
     }
 }
