@@ -383,7 +383,10 @@ mod input_sound_midi {
         )
         .await?;
 
-        Ok((read_midi(&mut Cursor::new(file.read().await))?, file.file_name()))
+        Ok((
+            read_midi(&mut Cursor::new(file.read().await))?,
+            file.file_name(),
+        ))
     }
 
     pub fn get_input_midi<'a>(

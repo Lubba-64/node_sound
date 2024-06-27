@@ -631,7 +631,7 @@ impl eframe::App for SoundNodeGraph {
                 )));
             });
         });
-        let mut user_state = self.state.user_state.clone();
+
         let graph_response = egui::CentralPanel::default()
             .show(ctx, |ui| {
                 self.state.editor_state.draw_graph_editor(
@@ -643,12 +643,12 @@ impl eframe::App for SoundNodeGraph {
                             .as_ref()
                             .unwrap(),
                     ),
-                    &mut user_state,
+                    &mut self.state.user_state,
                     Vec::default(),
                 )
             })
             .inner;
-        self.state.user_state = user_state;
+
         if self.state.user_state._unserializeable_state.is_none() {
             self.state.user_state._unserializeable_state = get_unserializeable_state();
         }
