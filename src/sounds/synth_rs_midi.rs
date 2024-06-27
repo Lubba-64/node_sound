@@ -46,7 +46,7 @@ impl Iterator for MidiRenderer {
     #[inline]
     fn next(&mut self) -> Option<f32> {
         self.num_sample = self.num_sample.wrapping_add(1);
-        if self.num_sample > self.samples.len() {
+        if self.num_sample == self.samples.len() {
             None
         } else {
             Some(self.samples[self.num_sample] as f32)
