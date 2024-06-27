@@ -2220,7 +2220,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound"
-version = "1.1.4"
+version = "1.1.5"
 dependencies = [
  "dyn-clone",
  "eframe",
