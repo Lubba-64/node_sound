@@ -6,6 +6,7 @@ mod data_types {
     use std::fmt::Debug;
 
     use serde::{Deserialize, Serialize};
+    use synthrs::midi::MidiSong;
 
     use super::*;
     #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -14,7 +15,8 @@ mod data_types {
         AudioSource,
         Float,
         Duration,
-        File,
+        AudioFile,
+        MidiFile,
     }
 
     #[derive(Clone, Default, Serialize, Deserialize)]
@@ -30,8 +32,11 @@ mod data_types {
         Duration {
             value: Duration,
         },
-        File {
+        AudioFile {
             value: Option<(String, Vec<u8>)>,
+        },
+        MidiFile {
+            value: Option<(String, MidiSong)>,
         },
     }
 
@@ -46,7 +51,8 @@ mod data_types {
         AudioSource {},
         Float { value: f32 },
         Duration { value: f32 },
-        File {},
+        AudioFile {},
+        MidiFile {},
     }
 
     impl Debug for ValueType {
@@ -61,8 +67,12 @@ mod data_types {
                     f.debug_struct("Duration").field("value", value).finish()
                 }
                 Self::None => f.debug_struct("None").finish(),
-                Self::File { value } => f
+                Self::AudioFile { value } => f
                     .debug_struct(&value.clone().unwrap_or(("None".to_string(), vec![])).0)
+                    .finish(),
+                Self::MidiFile { value } => f
+                    .debug_struct("Midi")
+                    .field("value", &"Anonymous MidiFile")
                     .finish(),
             }
         }
@@ -94,7 +104,13 @@ mod data_types {
 
         pub fn try_to_file(self) -> Result<Option<(String, Vec<u8>)>, String> {
             match self {
-                ValueType::File { value } => Ok(value),
+                ValueType::AudioFile { value } => Ok(value),
+                _ => Err("invalid cast".to_string()),
+            }
+        }
+        pub fn try_to_midi(self) -> Result<Option<(String, MidiSong)>, String> {
+            match self {
+                ValueType::MidiFile { value } => Ok(value),
                 _ => Err("invalid cast".to_string()),
             }
         }

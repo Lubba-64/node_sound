@@ -1,8 +1,8 @@
 use super::graph_types::InputValueConfig;
 use super::save_management::{
-    get_current_exe_dir, get_current_working_settings, get_input_sound, open_project_file,
-    save_current_working_settings, save_project_file, save_project_file_as, write_output_sound,
-    ProjectFile, WasmAsyncResolver, WorkingFileSettings,
+    get_current_exe_dir, get_current_working_settings, get_input_midi, get_input_sound,
+    open_project_file, save_current_working_settings, save_project_file, save_project_file_as,
+    write_output_sound, ProjectFile, WasmAsyncResolver, WorkingFileSettings,
 };
 use super::DEFAULT_SAMPLE_RATE;
 use crate::macros::macros::crate_version;
@@ -24,6 +24,7 @@ use std::ffi::OsStr;
 use std::io::{BufWriter, Cursor};
 use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
+use synthrs::midi::MidiSong;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 #[cfg(target_arch = "wasm32")]
@@ -46,6 +47,10 @@ pub enum ActiveNodeState {
 pub struct UnserializeableState {
     pub input_sound_wasm_future: Option<(
         WasmAsyncResolver<Result<(Vec<u8>, String), Box<dyn std::error::Error>>>,
+        NodeId,
+    )>,
+    pub input_midi_wasm_future: Option<(
+        WasmAsyncResolver<Result<(MidiSong, String), Box<dyn std::error::Error>>>,
         NodeId,
     )>,
 }
@@ -82,8 +87,9 @@ impl DataTypeTrait<SoundGraphState> for DataType {
             DataType::Duration => egui::Color32::from_rgb(38, 109, 211),
             DataType::Float => egui::Color32::from_rgb(238, 207, 109),
             DataType::AudioSource => egui::Color32::from_rgb(100, 150, 100),
-            DataType::File => egui::Color32::from_rgb(100, 100, 150),
+            DataType::AudioFile => egui::Color32::from_rgb(100, 100, 150),
             DataType::None => egui::Color32::from_rgb(100, 100, 100),
+            DataType::MidiFile => egui::Color32::from_rgb(150, 100, 100),
         }
     }
 
@@ -92,8 +98,9 @@ impl DataTypeTrait<SoundGraphState> for DataType {
             DataType::Duration => Cow::Borrowed("Duration"),
             DataType::Float => Cow::Borrowed("Float"),
             DataType::AudioSource => Cow::Borrowed("AudioSource"),
-            DataType::File => Cow::Borrowed("File"),
+            DataType::AudioFile => Cow::Borrowed("File"),
             DataType::None => Cow::Borrowed("None"),
+            DataType::MidiFile => Cow::Borrowed("Midi"),
         }
     }
 }
@@ -139,7 +146,8 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                     InputValueConfig::Duration { value } => ValueType::Duration {
                         value: Duration::from_secs_f32(*value),
                     },
-                    InputValueConfig::File {} => ValueType::File { value: None },
+                    InputValueConfig::AudioFile {} => ValueType::AudioFile { value: None },
+                    InputValueConfig::MidiFile {} => ValueType::MidiFile { value: None },
                 },
                 input.1.kind,
                 true,
@@ -199,7 +207,7 @@ impl WidgetValueTrait for ValueType {
             ValueType::None => {
                 ui.label("None");
             }
-            ValueType::File { value } => {
+            ValueType::AudioFile { value } => {
                 if _user_state._unserializeable_state.is_none() {
                     _user_state._unserializeable_state = get_unserializeable_state();
                 }
@@ -248,6 +256,57 @@ impl WidgetValueTrait for ValueType {
                         .as_mut()
                         .unwrap()
                         .input_sound_wasm_future = None;
+                }
+            }
+            ValueType::MidiFile { value } => {
+                if _user_state._unserializeable_state.is_none() {
+                    _user_state._unserializeable_state = get_unserializeable_state();
+                }
+                let y = &value.clone();
+                let file_name = match y {
+                    Some(x) => std::path::Path::new(&x.0)
+                        .file_name()
+                        .unwrap_or(OsStr::new(""))
+                        .to_str()
+                        .unwrap_or(""),
+                    None => "",
+                };
+                if ui.button(format!("{}...", file_name)).clicked() {
+                    _user_state
+                        ._unserializeable_state
+                        .as_mut()
+                        .unwrap()
+                        .input_midi_wasm_future = Some((get_input_midi(), _node_id));
+                }
+                let mut reset_future: bool = false;
+                if let Some(future) = &mut _user_state
+                    ._unserializeable_state
+                    .as_mut()
+                    .unwrap()
+                    .input_midi_wasm_future
+                {
+                    if future.1 == _node_id {
+                        match future.0.poll() {
+                            Some(poll) => {
+                                match poll {
+                                    Ok(poll_item) => {
+                                        let cloned = poll_item.clone();
+                                        *value = Some((cloned.1, cloned.0))
+                                    }
+                                    Err(_) => {}
+                                }
+                                reset_future = true;
+                            }
+                            None => {}
+                        }
+                    }
+                }
+                if reset_future {
+                    _user_state
+                        ._unserializeable_state
+                        .as_mut()
+                        .unwrap()
+                        .input_midi_wasm_future = None;
                 }
             }
         }
@@ -368,6 +427,7 @@ pub struct SoundNodeGraph {
 fn get_unserializeable_state() -> Option<UnserializeableState> {
     return Some(UnserializeableState {
         input_sound_wasm_future: None,
+        input_midi_wasm_future: None,
     });
 }
 

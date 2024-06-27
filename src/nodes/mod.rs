@@ -9,6 +9,7 @@ mod triangle_node;
 use serde::{Deserialize, Serialize};
 use sine_node::{sine_logic, sine_node};
 use std::{collections::BTreeMap, time::Duration};
+use synthrs::midi::MidiSong;
 use triangle_node::{triangle_logic, triangle_node};
 mod square_node;
 use square_node::{square_logic, square_node};
@@ -64,6 +65,9 @@ mod automated_translate_node;
 use automated_translate_node::{automated_translate_logic, automated_translate_node};
 mod const_node;
 use const_node::{const_logic, const_node};
+mod midi_node;
+use midi_node::{midi_logic, midi_node};
+
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -104,6 +108,17 @@ impl SoundNodeProps {
             .clone()
             .try_to_file()?)
     }
+    fn get_midi(
+        &self,
+        name: &str,
+    ) -> Result<Option<(String, MidiSong)>, Box<dyn std::error::Error>> {
+        Ok(self
+            .inputs
+            .get(name)
+            .unwrap_or_default()
+            .clone()
+            .try_to_midi()?)
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -118,7 +133,7 @@ type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::E
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: [(SoundNode, Box<SoundNodeOp>); 31] = [
+    let nodes: [(SoundNode, Box<SoundNodeOp>); 32] = [
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -159,6 +174,7 @@ pub fn get_nodes() -> NodeDefinitions {
             Box::new(automated_translate_logic),
         ),
         (const_node(), Box::new(const_logic)),
+        (midi_node(), Box::new(midi_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

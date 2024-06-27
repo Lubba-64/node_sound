@@ -17,10 +17,10 @@ pub fn file_node() -> SoundNode {
         inputs: BTreeMap::from([(
             "file".to_string(),
             InputParameter {
-                data_type: DataType::File,
+                data_type: DataType::AudioFile,
                 kind: InputParamKind::ConstantOnly,
                 name: "file".to_string(),
-                value: InputValueConfig::File {},
+                value: InputValueConfig::AudioFile {},
             },
         )]),
         outputs: BTreeMap::from([(

@@ -348,3 +348,53 @@ mod save_project_file_as {
         }
     }
 }
+
+pub use input_sound_midi::get_input_midi;
+
+mod input_sound_midi {
+    use synthrs::midi;
+    use synthrs::midi::MidiSong;
+
+    use super::*;
+    #[cfg(not(target_arch = "wasm32"))]
+    fn get_input_sound_sync<'a>() -> Result<(MidiSong, String), Box<dyn std::error::Error>> {
+        let file = convert_option_pathbuf(
+            FileDialog::new()
+                .add_filter("sound", &["midi", "mid"])
+                .set_directory("./")
+                .pick_file(),
+        )?;
+
+        Ok((midi::read_midi_file(file.clone())?, file))
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    async fn set_input_sound_async() -> Result<(MidiSong, String), Box<dyn std::error::Error>> {
+        use std::io::Cursor;
+
+        use synthrs::midi::read_midi;
+
+        let file = convert_file_handle(
+            AsyncFileDialog::new()
+                .add_filter("sound", &["midi", "mid"])
+                .set_directory("./")
+                .pick_file()
+                .await,
+        )
+        .await?;
+
+        Ok((read_midi(&mut Cursor::new(file.read().await))?, file.file_name()))
+    }
+
+    pub fn get_input_midi<'a>(
+    ) -> WasmAsyncResolver<Result<(MidiSong, String), Box<dyn std::error::Error>>> {
+        #[cfg(target_arch = "wasm32")]
+        {
+            WasmAsyncResolver::new(Task::spawn(set_input_sound_async()))
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            WasmAsyncResolver::new_sync(get_input_sound_sync())
+        }
+    }
+}
