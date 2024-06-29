@@ -44,3 +44,5 @@ mod const_wave;
 pub use const_wave::ConstWave;
 mod synth_rs_midi;
 pub use synth_rs_midi::MidiRenderer;
+mod wrapper;
+pub use wrapper::Wrapper;
