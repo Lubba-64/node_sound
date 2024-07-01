@@ -424,6 +424,9 @@ pub struct SoundNodeGraph {
     settings_path: String,
 }
 
+unsafe impl Send for SoundNodeGraph {}
+unsafe impl Sync for SoundNodeGraph {}
+
 fn get_unserializeable_state() -> Option<UnserializeableState> {
     return Some(UnserializeableState {
         input_sound_wasm_future: None,
@@ -431,43 +434,53 @@ fn get_unserializeable_state() -> Option<UnserializeableState> {
     });
 }
 
-impl SoundNodeGraph {
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+fn _new() -> SoundNodeGraph {
+    let exe_dir = get_current_exe_dir().expect("could not get app directory");
+    let settings_path = std::path::Path::new(&exe_dir).join("node_settings.ron");
+
+    let settings_state = {
+        #[cfg(not(target_arch = "wasm32"))]
+        match get_current_working_settings(&settings_path.to_str().unwrap_or("")) {
+            Err(_) => WorkingFileSettings::default(),
+            Ok(x) => x,
         }
-
-        let exe_dir = get_current_exe_dir().expect("could not get app directory");
-        let settings_path = std::path::Path::new(&exe_dir).join("node_settings.ron");
-
-        let settings_state = {
-            #[cfg(not(target_arch = "wasm32"))]
-            match get_current_working_settings(&settings_path.to_str().unwrap_or("")) {
-                Err(_) => WorkingFileSettings::default(),
-                Ok(x) => x,
-            }
-            #[cfg(target_arch = "wasm32")]
-            WorkingFileSettings::default()
-        };
-        Self {
-            settings_path: settings_path.to_str().unwrap_or("").to_string(),
-            exe_dir: exe_dir,
-            state: SoundNodeGraphSavedState {
-                editor_state: match &settings_state.latest_saved_file {
-                    None => SoundGraphEditorState::default(),
-                    Some(x) => match get_project_file(&x) {
-                        Ok(y) => y.graph_state,
-                        Err(_) => SoundGraphEditorState::default(),
-                    },
-                },
-                user_state: SoundGraphState {
-                    _unserializeable_state: get_unserializeable_state(),
-                    ..Default::default()
+        #[cfg(target_arch = "wasm32")]
+        WorkingFileSettings::default()
+    };
+    SoundNodeGraph {
+        settings_path: settings_path.to_str().unwrap_or("").to_string(),
+        exe_dir: exe_dir,
+        state: SoundNodeGraphSavedState {
+            editor_state: match &settings_state.latest_saved_file {
+                None => SoundGraphEditorState::default(),
+                Some(x) => match get_project_file(&x) {
+                    Ok(y) => y.graph_state,
+                    Err(_) => SoundGraphEditorState::default(),
                 },
             },
-            _unserializeable_state: get_unserializeable_graph_state(),
-            settings_state: settings_state,
+            user_state: SoundGraphState {
+                _unserializeable_state: get_unserializeable_state(),
+                ..Default::default()
+            },
+        },
+        _unserializeable_state: get_unserializeable_graph_state(),
+        settings_state: settings_state,
+    }
+}
+
+impl SoundNodeGraph {
+    pub fn new(cc: Option<&eframe::CreationContext<'_>>) -> Self {
+        if cc.is_some() {
+            if let Some(storage) = cc.unwrap().storage {
+                return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+            }
         }
+
+        _new()
+    }
+
+    pub fn new_raw() -> Self {
+        _new()
     }
 
     fn save_project_file(&mut self, path: &str) {
@@ -574,17 +587,8 @@ impl SoundNodeGraph {
             Ok(())
         });
     }
-}
 
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
-pub fn open_url(url: &str) {
-    let window = web_sys::window().expect("failed to retrieve window");
-    let _ = window.open_with_url(url);
-}
-
-impl eframe::App for SoundNodeGraph {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    pub fn update_root(&mut self, ctx: &egui::Context) {
         if self.state.user_state._unserializeable_state.is_none() {
             self.state.user_state._unserializeable_state = get_unserializeable_state();
         }
@@ -592,6 +596,7 @@ impl eframe::App for SoundNodeGraph {
             self._unserializeable_state = get_unserializeable_graph_state();
         }
         self.poll_wasm_futures();
+
         ctx.input_mut(|i| {
             if i.consume_shortcut(&KeyboardShortcut::new(Modifiers::CTRL, egui::Key::S)) {
                 match self.settings_state.latest_saved_file.clone() {
@@ -875,6 +880,19 @@ impl eframe::App for SoundNodeGraph {
                 }
             }
         }
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn open_url(url: &str) {
+    let window = web_sys::window().expect("failed to retrieve window");
+    let _ = window.open_with_url(url);
+}
+
+impl eframe::App for SoundNodeGraph {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.update_root(ctx)
     }
 }
 

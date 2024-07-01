@@ -1,18 +1,16 @@
 use nih_plug::prelude::*;
-use nih_plug_egui::{create_egui_editor, egui, widgets, EguiState};
+use nih_plug_egui::{create_egui_editor, EguiState};
 use node_sound_core::sound_graph;
 use std::sync::Arc;
-
-/// The time it takes for the peak meter to decay by 12 dB after switching to complete silence.
-const PEAK_METER_DECAY_MS: f64 = 150.0;
-
-/// This is mostly identical to the gain example, minus some fluff, and with a GUI.
 pub struct NodeSound {
     params: Arc<NodeSoundParams>,
 }
 
 #[derive(Params)]
-pub struct NodeSoundParams {}
+pub struct NodeSoundParams {
+    #[persist = "editor-state"]
+    editor_state: Arc<EguiState>,
+}
 
 impl Default for NodeSound {
     fn default() -> Self {
@@ -24,7 +22,9 @@ impl Default for NodeSound {
 
 impl Default for NodeSoundParams {
     fn default() -> Self {
-        Self {}
+        Self {
+            editor_state: EguiState::from_size(1280, 720),
+        }
     }
 }
 
@@ -51,22 +51,21 @@ impl Plugin for NodeSound {
     }
 
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
-        let params = self.params.clone();
-        let peak_meter = self.peak_meter.clone();
         create_egui_editor(
             self.params.editor_state.clone(),
-            (),
+            sound_graph::graph::SoundNodeGraph::new_raw(),
             |_, _| {},
-            move |egui_ctx, setter, _state| sound_graph::graph::SoundNodeGraph::new(egui_ctx),
+            move |egui_ctx, _setter, state| state.update_root(egui_ctx),
         )
     }
 
     fn initialize(
         &mut self,
         _audio_io_layout: &AudioIOLayout,
-        buffer_config: &BufferConfig,
+        _buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
+        true
     }
 
     fn process(
@@ -75,32 +74,7 @@ impl Plugin for NodeSound {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        for channel_samples in buffer.iter_samples() {
-            let mut amplitude = 0.0;
-            let num_samples = channel_samples.len();
-
-            let gain = self.params.gain.smoothed.next();
-            for sample in channel_samples {
-                *sample *= gain;
-                amplitude += *sample;
-            }
-
-            // To save resources, a plugin can (and probably should!) only perform expensive
-            // calculations that are only displayed on the GUI while the GUI is open
-            if self.params.editor_state.is_open() {
-                amplitude = (amplitude / num_samples as f32).abs();
-                let current_peak_meter = self.peak_meter.load(std::sync::atomic::Ordering::Relaxed);
-                let new_peak_meter = if amplitude > current_peak_meter {
-                    amplitude
-                } else {
-                    current_peak_meter * self.peak_meter_decay_weight
-                        + amplitude * (1.0 - self.peak_meter_decay_weight)
-                };
-
-                self.peak_meter
-                    .store(new_peak_meter, std::sync::atomic::Ordering::Relaxed)
-            }
-        }
+        for channel_samples in buffer.iter_samples() {}
 
         ProcessStatus::Normal
     }
@@ -111,12 +85,17 @@ impl ClapPlugin for NodeSound {
     const CLAP_DESCRIPTION: Option<&'static str> = Some("A node graph waveform synth");
     const CLAP_MANUAL_URL: Option<&'static str> = Some(Self::URL);
     const CLAP_SUPPORT_URL: Option<&'static str> = None;
-    const CLAP_FEATURES: &'static [ClapFeature] = &[ClapFeature::Synthesizer, ClapFeature::Stereo];
+    const CLAP_FEATURES: &'static [ClapFeature] = &[
+        ClapFeature::Synthesizer,
+        ClapFeature::Stereo,
+        ClapFeature::Instrument,
+    ];
 }
 
 impl Vst3Plugin for NodeSound {
-    const VST3_CLASS_ID: [u8; 16] = *b"NodeSoundLubba64Egui";
-    const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] = &[Vst3SubCategory::Synth];
+    const VST3_CLASS_ID: [u8; 16] = *b"NodeSoundLubba64";
+    const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] =
+        &[Vst3SubCategory::Synth, Vst3SubCategory::Generator];
 }
 
 nih_export_clap!(NodeSound);

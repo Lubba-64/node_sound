@@ -20,7 +20,7 @@ fn main() -> () {
     eframe::run_native(
         "Sound node graph",
         native_options,
-        Box::new(|cc| Box::new(sound_graph::graph::SoundNodeGraph::new(cc))),
+        Box::new(|cc| Box::new(sound_graph::graph::SoundNodeGraph::new(Some(cc)))),
     )
     .expect("eframe failed to run");
 }
@@ -35,7 +35,7 @@ fn main() {
             .start(
                 "the_canvas_id", // hardcode it
                 web_options,
-                Box::new(|cc| Box::new(sound_graph::graph::SoundNodeGraph::new(cc))),
+                Box::new(|cc| Box::new(sound_graph::graph::SoundNodeGraph::new(Some(cc)))),
             )
             .await
             .expect("failed to start eframe");
