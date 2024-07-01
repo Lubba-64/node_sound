@@ -19,7 +19,7 @@ pub fn noise_node() -> SoundNode {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "min".to_string(),
-                    value: InputValueConfig::Float { value: 1.0 },
+                    value: InputValueConfig::Float { value: -1.0 },
                 },
             ),
             (

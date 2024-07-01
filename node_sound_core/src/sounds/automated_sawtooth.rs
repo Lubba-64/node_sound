@@ -29,7 +29,7 @@ impl<T: rodio::Source<Item = f32>> Iterator for AutomatedSawToothWave<T> {
 
         let value = (freq * (self.num_sample as f32 % DEFAULT_SAMPLE_RATE as f32))
             / DEFAULT_SAMPLE_RATE as f32;
-        Some(value % 1.0)
+        Some((value % 2.0) - 1.0)
     }
 }
 

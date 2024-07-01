@@ -13,7 +13,17 @@ pub struct Noise {
 impl Noise {
     #[inline]
     pub fn new(min: f32, max: f32) -> Self {
-        Self { min: min, max: max }
+        let mut min_1 = min;
+        let mut max_1 = max;
+        if min_1 > max_1 {
+            let other = min_1;
+            min_1 = max_1;
+            max_1 = other;
+        }
+        Self {
+            min: min_1,
+            max: max_1,
+        }
     }
 }
 
