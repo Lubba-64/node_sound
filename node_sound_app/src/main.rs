@@ -1,11 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
-mod nodes;
-mod sound_graph;
-mod sound_map;
-mod sounds;
 use eframe;
 use eframe::egui;
-mod macros;
+use node_sound_core::sound_graph;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
