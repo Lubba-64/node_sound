@@ -6,4 +6,3 @@ edition = "2021"
 [dependencies]
 nih_plug_xtask = { git = "https://github.com/robbert-vdh/nih-plug.git" }
 xtask = "0.1.0"
-

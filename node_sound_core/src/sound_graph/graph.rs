@@ -1,27 +1,38 @@
 use super::graph_types::InputValueConfig;
+#[cfg(not(feature = "vst"))]
+use super::save_management::write_output_sound;
 use super::save_management::{
     get_current_exe_dir, get_current_working_settings, get_input_midi, get_input_sound,
-    open_project_file, save_current_working_settings, save_project_file, save_project_file_as,
-    write_output_sound, ProjectFile, WasmAsyncResolver, WorkingFileSettings,
+    save_current_working_settings, save_project_file, ProjectFile, WasmAsyncResolver,
+    WorkingFileSettings,
 };
+#[cfg(not(feature = "vst"))]
+use super::save_management::{open_project_file, save_project_file_as};
+#[cfg(not(feature = "vst"))]
 use super::DEFAULT_SAMPLE_RATE;
 use crate::macros::macros::crate_version;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::save_management::get_project_file;
+#[cfg(not(feature = "vst"))]
 use crate::sound_map;
 #[cfg(target_arch = "wasm32")]
 use crate::sound_map::RefSource;
-use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers, TextStyle};
-use egui_node_graph_2::*;
+#[cfg(not(feature = "vst"))]
+use eframe::egui::TextStyle;
+use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers};
+pub use egui_node_graph_2::*;
+#[cfg(not(feature = "vst"))]
 use rodio::source::Source;
 #[cfg(target_arch = "wasm32")]
 use rodio::source::UniformSourceIterator;
-use rodio::source::Zero;
+pub use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
+#[cfg(not(feature = "vst"))]
 use std::io::{BufWriter, Cursor};
+#[cfg(not(feature = "vst"))]
 use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 use synthrs::midi::MidiSong;
@@ -41,6 +52,15 @@ pub enum ActiveNodeState {
     RecordingNode(NodeId),
     #[default]
     NoNode,
+}
+
+impl ActiveNodeState {
+    pub fn is_playing(&self) -> bool {
+        match self {
+            ActiveNodeState::PlayingNode(_) => return true,
+            _ => return false,
+        }
+    }
 }
 
 #[derive(Default)]
@@ -66,6 +86,8 @@ pub struct SoundGraphUserState {
     pub is_vst_edit: bool,
     #[cfg(feature = "vst")]
     pub is_vst_taking_input: bool,
+    #[cfg(feature = "vst")]
+    pub vst_output_node_id: Option<NodeId>,
     pub is_done_showing_recording_dialogue: bool,
     #[serde(skip)]
     pub _unserializeable_state: Option<UnserializeableState>,
@@ -83,6 +105,8 @@ impl Clone for SoundGraphUserState {
             is_vst_edit: true,
             #[cfg(feature = "vst")]
             is_vst_taking_input: false,
+            #[cfg(feature = "vst")]
+            vst_output_node_id: None,
             is_done_showing_recording_dialogue: self.is_done_showing_recording_dialogue,
             _unserializeable_state: None,
         }
@@ -569,6 +593,7 @@ impl SoundNodeGraph {
         }
     }
 
+    #[cfg(not(feature = "vst"))]
     fn save_project_settings_as(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self._unserializeable_state.save_as_wasm_future = Some(save_project_file_as(ProjectFile {
             graph_state: self.state.editor_state.clone(),
@@ -576,6 +601,7 @@ impl SoundNodeGraph {
         Ok(())
     }
 
+    #[cfg(not(feature = "vst"))]
     fn combobox(&mut self, ui: &mut egui::Ui) {
         let combobox = egui::ComboBox::from_label("").selected_text("File");
         let _ = combobox.show_ui(ui, |ui| -> Result<(), Box<dyn std::error::Error>> {
@@ -600,6 +626,28 @@ impl SoundNodeGraph {
         });
     }
 
+    #[cfg(feature = "vst")]
+    fn update_output_node(&mut self) {
+        let mut found = false;
+        let mut to_remove: Vec<NodeId> = vec![];
+        for node in self.state.editor_state.graph.iter_nodes() {
+            let found_match =
+                self.state.editor_state.graph.nodes.get(node).unwrap().label == "Output";
+            if found_match && found {
+                to_remove.push(node);
+            } else if found_match {
+                found = true;
+                self.state.user_state.vst_output_node_id = Some(node)
+            }
+        }
+        for node in to_remove {
+            self.state.editor_state.graph.remove_node(node);
+        }
+        if !found {
+            self.state.user_state.vst_output_node_id = None;
+        }
+    }
+
     pub fn update_root(&mut self, ctx: &egui::Context) {
         if self.state.user_state._unserializeable_state.is_none() {
             self.state.user_state._unserializeable_state = get_unserializeable_state();
@@ -608,6 +656,8 @@ impl SoundNodeGraph {
             self._unserializeable_state = get_unserializeable_graph_state();
         }
         self.poll_wasm_futures();
+        #[cfg(feature = "vst")]
+        self.update_output_node();
 
         ctx.input_mut(|i| {
             if i.consume_shortcut(&KeyboardShortcut::new(Modifiers::CTRL, egui::Key::S)) {
@@ -693,219 +743,221 @@ impl SoundNodeGraph {
             }
         }
 
-        let mut sound_result = None;
+        #[cfg(not(feature = "vst"))]
+        {
+            let mut sound_result = None;
 
-        if self.state.user_state.active_modified {
-            match self.state.user_state.active_node {
-                ActiveNodeState::PlayingNode(node) => {
-                    if self.state.editor_state.graph.nodes.contains_key(node) {
-                        let text;
+            if self.state.user_state.active_modified {
+                match self.state.user_state.active_node {
+                    ActiveNodeState::PlayingNode(node) => {
+                        if self.state.editor_state.graph.nodes.contains_key(node) {
+                            let text;
 
-                        match evaluate_node(
-                            &self.state.editor_state.graph,
-                            node,
-                            &mut HashMap::new(),
-                            &self
-                                ._unserializeable_state
-                                .node_definitions
-                                .as_ref()
-                                .unwrap(),
-                        ) {
-                            Ok(value) => {
-                                let sound =
-                                    value.try_to_source().expect("expected valid audio source");
-                                sound_result = Some(sound.clone());
-                                text = "Playing Anonymous audio source.";
-                            }
-                            Err(_err) => {
-                                sound_result = None;
-                                text = "An error occured trying to play the audio source.";
-                            }
-                        };
+                            match evaluate_node(
+                                &self.state.editor_state.graph,
+                                node,
+                                &mut HashMap::new(),
+                                &self
+                                    ._unserializeable_state
+                                    .node_definitions
+                                    .as_ref()
+                                    .unwrap(),
+                            ) {
+                                Ok(value) => {
+                                    let sound =
+                                        value.try_to_source().expect("expected valid audio source");
+                                    sound_result = Some(sound.clone());
+                                    text = "Playing Anonymous audio source.";
+                                }
+                                Err(_err) => {
+                                    sound_result = None;
+                                    text = "An error occured trying to play the audio source.";
+                                }
+                            };
 
-                        ctx.debug_painter().text(
-                            egui::pos2(10.0, 35.0),
-                            egui::Align2::LEFT_TOP,
-                            text,
-                            TextStyle::Button.resolve(&ctx.style()),
-                            egui::Color32::WHITE,
-                        );
-                    } else {
-                        self.state.user_state.active_node = ActiveNodeState::NoNode;
-                    }
-                }
-                ActiveNodeState::RecordingNode(node) => {
-                    if self.state.editor_state.graph.nodes.contains_key(node) {
-                        let text;
-
-                        match evaluate_node(
-                            &self.state.editor_state.graph,
-                            node,
-                            &mut HashMap::new(),
-                            &self
-                                ._unserializeable_state
-                                .node_definitions
-                                .as_ref()
-                                .unwrap(),
-                        ) {
-                            Ok(value) => {
-                                let sound =
-                                    value.try_to_source().expect("expected valid audio source");
-                                sound_result = Some(sound.clone());
-                                text = "Recording Anonymous audio source.";
-                            }
-                            Err(_err) => {
-                                sound_result = None;
-                                text = "An error occured trying to record the audio source.";
-                            }
-                        };
-
-                        ctx.debug_painter().text(
-                            egui::pos2(10.0, 35.0),
-                            egui::Align2::LEFT_TOP,
-                            text,
-                            TextStyle::Button.resolve(&ctx.style()),
-                            egui::Color32::WHITE,
-                        );
-                    } else {
-                        self.state.user_state.active_node = ActiveNodeState::NoNode;
-                    }
-                }
-                ActiveNodeState::NoNode => {}
-            }
-        }
-
-        match sound_result {
-            Some(x) => match self.state.user_state.active_node {
-                ActiveNodeState::PlayingNode(_) => {
-                    if self.state.user_state.active_modified {
-                        sound_map::set_repeats(x, 1);
-                        let sound: sound_map::RefSource = match sound_map::clone_sound(x) {
-                            Err(_) => {
-                                let x = sound_map::push_sound::<Zero<f32>>(Box::new(
-                                    Zero::<f32>::new(1, DEFAULT_SAMPLE_RATE),
-                                ));
-                                sound_map::clone_sound(x).unwrap()
-                            }
-                            Ok(x) => x,
-                        };
-                        #[cfg(not(target_arch = "wasm32"))]
-                        {
-                            let sink = self._unserializeable_state.sink.as_ref().unwrap();
-                            sink.append(sound);
-                            sink.play();
-                            sink.set_volume(1.0);
+                            ctx.debug_painter().text(
+                                egui::pos2(10.0, 35.0),
+                                egui::Align2::LEFT_TOP,
+                                text,
+                                TextStyle::Button.resolve(&ctx.style()),
+                                egui::Color32::WHITE,
+                            );
+                        } else {
+                            self.state.user_state.active_node = ActiveNodeState::NoNode;
                         }
+                    }
+                    ActiveNodeState::RecordingNode(node) => {
+                        if self.state.editor_state.graph.nodes.contains_key(node) {
+                            let text;
 
-                        #[cfg(target_arch = "wasm32")]
-                        {
-                            let channels = 2;
-                            let mut length = 1 + self.state.user_state.recording_length as u32;
-                            let context = AudioContext::new().expect("wasm audio failed");
-                            let sample_rate = context.sample_rate().round() as u32;
-                            let mut translated_sound: UniformSourceIterator<RefSource, f32> =
-                                UniformSourceIterator::new(sound, channels, sample_rate);
-                            context.destination().set_channel_count(channels.into());
+                            match evaluate_node(
+                                &self.state.editor_state.graph,
+                                node,
+                                &mut HashMap::new(),
+                                &self
+                                    ._unserializeable_state
+                                    .node_definitions
+                                    .as_ref()
+                                    .unwrap(),
+                            ) {
+                                Ok(value) => {
+                                    let sound =
+                                        value.try_to_source().expect("expected valid audio source");
+                                    sound_result = Some(sound.clone());
+                                    text = "Recording Anonymous audio source.";
+                                }
+                                Err(_err) => {
+                                    sound_result = None;
+                                    text = "An error occured trying to record the audio source.";
+                                }
+                            };
 
-                            let mut buffer = context
-                                .create_buffer(
-                                    channels.into(),
-                                    sample_rate * length,
-                                    sample_rate as f32,
-                                )
-                                .expect("wasm audio failed");
-                            let mut buffer_values_0 = vec![];
-                            let mut buffer_values_1 = vec![];
-                            let mut flip: bool = false;
-                            for i in 0..sample_rate * length * channels as u32 {
-                                match translated_sound.next() {
-                                    Some(f) => {
-                                        flip = !flip;
-                                        if flip {
-                                            buffer_values_0.push(f);
-                                        } else {
-                                            buffer_values_1.push(f);
+                            ctx.debug_painter().text(
+                                egui::pos2(10.0, 35.0),
+                                egui::Align2::LEFT_TOP,
+                                text,
+                                TextStyle::Button.resolve(&ctx.style()),
+                                egui::Color32::WHITE,
+                            );
+                        } else {
+                            self.state.user_state.active_node = ActiveNodeState::NoNode;
+                        }
+                    }
+                    ActiveNodeState::NoNode => {}
+                }
+            }
+
+            match sound_result {
+                Some(x) => match self.state.user_state.active_node {
+                    ActiveNodeState::PlayingNode(_) => {
+                        if self.state.user_state.active_modified {
+                            sound_map::set_repeats(x, 1);
+                            let sound: sound_map::RefSource = match sound_map::clone_sound(x) {
+                                Err(_) => {
+                                    let x = sound_map::push_sound::<Zero<f32>>(Box::new(
+                                        Zero::<f32>::new(1, DEFAULT_SAMPLE_RATE),
+                                    ));
+                                    sound_map::clone_sound(x).unwrap()
+                                }
+                                Ok(x) => x,
+                            };
+                            #[cfg(not(target_arch = "wasm32"))]
+                            {
+                                let sink = self._unserializeable_state.sink.as_ref().unwrap();
+                                sink.append(sound);
+                                sink.play();
+                                sink.set_volume(1.0);
+                            }
+
+                            #[cfg(target_arch = "wasm32")]
+                            {
+                                let channels = 2;
+                                let mut length = 1 + self.state.user_state.recording_length as u32;
+                                let context = AudioContext::new().expect("wasm audio failed");
+                                let sample_rate = context.sample_rate().round() as u32;
+                                let mut translated_sound: UniformSourceIterator<RefSource, f32> =
+                                    UniformSourceIterator::new(sound, channels, sample_rate);
+                                context.destination().set_channel_count(channels.into());
+
+                                let mut buffer = context
+                                    .create_buffer(
+                                        channels.into(),
+                                        sample_rate * length,
+                                        sample_rate as f32,
+                                    )
+                                    .expect("wasm audio failed");
+                                let mut buffer_values_0 = vec![];
+                                let mut buffer_values_1 = vec![];
+                                let mut flip: bool = false;
+                                for i in 0..sample_rate * length * channels as u32 {
+                                    match translated_sound.next() {
+                                        Some(f) => {
+                                            flip = !flip;
+                                            if flip {
+                                                buffer_values_0.push(f);
+                                            } else {
+                                                buffer_values_1.push(f);
+                                            }
+                                        }
+                                        None => {
+                                            break;
                                         }
                                     }
-                                    None => {
-                                        break;
-                                    }
                                 }
-                            }
-                            buffer
-                                .copy_to_channel(&buffer_values_0, 0)
-                                .expect("wasm audio failed");
-                            buffer
-                                .copy_to_channel(&buffer_values_1, 1)
-                                .expect("wasm audio failed");
+                                buffer
+                                    .copy_to_channel(&buffer_values_0, 0)
+                                    .expect("wasm audio failed");
+                                buffer
+                                    .copy_to_channel(&buffer_values_1, 1)
+                                    .expect("wasm audio failed");
 
-                            let mut src =
-                                context.create_buffer_source().expect("wasm audio failed");
-                            src.set_buffer(Some(&buffer));
-                            src.connect_with_audio_node(&context.destination())
-                                .expect("wasm audio failed");
-                            src.start().expect("wasm audio failed");
-                            let _ = context.resume().expect("wasm audio failed");
-                        }
+                                let mut src =
+                                    context.create_buffer_source().expect("wasm audio failed");
+                                src.set_buffer(Some(&buffer));
+                                src.connect_with_audio_node(&context.destination())
+                                    .expect("wasm audio failed");
+                                src.start().expect("wasm audio failed");
+                                let _ = context.resume().expect("wasm audio failed");
+                            }
 
-                        self.state.user_state.active_modified = false;
-                    }
-                }
-                ActiveNodeState::RecordingNode(_) => {
-                    if self.state.user_state.active_modified
-                        && !self.state.user_state.is_done_showing_recording_dialogue
-                    {
-                        sound_map::set_repeats(x, 1);
-                        let source = match sound_map::clone_sound(x) {
-                            Err(_) => {
-                                let x = sound_map::push_sound::<Zero<f32>>(Box::new(Zero::new(
-                                    1,
-                                    DEFAULT_SAMPLE_RATE,
-                                )));
-                                sound_map::clone_sound(x).unwrap()
-                            }
-                            Ok(x) => x,
-                        };
-                        let spec = hound::WavSpec {
-                            channels: source.channels(),
-                            sample_rate: DEFAULT_SAMPLE_RATE,
-                            bits_per_sample: 32,
-                            sample_format: hound::SampleFormat::Float,
-                        };
-                        let recording_len =
-                            self.state.user_state.recording_length * DEFAULT_SAMPLE_RATE as usize;
-                        let mut vec = Vec::with_capacity(recording_len);
-                        let cursor = Cursor::new(&mut vec);
-                        let stream = BufWriter::new(cursor);
-                        let mut writer = hound::WavWriter::new(stream, spec).unwrap();
-                        for (idx, sample) in source.enumerate() {
-                            if idx / DEFAULT_SAMPLE_RATE as usize
-                                > self.state.user_state.recording_length
-                            {
-                                break;
-                            }
-                            let _ = writer.write_sample(sample).unwrap();
+                            self.state.user_state.active_modified = false;
                         }
-                        let _ = writer.finalize().unwrap();
-                        let _ = write_output_sound(vec);
-                        self.state.user_state.is_done_showing_recording_dialogue = true;
                     }
-                }
-                ActiveNodeState::NoNode => {
+                    ActiveNodeState::RecordingNode(_) => {
+                        if self.state.user_state.active_modified
+                            && !self.state.user_state.is_done_showing_recording_dialogue
+                        {
+                            sound_map::set_repeats(x, 1);
+                            let source = match sound_map::clone_sound(x) {
+                                Err(_) => {
+                                    let x = sound_map::push_sound::<Zero<f32>>(Box::new(
+                                        Zero::new(1, DEFAULT_SAMPLE_RATE),
+                                    ));
+                                    sound_map::clone_sound(x).unwrap()
+                                }
+                                Ok(x) => x,
+                            };
+                            let spec = hound::WavSpec {
+                                channels: source.channels(),
+                                sample_rate: DEFAULT_SAMPLE_RATE,
+                                bits_per_sample: 32,
+                                sample_format: hound::SampleFormat::Float,
+                            };
+                            let recording_len = self.state.user_state.recording_length
+                                * DEFAULT_SAMPLE_RATE as usize;
+                            let mut vec = Vec::with_capacity(recording_len);
+                            let cursor = Cursor::new(&mut vec);
+                            let stream = BufWriter::new(cursor);
+                            let mut writer = hound::WavWriter::new(stream, spec).unwrap();
+                            for (idx, sample) in source.enumerate() {
+                                if idx / DEFAULT_SAMPLE_RATE as usize
+                                    > self.state.user_state.recording_length
+                                {
+                                    break;
+                                }
+                                let _ = writer.write_sample(sample).unwrap();
+                            }
+                            let _ = writer.finalize().unwrap();
+                            let _ = write_output_sound(vec);
+                            self.state.user_state.is_done_showing_recording_dialogue = true;
+                        }
+                    }
+                    ActiveNodeState::NoNode => {
+                        if self.state.user_state.active_modified == true {
+                            self._unserializeable_state.sink.as_ref().unwrap().clear();
+                            sound_map::clear();
+                            self.state.user_state.active_modified = false;
+                            self.state.user_state.is_done_showing_recording_dialogue = false;
+                        }
+                    }
+                },
+                None => {
                     if self.state.user_state.active_modified == true {
                         self._unserializeable_state.sink.as_ref().unwrap().clear();
                         sound_map::clear();
                         self.state.user_state.active_modified = false;
                         self.state.user_state.is_done_showing_recording_dialogue = false;
                     }
-                }
-            },
-            None => {
-                if self.state.user_state.active_modified == true {
-                    self._unserializeable_state.sink.as_ref().unwrap().clear();
-                    sound_map::clear();
-                    self.state.user_state.active_modified = false;
-                    self.state.user_state.is_done_showing_recording_dialogue = false;
                 }
             }
         }

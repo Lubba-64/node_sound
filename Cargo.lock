@@ -2656,10 +2656,12 @@ name = "node_sound_vst"
 version = "1.2.2"
 dependencies = [
  "crossbeam",
+ "egui",
  "lock_api",
  "nih_plug",
  "nih_plug_egui",
  "node_sound_core",
+ "ron",
 ]
 
 [[package]]

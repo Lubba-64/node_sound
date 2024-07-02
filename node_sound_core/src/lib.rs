@@ -1,5 +1,5 @@
 mod macros;
 pub mod nodes;
 pub mod sound_graph;
-mod sound_map;
-mod sounds;
+pub mod sound_map;
+pub mod sounds;
