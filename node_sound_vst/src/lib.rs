@@ -1,15 +1,21 @@
 use nih_plug::prelude::*;
 use nih_plug_egui::{create_egui_editor, EguiState};
-use node_sound_core::sound_graph;
-use std::sync::Arc;
+use node_sound_core::sound_graph::{self, graph::SoundGraphEditorState};
+use std::sync::{Arc, Mutex};
+
 pub struct NodeSound {
     params: Arc<NodeSoundParams>,
 }
+
+static mut EDITOR_STATE_OUT: Option<SoundGraphEditorState> = None;
+static mut EDITOR_STATE_IN: Option<SoundGraphEditorState> = None;
 
 #[derive(Params)]
 pub struct NodeSoundParams {
     #[persist = "editor-state"]
     editor_state: Arc<EguiState>,
+    #[persist = "editor-preset"]
+    editor_preset: Arc<Mutex<SoundGraphEditorState>>,
 }
 
 impl Default for NodeSound {
@@ -24,6 +30,7 @@ impl Default for NodeSoundParams {
     fn default() -> Self {
         Self {
             editor_state: EguiState::from_size(1280, 720),
+            editor_preset: Arc::new(Mutex::new(SoundGraphEditorState::default())),
         }
     }
 }
@@ -37,10 +44,12 @@ impl Plugin for NodeSound {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
     const AUDIO_IO_LAYOUTS: &'static [AudioIOLayout] = &[AudioIOLayout {
+        main_input_channels: NonZeroU32::new(2),
         main_output_channels: NonZeroU32::new(2),
         ..AudioIOLayout::const_default()
     }];
 
+    const MIDI_INPUT: MidiConfig = MidiConfig::Basic;
     const SAMPLE_ACCURATE_AUTOMATION: bool = true;
 
     type SysExMessage = ();
@@ -55,7 +64,17 @@ impl Plugin for NodeSound {
             self.params.editor_state.clone(),
             sound_graph::graph::SoundNodeGraph::new_raw(),
             |_, _| {},
-            move |egui_ctx, _setter, state| state.update_root(egui_ctx),
+            move |egui_ctx, setter, state| {
+                match unsafe { EDITOR_STATE_IN.clone() } {
+                    Some(x) => state.state.editor_state = x,
+                    None => {}
+                }
+                state.update_root(egui_ctx);
+                if state.state.user_state.is_vst_edit {
+                    unsafe { EDITOR_STATE_OUT = Some(state.state.editor_state.clone()) }
+                    state.state.user_state.is_vst_edit = false;
+                }
+            },
         )
     }
 
@@ -74,9 +93,29 @@ impl Plugin for NodeSound {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
+        self.process_static_bs();
         for channel_samples in buffer.iter_samples() {}
-
         ProcessStatus::Normal
+    }
+}
+
+impl NodeSound {
+    fn process_static_bs(&mut self) {
+        match unsafe { EDITOR_STATE_OUT.clone() } {
+            Some(x) => {
+                *self.params.editor_preset.lock().expect("could not lock") = x.clone();
+            }
+            _ => {}
+        }
+        unsafe {
+            EDITOR_STATE_IN = Some(
+                self.params
+                    .editor_preset
+                    .lock()
+                    .expect("could not lock")
+                    .clone(),
+            )
+        }
     }
 }
 
@@ -94,8 +133,11 @@ impl ClapPlugin for NodeSound {
 
 impl Vst3Plugin for NodeSound {
     const VST3_CLASS_ID: [u8; 16] = *b"NodeSoundLubba64";
-    const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] =
-        &[Vst3SubCategory::Synth, Vst3SubCategory::Generator];
+    const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] = &[
+        Vst3SubCategory::Instrument,
+        Vst3SubCategory::Synth,
+        Vst3SubCategory::Stereo,
+    ];
 }
 
 nih_export_clap!(NodeSound);

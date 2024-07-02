@@ -56,18 +56,20 @@ pub struct UnserializeableState {
 }
 
 #[derive(Default, Serialize, Deserialize)]
-pub struct SoundGraphState {
+pub struct SoundGraphUserState {
     pub active_node: ActiveNodeState,
     pub active_modified: bool,
     pub sound_result_evaluated: bool,
     pub recording_length: usize,
     pub is_saved: bool,
+    #[cfg(feature = "vst")]
+    pub is_vst_edit: bool,
     pub is_done_showing_recording_dialogue: bool,
     #[serde(skip)]
     pub _unserializeable_state: Option<UnserializeableState>,
 }
 
-impl Clone for SoundGraphState {
+impl Clone for SoundGraphUserState {
     fn clone(&self) -> Self {
         Self {
             active_node: self.active_node,
@@ -75,14 +77,16 @@ impl Clone for SoundGraphState {
             sound_result_evaluated: self.sound_result_evaluated,
             recording_length: self.recording_length,
             is_saved: self.is_saved,
+            #[cfg(feature = "vst")]
+            is_vst_edit: true,
             is_done_showing_recording_dialogue: self.is_done_showing_recording_dialogue,
             _unserializeable_state: None,
         }
     }
 }
 
-impl DataTypeTrait<SoundGraphState> for DataType {
-    fn data_type_color(&self, _user_state: &mut SoundGraphState) -> egui::Color32 {
+impl DataTypeTrait<SoundGraphUserState> for DataType {
+    fn data_type_color(&self, _user_state: &mut SoundGraphUserState) -> egui::Color32 {
         match self {
             DataType::Duration => egui::Color32::from_rgb(38, 109, 211),
             DataType::Float => egui::Color32::from_rgb(238, 207, 109),
@@ -111,7 +115,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
     type NodeData = NodeData;
     type DataType = DataType;
     type ValueType = ValueType;
-    type UserState = SoundGraphState;
+    type UserState = SoundGraphUserState;
     type CategoryType = ();
 
     fn node_finder_label(&self, _user_state: &mut Self::UserState) -> Cow<'_, str> {
@@ -134,6 +138,10 @@ impl NodeTemplateTrait for NodeDefinitionUi {
         user_state: &mut Self::UserState,
         node_id: NodeId,
     ) {
+        #[cfg(feature = "vst")]
+        {
+            user_state.is_vst_edit = true;
+        }
         user_state.is_saved = false;
         for input in self.0.inputs.iter() {
             graph.add_input_param(
@@ -176,7 +184,7 @@ impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
 
 impl WidgetValueTrait for ValueType {
     type Response = ActiveNodeState;
-    type UserState = SoundGraphState;
+    type UserState = SoundGraphUserState;
     type NodeData = NodeData;
     fn value_widget(
         &mut self,
@@ -317,7 +325,7 @@ impl WidgetValueTrait for ValueType {
 impl UserResponseTrait for ActiveNodeState {}
 impl NodeDataTrait for NodeData {
     type Response = ActiveNodeState;
-    type UserState = SoundGraphState;
+    type UserState = SoundGraphUserState;
     type DataType = DataType;
     type ValueType = ValueType;
 
@@ -382,11 +390,11 @@ impl NodeDataTrait for NodeData {
 type MyGraph = Graph<NodeData, DataType, ValueType>;
 
 pub type SoundGraphEditorState =
-    GraphEditorState<NodeData, DataType, ValueType, NodeDefinitionUi, SoundGraphState>;
+    GraphEditorState<NodeData, DataType, ValueType, NodeDefinitionUi, SoundGraphUserState>;
 
-#[derive(Serialize, Deserialize, Default)]
-pub struct SoundNodeGraphSavedState {
-    pub user_state: SoundGraphState,
+#[derive(Serialize, Deserialize, Default, Clone)]
+pub struct SoundNodeGraphState {
+    pub user_state: SoundGraphUserState,
     pub editor_state: SoundGraphEditorState,
 }
 
@@ -417,7 +425,7 @@ pub fn get_unserializeable_graph_state() -> UnserializeableGraphState {
 #[derive(Serialize, Deserialize, Default)]
 pub struct SoundNodeGraph {
     pub settings_state: WorkingFileSettings,
-    pub state: SoundNodeGraphSavedState,
+    pub state: SoundNodeGraphState,
     pub exe_dir: String,
     #[serde(skip)]
     pub _unserializeable_state: UnserializeableGraphState,
@@ -450,7 +458,7 @@ fn _new() -> SoundNodeGraph {
     SoundNodeGraph {
         settings_path: settings_path.to_str().unwrap_or("").to_string(),
         exe_dir: exe_dir,
-        state: SoundNodeGraphSavedState {
+        state: SoundNodeGraphState {
             editor_state: match &settings_state.latest_saved_file {
                 None => SoundGraphEditorState::default(),
                 Some(x) => match get_project_file(&x) {
@@ -458,7 +466,7 @@ fn _new() -> SoundNodeGraph {
                     Err(_) => SoundGraphEditorState::default(),
                 },
             },
-            user_state: SoundGraphState {
+            user_state: SoundGraphUserState {
                 _unserializeable_state: get_unserializeable_state(),
                 ..Default::default()
             },
@@ -548,9 +556,9 @@ impl SoundNodeGraph {
         match option_res {
             Some(file) => {
                 self.save_project_settings(file.0.clone());
-                self.state = SoundNodeGraphSavedState {
+                self.state = SoundNodeGraphState {
                     editor_state: file.1.graph_state.clone(),
-                    user_state: SoundGraphState::default(),
+                    user_state: SoundGraphUserState::default(),
                 };
             }
             None => {}
@@ -569,7 +577,7 @@ impl SoundNodeGraph {
         let _ = combobox.show_ui(ui, |ui| -> Result<(), Box<dyn std::error::Error>> {
             if ui.add(egui::Button::new("New Project")).clicked() {
                 self.settings_state.latest_saved_file = None;
-                self.state = SoundNodeGraphSavedState::default();
+                self.state = SoundNodeGraphState::default();
             }
             if ui.add(egui::Button::new("Save")).clicked() {
                 match self.settings_state.latest_saved_file.clone() {

@@ -31,3 +31,4 @@ weblog = "0.3.0"
 
 [features]
 non-wasm = ["open"]
+vst = []
