@@ -12,3 +12,5 @@ node_sound_core ={version = "*", path = "../node_sound_core", features = ["vst"]
 nih_plug_egui ={version = "0.0.0", git = "https://github.com/robbert-vdh/nih-plug.git"}
 crossbeam = "0.8.4"
 lock_api = "0.4.12"
+ron = "0.8.1"
+egui = "0.27.2"

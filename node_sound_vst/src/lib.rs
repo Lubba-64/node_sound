@@ -1,27 +1,51 @@
-use nih_plug::prelude::*;
+use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{create_egui_editor, EguiState};
-use node_sound_core::sound_graph::{self, graph::SoundGraphEditorState};
-use std::sync::{Arc, Mutex};
+use node_sound_core::{
+    sound_graph::{
+        self,
+        graph::{evaluate_node, SoundNodeGraph},
+    },
+    sound_map::{self, RefSource},
+};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 pub struct NodeSound {
     params: Arc<NodeSoundParams>,
+    sound: Arc<Mutex<Option<RefSource>>>,
 }
-
-static mut EDITOR_STATE_OUT: Option<SoundGraphEditorState> = None;
-static mut EDITOR_STATE_IN: Option<SoundGraphEditorState> = None;
+pub struct PluginPresetState {
+    graph: Arc<Mutex<SoundNodeGraph>>,
+}
 
 #[derive(Params)]
 pub struct NodeSoundParams {
     #[persist = "editor-state"]
     editor_state: Arc<EguiState>,
     #[persist = "editor-preset"]
-    editor_preset: Arc<Mutex<SoundGraphEditorState>>,
+    plugin_state: PluginPresetState,
+}
+
+impl<'a> PersistentField<'a, String> for PluginPresetState {
+    fn set(&self, new_value: String) {
+        *self.graph.lock().expect("expected to lock") = ron::de::from_str(&new_value).expect("");
+    }
+
+    fn map<F, R>(&self, f: F) -> R
+    where
+        F: Fn(&String) -> R,
+    {
+        f(&ron::ser::to_string(&self.graph).expect("Graph state is ok"))
+    }
 }
 
 impl Default for NodeSound {
     fn default() -> Self {
         Self {
             params: Arc::new(NodeSoundParams::default()),
+            sound: Arc::new(Mutex::new(None)),
         }
     }
 }
@@ -30,7 +54,9 @@ impl Default for NodeSoundParams {
     fn default() -> Self {
         Self {
             editor_state: EguiState::from_size(1280, 720),
-            editor_preset: Arc::new(Mutex::new(SoundGraphEditorState::default())),
+            plugin_state: PluginPresetState {
+                graph: Arc::new(Mutex::new(sound_graph::graph::SoundNodeGraph::new_raw())),
+            },
         }
     }
 }
@@ -62,25 +88,50 @@ impl Plugin for NodeSound {
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
         create_egui_editor(
             self.params.editor_state.clone(),
-            (false, sound_graph::graph::SoundNodeGraph::new_raw()),
+            (self.params.plugin_state.graph.clone(), self.sound.clone()),
             |_, _| {},
-            move |egui_ctx, setter, state| {
-                let is_picked = &mut state.0;
-                let state = &mut state.1;
-                *is_picked = !*is_picked;
+            move |egui_ctx, _setter, state| {
+                let sound_result = &mut state.1.lock().expect("");
+                let state = &mut state.0.lock().expect("");
 
                 state.update_root(egui_ctx);
-                if !state.state.user_state.is_vst_edit && *is_picked {
-                    match unsafe { EDITOR_STATE_IN.clone() } {
+                if sound_result.is_none() || state.state.user_state.active_node.is_playing() {
+                    match state.state.user_state.vst_output_node_id {
                         Some(x) => {
-                            state.state.editor_state = x;
+                            match evaluate_node(
+                                &state.state.editor_state.graph,
+                                x,
+                                &mut HashMap::new(),
+                                &state
+                                    ._unserializeable_state
+                                    .node_definitions
+                                    .as_ref()
+                                    .unwrap(),
+                            ) {
+                                Ok(val) => {
+                                    let sound: sound_map::RefSource = match sound_map::clone_sound(
+                                        val.try_to_source()
+                                            .expect("expected valid audio source")
+                                            .clone(),
+                                    ) {
+                                        Err(_err) => {
+                                            return;
+                                        }
+                                        Ok(x) => x,
+                                    };
+                                    **sound_result = Some(sound);
+                                }
+                                Err(_err) => {
+                                    sound_map::clear();
+                                    **sound_result = None
+                                }
+                            };
                         }
-                        None => {}
+                        None => {
+                            sound_map::clear();
+                            **sound_result = None
+                        }
                     }
-                }
-                if state.state.user_state.is_vst_edit {
-                    unsafe { EDITOR_STATE_OUT = Some(state.state.editor_state.clone()) }
-                    state.state.user_state.is_vst_edit = false;
                 }
             },
         )
@@ -92,15 +143,6 @@ impl Plugin for NodeSound {
         _buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
-        unsafe {
-            EDITOR_STATE_IN = Some(
-                self.params
-                    .editor_preset
-                    .lock()
-                    .expect("could not lock")
-                    .clone(),
-            )
-        }
         true
     }
 
@@ -110,24 +152,16 @@ impl Plugin for NodeSound {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        self.process_static_bs();
-        for channel_samples in buffer.iter_samples() {}
-        ProcessStatus::Normal
-    }
-}
-
-impl NodeSound {
-    fn process_static_bs(&mut self) {
-        match unsafe { EDITOR_STATE_OUT.clone() } {
-            Some(x) => {
-                *self.params.editor_preset.lock().expect("could not lock") = x.clone();
-                unsafe {
-                    EDITOR_STATE_IN = None;
-                    EDITOR_STATE_OUT = None;
+        for mut channel_samples in buffer.iter_samples() {
+            for sample in channel_samples.iter_mut() {
+                *sample = match &mut self.sound.lock().expect("expected lock on source").clone() {
+                    Some(x) => x.next().unwrap_or(0.0).clamp(-1.0, 1.0),
+                    None => 0.0,
                 }
             }
-            _ => {}
         }
+
+        ProcessStatus::Normal
     }
 }
 

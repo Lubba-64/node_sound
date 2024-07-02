@@ -64,6 +64,8 @@ pub struct SoundGraphUserState {
     pub is_saved: bool,
     #[cfg(feature = "vst")]
     pub is_vst_edit: bool,
+    #[cfg(feature = "vst")]
+    pub is_vst_taking_input: bool,
     pub is_done_showing_recording_dialogue: bool,
     #[serde(skip)]
     pub _unserializeable_state: Option<UnserializeableState>,
@@ -79,6 +81,8 @@ impl Clone for SoundGraphUserState {
             is_saved: self.is_saved,
             #[cfg(feature = "vst")]
             is_vst_edit: true,
+            #[cfg(feature = "vst")]
+            is_vst_taking_input: false,
             is_done_showing_recording_dialogue: self.is_done_showing_recording_dialogue,
             _unserializeable_state: None,
         }
@@ -616,6 +620,7 @@ impl SoundNodeGraph {
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::widgets::global_dark_light_mode_switch(ui);
+                #[cfg(not(feature = "vst"))]
                 self.combobox(ui);
                 ui.add(egui::Label::new(crate_version!()));
                 ui.add(egui::Label::new("|"));
@@ -626,22 +631,38 @@ impl SoundNodeGraph {
                     #[cfg(target_arch = "wasm32")]
                     open_url(_url);
                 }
-                ui.add(egui::Label::new("|"));
-                ui.add(egui::Label::new(format!(
-                    "{}{}",
-                    match &self.settings_state.latest_saved_file {
-                        Some(x) => Path::new(x)
-                            .file_name()
-                            .unwrap_or(&OsStr::new(""))
-                            .to_str()
-                            .unwrap_or(""),
-                        None => "<new project>",
-                    },
-                    match self.state.user_state.is_saved {
-                        true => "",
-                        false => "*",
+                #[cfg(not(feature = "vst"))]
+                {
+                    ui.add(egui::Label::new("|"));
+                    ui.add(egui::Label::new(format!(
+                        "{}{}",
+                        match &self.settings_state.latest_saved_file {
+                            Some(x) => Path::new(x)
+                                .file_name()
+                                .unwrap_or(&OsStr::new(""))
+                                .to_str()
+                                .unwrap_or(""),
+                            None => "<new project>",
+                        },
+                        match self.state.user_state.is_saved {
+                            true => "",
+                            false => "*",
+                        }
+                    )));
+                }
+                #[cfg(feature = "vst")]
+                {
+                    ui.add(egui::Label::new("|"));
+                    if self.state.user_state.is_vst_taking_input {
+                        if ui.add(egui::Button::new("Stop Loading Presets")).clicked() {
+                            self.state.user_state.is_vst_taking_input = false;
+                        }
+                    } else {
+                        if ui.add(egui::Button::new("Load VST preset")).clicked() {
+                            self.state.user_state.is_vst_taking_input = true;
+                        }
                     }
-                )));
+                }
             });
         });
 
