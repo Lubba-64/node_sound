@@ -62,14 +62,22 @@ impl Plugin for NodeSound {
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
         create_egui_editor(
             self.params.editor_state.clone(),
-            sound_graph::graph::SoundNodeGraph::new_raw(),
+            (false, sound_graph::graph::SoundNodeGraph::new_raw()),
             |_, _| {},
             move |egui_ctx, setter, state| {
-                match unsafe { EDITOR_STATE_IN.clone() } {
-                    Some(x) => state.state.editor_state = x,
-                    None => {}
-                }
+                let is_picked = &mut state.0;
+                let state = &mut state.1;
+                *is_picked = !*is_picked;
+
                 state.update_root(egui_ctx);
+                if !state.state.user_state.is_vst_edit && *is_picked {
+                    match unsafe { EDITOR_STATE_IN.clone() } {
+                        Some(x) => {
+                            state.state.editor_state = x;
+                        }
+                        None => {}
+                    }
+                }
                 if state.state.user_state.is_vst_edit {
                     unsafe { EDITOR_STATE_OUT = Some(state.state.editor_state.clone()) }
                     state.state.user_state.is_vst_edit = false;
@@ -84,6 +92,15 @@ impl Plugin for NodeSound {
         _buffer_config: &BufferConfig,
         _context: &mut impl InitContext<Self>,
     ) -> bool {
+        unsafe {
+            EDITOR_STATE_IN = Some(
+                self.params
+                    .editor_preset
+                    .lock()
+                    .expect("could not lock")
+                    .clone(),
+            )
+        }
         true
     }
 
@@ -104,17 +121,12 @@ impl NodeSound {
         match unsafe { EDITOR_STATE_OUT.clone() } {
             Some(x) => {
                 *self.params.editor_preset.lock().expect("could not lock") = x.clone();
+                unsafe {
+                    EDITOR_STATE_IN = None;
+                    EDITOR_STATE_OUT = None;
+                }
             }
             _ => {}
-        }
-        unsafe {
-            EDITOR_STATE_IN = Some(
-                self.params
-                    .editor_preset
-                    .lock()
-                    .expect("could not lock")
-                    .clone(),
-            )
         }
     }
 }
