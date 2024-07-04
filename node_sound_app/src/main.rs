@@ -1,11 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
-mod nodes;
-mod sound_graph;
-mod sound_map;
-mod sounds;
 use eframe;
 use eframe::egui;
-mod macros;
+use node_sound_core::sound_graph;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
@@ -24,7 +20,7 @@ fn main() -> () {
     eframe::run_native(
         "Sound node graph",
         native_options,
-        Box::new(|cc| Box::new(sound_graph::graph::SoundNodeGraph::new(cc))),
+        Box::new(|cc| Box::new(sound_graph::graph::SoundNodeGraph::new(Some(cc)))),
     )
     .expect("eframe failed to run");
 }
@@ -39,7 +35,7 @@ fn main() {
             .start(
                 "the_canvas_id", // hardcode it
                 web_options,
-                Box::new(|cc| Box::new(sound_graph::graph::SoundNodeGraph::new(cc))),
+                Box::new(|cc| Box::new(sound_graph::graph::SoundNodeGraph::new(Some(cc)))),
             )
             .await
             .expect("failed to start eframe");

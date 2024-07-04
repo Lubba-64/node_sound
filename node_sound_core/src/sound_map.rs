@@ -191,6 +191,10 @@ pub fn clone_sound(idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> 
     return unsafe { Ok(RefSource::new(SOUND_QUEUE[idx].clone())) };
 }
 
+pub fn sound_queue_len() -> usize {
+    unsafe { SOUND_QUEUE.len() }
+}
+
 pub fn clear() {
     unsafe { SOUND_QUEUE.clear() }
 }

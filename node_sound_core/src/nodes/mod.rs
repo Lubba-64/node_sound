@@ -69,6 +69,10 @@ mod midi_node;
 use midi_node::{midi_logic, midi_node};
 mod wrapper_node;
 use wrapper_node::{wrapper_logic, wrapper_node};
+#[cfg(feature = "vst")]
+mod output_node;
+#[cfg(feature = "vst")]
+use output_node::{output_logic, output_node};
 
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
@@ -135,7 +139,7 @@ type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::E
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: [(SoundNode, Box<SoundNodeOp>); 33] = [
+    let nodes: Vec<(SoundNode, Box<SoundNodeOp>)> = vec![
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -178,6 +182,8 @@ pub fn get_nodes() -> NodeDefinitions {
         (const_node(), Box::new(const_logic)),
         (midi_node(), Box::new(midi_logic)),
         (wrapper_node(), Box::new(wrapper_logic)),
+        #[cfg(feature = "vst")]
+        (output_node(), Box::new(output_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
