@@ -397,7 +397,7 @@ impl Plugin for NodeSound {
                                         let in_buf = &samples;
                                         let mut out_buf = samples.clone();
                                         pitch_shifter.shift_pitch(
-                                            16,
+                                            2,
                                             convert_semitones(
                                                 261.63,
                                                 midi_note_to_freq(vidx as u8),
@@ -618,46 +618,11 @@ impl Plugin for NodeSound {
             output[0][block_start..block_end].fill(0.0);
             output[1][block_start..block_end].fill(0.0);
 
-            // These are the smoothed global parameter values. These are used for voices that do not
-            // have polyphonic modulation applied to them. With a plugin as simple as this it would
-            // be possible to avoid this completely by simply always copying the smoother into the
-            // voice's struct, but that may not be realistic when the plugin has hundreds of
-            // parameters. The `voice_*` arrays are scratch arrays that an individual voice can use.
-            let block_len = block_end - block_start;
-            let mut gain = [0.0; MAX_BLOCK_SIZE];
-            let mut voice_gain = [0.0; MAX_BLOCK_SIZE];
-            let mut voice_amp_envelope = [0.0; MAX_BLOCK_SIZE];
-            self.params.gain.smoothed.next_block(&mut gain, block_len);
-
             for voice in self.voices.iter_mut().filter_map(|v| v.as_mut()) {
-                // Depending on whether the voice has polyphonic modulation applied to it,
-                // either the global parameter values are used, or the voice's smoother is used
-                // to generate unique modulated values for that voice
-                let gain = match &voice.voice_gain {
-                    Some((_, smoother)) => {
-                        smoother.next_block(&mut voice_gain, block_len);
-                        &voice_gain
-                    }
-                    None => &gain,
-                };
-
-                // This is an exponential smoother repurposed as an AR envelope with values between
-                // 0 and 1. When a note off event is received, this envelope will start fading out
-                // again. When it reaches 0, we will terminate the voice.
-                voice
-                    .amp_envelope
-                    .next_block(&mut voice_amp_envelope, block_len);
-
-                for (value_idx, sample_idx) in (block_start..block_end).enumerate() {
-                    let amp = voice.velocity_sqrt * gain[value_idx] * voice_amp_envelope[value_idx];
+                for sample_idx in block_start..block_end {
                     let buffer =
                         &self.sound_buffers.lock().expect("expected lock")[voice.note as usize];
-
-                    let sample: f32 = (buffer
-                        .iter()
-                        .nth((sample_idx + self.current_idx) % (buffer.len() - 1))
-                        .unwrap_or(&1.0)
-                        * amp)
+                    let sample: f32 = buffer[(sample_idx + self.current_idx) % (buffer.len() - 1)]
                         .clamp(-1.0, 1.0);
                     output[0][sample_idx] += sample;
                     output[1][sample_idx] += sample;

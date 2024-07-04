@@ -1,2 +1,2 @@
 [alias]
-bundle_vst = "run --package path+file:///C:/Repos/node_sound/xtask#0.1.0 bundle node_sound_vst --release"
+bundle_vst = "run --package path+file:///C:/Users/lubba/OneDrive/Documents/GitHub/node_sound/xtask#0.1.0 bundle node_sound_vst --release"
