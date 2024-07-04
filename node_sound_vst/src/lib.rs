@@ -1,4 +1,3 @@
-use core::num;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{create_egui_editor, EguiState};
 use node_sound_core::{
@@ -18,6 +17,7 @@ use util::midi_note_to_freq;
 const NUM_VOICES: u32 = 16;
 const GAIN_POLY_MOD_ID: u32 = 0;
 const MAX_BLOCK_SIZE: usize = 64;
+
 /// Data for a single synth voice. In a real synth where performance matter, you may want to use a
 /// struct of arrays instead of having a struct for each voice.
 #[derive(Debug, Clone)]
@@ -121,9 +121,6 @@ impl Default for NodeSoundParams {
                     max: util::db_to_gain(0.0),
                 },
             )
-            // This enables polyphonic mdoulation for this parameter by representing all related
-            // events with this ID. After enabling this, the plugin **must** start sending
-            // `VoiceTerminated` events to the host whenever a voice has ended.
             .with_poly_modulation_id(GAIN_POLY_MOD_ID)
             .with_smoother(SmoothingStyle::Logarithmic(5.0))
             .with_unit(" dB")
@@ -138,9 +135,6 @@ impl Default for NodeSoundParams {
                     factor: FloatRange::skew_factor(-1.0),
                 },
             )
-            // These parameters are global (and they cannot be changed once the voice has started).
-            // They also don't need any smoothing themselves because they affect smoothing
-            // coefficients.
             .with_step_size(0.1)
             .with_unit(" ms"),
             amp_release_ms: FloatParam::new(
@@ -158,23 +152,17 @@ impl Default for NodeSoundParams {
     }
 }
 
-/// Compute a voice ID in case the host doesn't provide them. Polyphonic modulation will not work in
-/// this case, but playing notes will.
 const fn compute_fallback_voice_id(note: u8, channel: u8) -> i32 {
     note as i32 | ((channel as i32) << 16)
 }
 
 impl NodeSound {
-    /// Get the index of a voice by its voice ID, if the voice exists. This does not immediately
-    /// reutnr a reference to the voice to avoid lifetime issues.
     fn get_voice_idx(&mut self, voice_id: i32) -> Option<usize> {
         self.voices
             .iter_mut()
             .position(|voice| matches!(voice, Some(voice) if voice.voice_id == voice_id))
     }
 
-    /// Start a new voice with the given voice ID. If all voices are currently in use, the oldest
-    /// voice will be stolen. Returns a reference to the new voice.
     fn start_voice(
         &mut self,
         context: &mut impl ProcessContext<Self>,
@@ -196,25 +184,18 @@ impl NodeSound {
 
         self.next_internal_voice_id = self.next_internal_voice_id.wrapping_add(1);
 
-        // Can't use `.iter_mut().find()` here because nonlexical lifetimes don't apply to return
-        // values
         match self.voices.iter().position(|voice| voice.is_none()) {
             Some(free_voice_idx) => {
                 self.voices[free_voice_idx] = Some(new_voice);
                 return self.voices[free_voice_idx].as_mut().unwrap();
             }
             None => {
-                // If there is no free voice, find and steal the oldest one
-                // SAFETY: We can skip a lot of checked unwraps here since we already know all voices are in
-                //         use
                 let oldest_voice = self
                     .voices
                     .iter_mut()
                     .min_by_key(|voice| voice.as_ref().unwrap().internal_voice_id)
                     .unwrap();
 
-                // The stolen voice needs to be terminated so the host can reuse its modulation
-                // resources
                 {
                     let oldest_voice = oldest_voice.as_ref().unwrap();
                     context.send_event(NoteEvent::VoiceTerminated {
@@ -231,8 +212,6 @@ impl NodeSound {
         }
     }
 
-    /// Start the release process for one or more voice by changing their amplitude envelope. If
-    /// `voice_id` is not provided, then this will terminate all matching voices.
     fn start_release_for_voices(
         &mut self,
         sample_rate: f32,
@@ -257,9 +236,6 @@ impl NodeSound {
                         SmoothingStyle::Exponential(self.params.amp_release_ms.value());
                     amp_envelope.set_target(sample_rate, 0.0);
 
-                    // If this targetted a single voice ID, we're done here. Otherwise there may be
-                    // multiple overlapping voices as we enabled support for that in the
-                    // `PolyModulationConfig`.
                     if voice_id.is_some() {
                         return;
                     }
@@ -269,9 +245,6 @@ impl NodeSound {
         }
     }
 
-    /// Immediately terminate one or more voice, removing it from the pool and informing the host
-    /// that the voice has ended. If `voice_id` is not provided, then this will terminate all
-    /// matching voices.
     fn choke_voices(
         &mut self,
         context: &mut impl ProcessContext<Self>,
@@ -292,7 +265,7 @@ impl NodeSound {
                 {
                     context.send_event(NoteEvent::VoiceTerminated {
                         timing: sample_offset,
-                        // Notice how we always send the terminated voice ID here
+
                         voice_id: Some(*candidate_voice_id),
                         channel,
                         note,
@@ -441,11 +414,6 @@ impl Plugin for NodeSound {
         _aux: &mut AuxiliaryBuffers,
         context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        // NIH-plug has a block-splitting adapter for `Buffer`. While this works great for effect
-        // plugins, for polyphonic synths the block size should be `min(MAX_BLOCK_SIZE,
-        // num_remaining_samples, next_event_idx - block_start_idx)`. Because blocks also need to be
-        // split on note events, it's easier to work with raw audio here and to do the splitting by
-        // hand.
         let num_samples = buffer.samples();
         *self.sample_rate.lock().expect("expect lock") = context.transport().sample_rate;
         let sample_rate = context.transport().sample_rate;
@@ -456,20 +424,12 @@ impl Plugin for NodeSound {
         let mut block_end: usize = MAX_BLOCK_SIZE.min(num_samples);
 
         while block_start < num_samples {
-            // First of all, handle all note events that happen at the start of the block, and cut
-            // the block short if another event happens before the end of it. To handle polyphonic
-            // modulation for new notes properly, we'll keep track of the next internal note index
-            // at the block's start. If we receive polyphonic modulation that matches a voice that
-            // has an internal note ID that's great than or equal to this one, then we should start
-            // the note's smoother at the new value instead of fading in from the global value.
             let this_sample_internal_voice_id_start = self.next_internal_voice_id;
 
             'events: loop {
                 match next_event {
                     // If the event happens now, then we'll keep processing events
                     Some(event) if (event.timing() as usize) <= block_start => {
-                        // This synth doesn't support any of the polyphonic expression events. A
-                        // real synth plugin however will want to support those.
                         match event {
                             NoteEvent::NoteOn {
                                 timing,
@@ -513,23 +473,11 @@ impl Plugin for NodeSound {
                                 poly_modulation_id,
                                 normalized_offset,
                             } => {
-                                // Polyphonic modulation events are matched to voices using the
-                                // voice ID, and to parameters using the poly modulation ID. The
-                                // host will probably send a modulation event every N samples. This
-                                // will happen before the voice is active, and of course also after
-                                // it has been terminated (because the host doesn't know that it
-                                // will be). Because of that, we won't print any assertion failures
-                                // when we can't find the voice index here.
                                 if let Some(voice_idx) = self.get_voice_idx(voice_id) {
                                     let voice = self.voices[voice_idx].as_mut().unwrap();
 
                                     match poly_modulation_id {
                                         GAIN_POLY_MOD_ID => {
-                                            // This should either create a smoother for this
-                                            // modulated parameter or update the existing one.
-                                            // Notice how this uses the parameter's unmodulated
-                                            // normalized value in combination with the normalized
-                                            // offset to create the target plain value
                                             let target_plain_value = self
                                                 .params
                                                 .gain
@@ -542,10 +490,6 @@ impl Plugin for NodeSound {
                                                     )
                                                 });
 
-                                            // If this `PolyModulation` events happens on the
-                                            // same sample as a voice's `NoteOn` event, then it
-                                            // should immediately use the modulated value
-                                            // instead of slowly fading in
                                             if voice.internal_voice_id
                                                 >= this_sample_internal_voice_id_start
                                             {
@@ -568,21 +512,13 @@ impl Plugin for NodeSound {
                                 poly_modulation_id,
                                 normalized_value,
                             } => {
-                                // Modulation always acts as an offset to the parameter's current
-                                // automated value. So if the host sends a new automation value for
-                                // a modulated parameter, the modulated values/smoothing targets
-                                // need to be updated for all polyphonically modulated voices.
                                 for voice in self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                                     match poly_modulation_id {
                                         GAIN_POLY_MOD_ID => {
                                             let (normalized_offset, smoother) =
                                                 match voice.voice_gain.as_mut() {
                                                     Some((o, s)) => (o, s),
-                                                    // If the voice does not have existing
-                                                    // polyphonic modulation, then there's nothing
-                                                    // to do here. The global automation/monophonic
-                                                    // modulation has already been taken care of by
-                                                    // the framework.
+
                                                     None => continue,
                                                 };
                                             let target_plain_value =
@@ -604,8 +540,7 @@ impl Plugin for NodeSound {
 
                         next_event = context.next_event();
                     }
-                    // If the event happens before the end of the block, then the block should be cut
-                    // short so the next block starts at the event
+
                     Some(event) if (event.timing() as usize) < block_end => {
                         block_end = event.timing() as usize;
                         break 'events;
@@ -614,7 +549,6 @@ impl Plugin for NodeSound {
                 }
             }
 
-            // We'll start with silence, and then add the output from the active voices
             output[0][block_start..block_end].fill(0.0);
             output[1][block_start..block_end].fill(0.0);
 
@@ -629,13 +563,9 @@ impl Plugin for NodeSound {
                 }
             }
 
-            // Terminate voices whose release period has fully ended. This could be done as part of
-            // the previous loop but this is simpler.
             for voice in self.voices.iter_mut() {
                 match voice {
                     Some(v) if v.releasing && v.amp_envelope.previous_value() == 0.0 => {
-                        // This event is very important, as it allows the host to manage its own modulation
-                        // voices
                         context.send_event(NoteEvent::VoiceTerminated {
                             timing: block_end as u32,
                             voice_id: Some(v.voice_id),
@@ -648,7 +578,6 @@ impl Plugin for NodeSound {
                 }
             }
 
-            // And then just keep processing blocks until we've run out of buffer to fill
             block_start = block_end;
             block_end = (block_start + MAX_BLOCK_SIZE).min(num_samples);
         }

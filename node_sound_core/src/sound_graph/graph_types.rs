@@ -70,7 +70,7 @@ mod data_types {
                 Self::AudioFile { value } => f
                     .debug_struct(&value.clone().unwrap_or(("None".to_string(), vec![])).0)
                     .finish(),
-                Self::MidiFile { value } => f
+                Self::MidiFile { value: _ } => f
                     .debug_struct("Midi")
                     .field("value", &"Anonymous MidiFile")
                     .finish(),

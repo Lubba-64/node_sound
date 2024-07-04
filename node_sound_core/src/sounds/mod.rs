@@ -23,7 +23,6 @@ mod mod_source;
 pub use mod_source::Mod;
 mod automated_sawtooth;
 pub use automated_sawtooth::AutomatedSawToothWave;
-mod pitch_shifter;
 mod translate;
 pub use translate::TranslateWave;
 mod automated_sine;
