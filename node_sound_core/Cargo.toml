@@ -27,6 +27,7 @@ tokio = { version = "1.38.0", features = ["time"] }
 open = {version = "5.1.4", optional = true}
 synthrs = {version = "0.1.0", git="https://github.com/Lubba-64/synthrs.git", features = ["ser"]}
 weblog = "0.3.0"
+pitch_shift = "1.0.0"
 
 
 [features]

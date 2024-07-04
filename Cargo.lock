@@ -1290,7 +1290,7 @@ version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330c60081dcc4c72131f8eb70510f1ac07223e5d4163db481a04a0befcffa412"
 dependencies = [
- "libloading 0.7.4",
+ "libloading 0.8.4",
 ]
 
 [[package]]
@@ -2020,7 +2020,7 @@ dependencies = [
  "bitflags 2.6.0",
  "com",
  "libc",
- "libloading 0.7.4",
+ "libloading 0.8.4",
  "thiserror",
  "widestring",
  "winapi",
@@ -2636,6 +2636,7 @@ dependencies = [
  "hound",
  "itertools 0.13.0",
  "open",
+ "pitch_shift",
  "rand 0.8.5",
  "realfft",
  "rfd",
@@ -2661,6 +2662,7 @@ dependencies = [
  "nih_plug",
  "nih_plug_egui",
  "node_sound_core",
+ "pitch_shift",
  "ron",
 ]
 
@@ -2785,7 +2787,7 @@ version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "681030a937600a36906c185595136d26abfebb4aa9c65701cefcaf8578bb982b"
 dependencies = [
- "proc-macro-crate 1.3.1",
+ "proc-macro-crate 3.1.0",
  "proc-macro2",
  "quote",
  "syn 2.0.68",
@@ -3134,6 +3136,16 @@ dependencies = [
  "atomic-waker",
  "fastrand 2.1.0",
  "futures-io",
+]
+
+[[package]]
+name = "pitch_shift"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc3567157c760c60b1bce23b9341a081cbd0b1c89f1d8ca1b8701fec70ecb20b"
+dependencies = [
+ "realfft",
+ "rustfft",
 ]
 
 [[package]]
@@ -4581,7 +4593,7 @@ dependencies = [
  "js-sys",
  "khronos-egl",
  "libc",
- "libloading 0.7.4",
+ "libloading 0.8.4",
  "log",
  "metal",
  "naga",
