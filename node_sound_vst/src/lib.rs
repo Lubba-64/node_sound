@@ -1,9 +1,10 @@
+use core::num;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{create_egui_editor, EguiState};
 use node_sound_core::{
     sound_graph::{
         self,
-        graph::{evaluate_node, SoundNodeGraph},
+        graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
     },
     sound_map::{self, RefSource},
 };
@@ -48,10 +49,14 @@ struct Voice {
 
 pub struct NodeSound {
     params: Arc<NodeSoundParams>,
-    sound: Arc<Mutex<Option<RefSource>>>,
+    sound_buffers: Arc<Mutex<[Vec<f32>; 128]>>,
     voices: [Option<Voice>; NUM_VOICES as usize],
     next_internal_voice_id: u64,
+    sample_rate: Arc<Mutex<f32>>,
+    sound_result: Arc<Mutex<Option<RefSource>>>,
+    current_idx: usize,
 }
+
 pub struct PluginPresetState {
     graph: Arc<Mutex<SoundNodeGraph>>,
 }
@@ -90,9 +95,12 @@ impl Default for NodeSound {
     fn default() -> Self {
         Self {
             params: Arc::new(NodeSoundParams::default()),
-            sound: Arc::new(Mutex::new(None)),
+            sound_buffers: Arc::new(Mutex::new([0; 128].map(|_| vec![]))),
             voices: [0; NUM_VOICES as usize].map(|_| None),
             next_internal_voice_id: 0,
+            sample_rate: Arc::new(Mutex::new(48000.0)),
+            sound_result: Arc::new(Mutex::new(None)),
+            current_idx: 0,
         }
     }
 }
@@ -173,11 +181,9 @@ impl NodeSound {
         sample_offset: u32,
         voice_id: Option<i32>,
         channel: u8,
-        samples: &Vec<f32>,
-        sample_rate: f32,
         note: u8,
     ) -> &mut Voice {
-        let mut new_voice = Voice {
+        let new_voice = Voice {
             voice_id: voice_id.unwrap_or_else(|| compute_fallback_voice_id(note, channel)),
             internal_voice_id: self.next_internal_voice_id,
             channel,
@@ -330,14 +336,22 @@ impl Plugin for NodeSound {
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
         create_egui_editor(
             self.params.editor_state.clone(),
-            (self.params.plugin_state.graph.clone(), self.sound.clone()),
+            (
+                self.params.plugin_state.graph.clone(),
+                self.sound_buffers.clone(),
+                self.sample_rate.clone(),
+                self.sound_result.clone(),
+            ),
             |_, _| {},
             move |egui_ctx, _setter, state| {
-                let sound_result = &mut state.1.lock().expect("");
+                let sound_result = &mut state.3.lock().expect("");
+                let sample_rate = &state.2.lock().expect("expect lock");
+                let sound_buffers = &mut *state.1.lock().expect("");
                 let state = &mut state.0.lock().expect("");
 
                 state.update_root(egui_ctx);
                 if sound_result.is_none() || state.state.user_state.active_node.is_playing() {
+                    state.state.user_state.active_node = ActiveNodeState::NoNode;
                     match state.state.user_state.vst_output_node_id {
                         Some(x) => {
                             match evaluate_node(
@@ -351,16 +365,49 @@ impl Plugin for NodeSound {
                                     .unwrap(),
                             ) {
                                 Ok(val) => {
-                                    let sound: sound_map::RefSource = match sound_map::clone_sound(
-                                        val.try_to_source()
-                                            .expect("expected valid audio source")
-                                            .clone(),
-                                    ) {
-                                        Err(_err) => {
-                                            return;
-                                        }
-                                        Ok(x) => x,
-                                    };
+                                    let mut sound: sound_map::RefSource =
+                                        match sound_map::clone_sound(
+                                            val.try_to_source()
+                                                .expect("expected valid audio source")
+                                                .clone(),
+                                        ) {
+                                            Err(_err) => {
+                                                return;
+                                            }
+                                            Ok(x) => x,
+                                        };
+
+                                    let mut rec_len = state.state.user_state.recording_length;
+                                    if rec_len == 0 {
+                                        rec_len = 1;
+                                    }
+
+                                    let buffer_len = **sample_rate as usize * rec_len;
+
+                                    let samples: Vec<_> = (0..buffer_len)
+                                        .map(|_| sound.next().unwrap_or(0.0).clamp(-1.0, 1.0))
+                                        .collect();
+
+                                    fn convert_semitones(f1: f32, f2: f32) -> f32 {
+                                        12.0 * f32::log2(f2 / f1)
+                                    }
+                                    let mut pitch_shifter =
+                                        PitchShifter::new(rec_len * 1000, **sample_rate as usize);
+                                    for vidx in 0..128usize {
+                                        let in_buf = &samples;
+                                        let mut out_buf = samples.clone();
+                                        pitch_shifter.shift_pitch(
+                                            16,
+                                            convert_semitones(
+                                                261.63,
+                                                midi_note_to_freq(vidx as u8),
+                                            ),
+                                            in_buf,
+                                            &mut out_buf,
+                                        );
+
+                                        sound_buffers[vidx] = out_buf;
+                                    }
                                     **sound_result = Some(sound);
                                 }
                                 Err(_err) => {
@@ -400,21 +447,13 @@ impl Plugin for NodeSound {
         // split on note events, it's easier to work with raw audio here and to do the splitting by
         // hand.
         let num_samples = buffer.samples();
+        *self.sample_rate.lock().expect("expect lock") = context.transport().sample_rate;
         let sample_rate = context.transport().sample_rate;
         let output = buffer.as_slice();
 
         let mut next_event = context.next_event();
         let mut block_start: usize = 0;
         let mut block_end: usize = MAX_BLOCK_SIZE.min(num_samples);
-
-        let samples: Vec<_> = (0..num_samples)
-            .map(
-                |_| match self.sound.lock().expect("expected lock on source").clone() {
-                    Some(mut x) => x.next().unwrap_or(0.0).clamp(-1.0, 1.0),
-                    None => 0.0,
-                },
-            )
-            .collect();
 
         while block_start < num_samples {
             // First of all, handle all note events that happen at the start of the block, and cut
@@ -446,15 +485,8 @@ impl Plugin for NodeSound {
                                 amp_envelope.reset(0.0);
                                 amp_envelope.set_target(sample_rate, 1.0);
 
-                                let voice = self.start_voice(
-                                    context,
-                                    timing,
-                                    voice_id,
-                                    channel,
-                                    &samples,
-                                    sample_rate,
-                                    note,
-                                );
+                                let voice =
+                                    self.start_voice(context, timing, voice_id, channel, note);
                                 voice.velocity_sqrt = velocity.sqrt();
                                 voice.amp_envelope = amp_envelope;
                             }
@@ -618,9 +650,12 @@ impl Plugin for NodeSound {
 
                 for (value_idx, sample_idx) in (block_start..block_end).enumerate() {
                     let amp = voice.velocity_sqrt * gain[value_idx] * voice_amp_envelope[value_idx];
-                    let sample: f32 = (samples
+                    let buffer =
+                        &self.sound_buffers.lock().expect("expected lock")[voice.note as usize];
+
+                    let sample: f32 = (buffer
                         .iter()
-                        .nth(sample_idx.clamp(0, samples.len() - 1))
+                        .nth((sample_idx + self.current_idx) % (buffer.len() - 1))
                         .unwrap_or(&1.0)
                         * amp)
                         .clamp(-1.0, 1.0);
@@ -652,6 +687,8 @@ impl Plugin for NodeSound {
             block_start = block_end;
             block_end = (block_start + MAX_BLOCK_SIZE).min(num_samples);
         }
+
+        self.current_idx += num_samples;
 
         ProcessStatus::Normal
     }
