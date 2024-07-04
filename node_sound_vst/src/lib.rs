@@ -49,7 +49,7 @@ struct Voice {
 
 pub struct NodeSound {
     params: Arc<NodeSoundParams>,
-    sound_buffers: Arc<Mutex<[Vec<f32>; 128]>>,
+
     voices: [Option<Voice>; NUM_VOICES as usize],
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
@@ -76,6 +76,7 @@ pub struct NodeSoundParams {
     /// The amplitude envelope release time. This is the same for every voice.
     #[id = "amp_rel"]
     amp_release_ms: FloatParam,
+    sound_buffers: Arc<Mutex<[Vec<f32>; 128]>>,
 }
 
 impl<'a> PersistentField<'a, String> for PluginPresetState {
@@ -95,7 +96,7 @@ impl Default for NodeSound {
     fn default() -> Self {
         Self {
             params: Arc::new(NodeSoundParams::default()),
-            sound_buffers: Arc::new(Mutex::new([0; 128].map(|_| vec![]))),
+
             voices: [0; NUM_VOICES as usize].map(|_| None),
             next_internal_voice_id: 0,
             sample_rate: Arc::new(Mutex::new(48000.0)),
@@ -108,6 +109,7 @@ impl Default for NodeSound {
 impl Default for NodeSoundParams {
     fn default() -> Self {
         Self {
+            sound_buffers: Arc::new(Mutex::new([0; 128].map(|_| vec![]))),
             editor_state: EguiState::from_size(1280, 720),
             plugin_state: PluginPresetState {
                 graph: Arc::new(Mutex::new(sound_graph::graph::SoundNodeGraph::new_raw())),
@@ -311,7 +313,7 @@ impl Plugin for NodeSound {
             self.params.editor_state.clone(),
             (
                 self.params.plugin_state.graph.clone(),
-                self.sound_buffers.clone(),
+                self.params.sound_buffers.clone(),
                 self.sample_rate.clone(),
                 self.sound_result.clone(),
             ),
@@ -554,8 +556,8 @@ impl Plugin for NodeSound {
 
             for voice in self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                 for sample_idx in block_start..block_end {
-                    let buffer =
-                        &self.sound_buffers.lock().expect("expected lock")[voice.note as usize];
+                    let buffer = &self.params.sound_buffers.lock().expect("expected lock")
+                        [voice.note as usize];
                     let sample: f32 = buffer[(sample_idx + self.current_idx) % (buffer.len() - 1)]
                         .clamp(-1.0, 1.0);
                     output[0][sample_idx] += sample;
