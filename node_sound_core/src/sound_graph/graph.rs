@@ -661,16 +661,16 @@ impl SoundNodeGraph {
                 #[cfg(not(feature = "vst"))]
                 self.combobox(ui);
                 ui.add(egui::Label::new(crate_version!()));
-                ui.add(egui::Label::new("|"));
-                if ui.add(egui::Link::new("tutorial")).clicked() {
-                    let _url = "https://www.youtube.com/watch?v=HQrrGoOnNys";
-                    #[cfg(feature = "non-wasm")]
-                    let _ = open::that(_url);
-                    #[cfg(target_arch = "wasm32")]
-                    open_url(_url);
-                }
                 #[cfg(not(feature = "vst"))]
                 {
+                    ui.add(egui::Label::new("|"));
+                    if ui.add(egui::Link::new("tutorial")).clicked() {
+                        let _url = "https://www.youtube.com/watch?v=HQrrGoOnNys";
+                        #[cfg(feature = "non-wasm")]
+                        let _ = open::that(_url);
+                        #[cfg(target_arch = "wasm32")]
+                        open_url(_url);
+                    }
                     ui.add(egui::Label::new("|"));
                     ui.add(egui::Label::new(format!(
                         "{}{}",
