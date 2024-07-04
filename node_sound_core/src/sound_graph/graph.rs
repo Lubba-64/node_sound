@@ -83,10 +83,6 @@ pub struct SoundGraphUserState {
     pub recording_length: usize,
     pub is_saved: bool,
     #[cfg(feature = "vst")]
-    pub is_vst_edit: bool,
-    #[cfg(feature = "vst")]
-    pub is_vst_taking_input: bool,
-    #[cfg(feature = "vst")]
     pub vst_output_node_id: Option<NodeId>,
     pub is_done_showing_recording_dialogue: bool,
     #[serde(skip)]
@@ -101,10 +97,6 @@ impl Clone for SoundGraphUserState {
             sound_result_evaluated: self.sound_result_evaluated,
             recording_length: self.recording_length,
             is_saved: self.is_saved,
-            #[cfg(feature = "vst")]
-            is_vst_edit: true,
-            #[cfg(feature = "vst")]
-            is_vst_taking_input: false,
             #[cfg(feature = "vst")]
             vst_output_node_id: None,
             is_done_showing_recording_dialogue: self.is_done_showing_recording_dialogue,
@@ -166,10 +158,6 @@ impl NodeTemplateTrait for NodeDefinitionUi {
         user_state: &mut Self::UserState,
         node_id: NodeId,
     ) {
-        #[cfg(feature = "vst")]
-        {
-            user_state.is_vst_edit = true;
-        }
         user_state.is_saved = false;
         for input in self.0.inputs.iter() {
             graph.add_input_param(
@@ -699,19 +687,6 @@ impl SoundNodeGraph {
                             false => "*",
                         }
                     )));
-                }
-                #[cfg(feature = "vst")]
-                {
-                    ui.add(egui::Label::new("|"));
-                    if self.state.user_state.is_vst_taking_input {
-                        if ui.add(egui::Button::new("Stop Loading Presets")).clicked() {
-                            self.state.user_state.is_vst_taking_input = false;
-                        }
-                    } else {
-                        if ui.add(egui::Button::new("Load VST preset")).clicked() {
-                            self.state.user_state.is_vst_taking_input = true;
-                        }
-                    }
                 }
             });
         });
