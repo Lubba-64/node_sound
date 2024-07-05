@@ -21,8 +21,8 @@ pub fn translate_node() -> SoundNode {
                     name: "start_min".to_string(),
                     value: InputValueConfig::Float {
                         value: 1.0,
-                        max: f32::MAX,
-                        min: f32::MIN,
+                        max: 4000.0,
+                        min: -1.0,
                     },
                 },
             ),
@@ -34,8 +34,8 @@ pub fn translate_node() -> SoundNode {
                     name: "start_max".to_string(),
                     value: InputValueConfig::Float {
                         value: -1.0,
-                        max: f32::MAX,
-                        min: f32::MIN,
+                        max: 4000.0,
+                        min: -1.0,
                     },
                 },
             ),
@@ -47,8 +47,8 @@ pub fn translate_node() -> SoundNode {
                     name: "end_min".to_string(),
                     value: InputValueConfig::Float {
                         value: 1.0,
-                        max: f32::MAX,
-                        min: f32::MIN,
+                        max: 4000.0,
+                        min: -1.0,
                     },
                 },
             ),
@@ -60,8 +60,8 @@ pub fn translate_node() -> SoundNode {
                     name: "end_max".to_string(),
                     value: InputValueConfig::Float {
                         value: -1.0,
-                        max: f32::MAX,
-                        min: f32::MIN,
+                        max: 4000.0,
+                        min: -1.0,
                     },
                 },
             ),

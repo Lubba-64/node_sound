@@ -24,7 +24,7 @@ pub fn reverb_node() -> SoundNode {
                     value: InputValueConfig::Float {
                         value: 1.0,
                         min: 0.0,
-                        max: f32::MAX,
+                        max: 4000.0,
                     },
                 },
             ),
@@ -37,7 +37,7 @@ pub fn reverb_node() -> SoundNode {
                     value: InputValueConfig::Float {
                         value: 1.0,
                         min: 0.0,
-                        max: f32::MAX,
+                        max: 4000.0,
                     },
                 },
             ),
