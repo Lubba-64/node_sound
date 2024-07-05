@@ -18,7 +18,11 @@ pub fn const_node() -> SoundNode {
                 data_type: DataType::Float,
                 kind: InputParamKind::ConnectionOrConstant,
                 name: "amplitude".to_string(),
-                value: InputValueConfig::Float { value: 1.0 },
+                value: InputValueConfig::Float {
+                    value: 1.0,
+                    min: f32::MIN,
+                    max: f32::MAX,
+                },
             },
         )]),
         outputs: BTreeMap::from([(

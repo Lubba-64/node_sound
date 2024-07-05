@@ -19,7 +19,11 @@ pub fn translate_node() -> SoundNode {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "start_min".to_string(),
-                    value: InputValueConfig::Float { value: 1.0 },
+                    value: InputValueConfig::Float {
+                        value: 1.0,
+                        max: f32::MAX,
+                        min: f32::MIN,
+                    },
                 },
             ),
             (
@@ -28,7 +32,11 @@ pub fn translate_node() -> SoundNode {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "start_max".to_string(),
-                    value: InputValueConfig::Float { value: -1.0 },
+                    value: InputValueConfig::Float {
+                        value: -1.0,
+                        max: f32::MAX,
+                        min: f32::MIN,
+                    },
                 },
             ),
             (
@@ -37,7 +45,11 @@ pub fn translate_node() -> SoundNode {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "end_min".to_string(),
-                    value: InputValueConfig::Float { value: 1.0 },
+                    value: InputValueConfig::Float {
+                        value: 1.0,
+                        max: f32::MAX,
+                        min: f32::MIN,
+                    },
                 },
             ),
             (
@@ -46,7 +58,11 @@ pub fn translate_node() -> SoundNode {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "end_max".to_string(),
-                    value: InputValueConfig::Float { value: -1.0 },
+                    value: InputValueConfig::Float {
+                        value: -1.0,
+                        max: f32::MAX,
+                        min: f32::MIN,
+                    },
                 },
             ),
             (

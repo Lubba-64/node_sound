@@ -19,7 +19,11 @@ pub fn clamp_node() -> SoundNode {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "min".to_string(),
-                    value: InputValueConfig::Float { value: -1.0 },
+                    value: InputValueConfig::Float {
+                        value: -1.0,
+                        max: 1.0,
+                        min: -1.0,
+                    },
                 },
             ),
             (
@@ -28,7 +32,11 @@ pub fn clamp_node() -> SoundNode {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "max".to_string(),
-                    value: InputValueConfig::Float { value: 1.0 },
+                    value: InputValueConfig::Float {
+                        value: 1.0,
+                        max: 1.0,
+                        min: -1.0,
+                    },
                 },
             ),
             (

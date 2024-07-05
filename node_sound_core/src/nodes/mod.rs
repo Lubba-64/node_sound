@@ -41,8 +41,6 @@ use skip_node::{skip_logic, skip_node};
 use split_channels_node::{split_channels_logic, split_channels_node};
 mod reverb;
 use reverb::{reverb_logic, reverb_node};
-mod pop_node;
-use pop_node::{pop_logic, pop_node};
 mod mod_node;
 use mod_node::{mod_logic, mod_node};
 mod automated_sawtooth_node;
@@ -159,7 +157,6 @@ pub fn get_nodes() -> NodeDefinitions {
         (split_channels_node(), Box::new(split_channels_logic)),
         (merge_channels_node(), Box::new(merge_channels_logic)),
         (reverb_node(), Box::new(reverb_logic)),
-        (pop_node(), Box::new(pop_logic)),
         (mod_node(), Box::new(mod_logic)),
         (translate_node(), Box::new(translate_logic)),
         (

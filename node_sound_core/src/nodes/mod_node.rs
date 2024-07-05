@@ -19,7 +19,11 @@ pub fn mod_node() -> SoundNode {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "mod".to_string(),
-                    value: InputValueConfig::Float { value: 1.0 },
+                    value: InputValueConfig::Float {
+                        value: 1.0,
+                        min: -1.0,
+                        max: 1.0,
+                    },
                 },
             ),
             (

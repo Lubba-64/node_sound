@@ -21,6 +21,7 @@ use crate::sound_map::RefSource;
 #[cfg(not(feature = "vst"))]
 use eframe::egui::TextStyle;
 use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers};
+use egui_extras_xt::knobs::AudioKnob;
 pub use egui_node_graph_2::*;
 #[cfg(not(feature = "vst"))]
 use rodio::source::Source;
@@ -166,7 +167,11 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                 input.1.data_type,
                 match &input.1.value {
                     InputValueConfig::AudioSource {} => ValueType::AudioSource { value: 0 },
-                    InputValueConfig::Float { value } => ValueType::Float { value: *value },
+                    InputValueConfig::Float { value, min, max } => ValueType::Float {
+                        value: *value,
+                        min: *min,
+                        max: *max,
+                    },
                     InputValueConfig::Duration { value } => ValueType::Duration {
                         value: Duration::from_secs_f32(*value),
                     },
@@ -211,17 +216,18 @@ impl WidgetValueTrait for ValueType {
         _node_data: &Self::NodeData,
     ) -> Vec<ActiveNodeState> {
         match self {
-            ValueType::Float { value } => {
+            ValueType::Float { value, min, max } => {
                 ui.horizontal(|ui| {
                     ui.label(param_name);
-                    ui.add(DragValue::new(value));
+                    ui.add(AudioKnob::new(value).range(*min..=*max));
+                    ui.add(DragValue::new(value).speed(0.01).clamp_range(*min..=*max));
                 });
             }
             ValueType::Duration { value } => {
                 ui.horizontal(|ui| {
                     ui.label(param_name);
                     let mut secs_f32 = value.as_secs_f32();
-                    ui.add(DragValue::new(&mut secs_f32));
+                    ui.add(DragValue::new(&mut secs_f32).speed(0.01));
                     *value = Duration::from_secs_f32(secs_f32.max(0.0));
                 });
             }

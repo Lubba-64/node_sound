@@ -17,8 +17,6 @@ mod merge_channels;
 pub use merge_channels::MergeChannels;
 mod split_channels;
 pub use split_channels::SplitChannels;
-mod pop;
-pub use pop::Pop;
 mod mod_source;
 pub use mod_source::Mod;
 mod automated_sawtooth;

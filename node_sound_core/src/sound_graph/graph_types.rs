@@ -28,6 +28,8 @@ mod data_types {
         },
         Float {
             value: f32,
+            min: f32,
+            max: f32,
         },
         Duration {
             value: Duration,
@@ -49,7 +51,7 @@ mod data_types {
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub enum InputValueConfig {
         AudioSource {},
-        Float { value: f32 },
+        Float { value: f32, min: f32, max: f32 },
         Duration { value: f32 },
         AudioFile {},
         MidiFile {},
@@ -62,7 +64,11 @@ mod data_types {
                     .debug_struct("Source")
                     .field("value", &"Anonymous AudioSource")
                     .finish(),
-                Self::Float { value } => f.debug_struct("Float").field("value", value).finish(),
+                Self::Float {
+                    value,
+                    min: _,
+                    max: _,
+                } => f.debug_struct("Float").field("value", value).finish(),
                 Self::Duration { value } => {
                     f.debug_struct("Duration").field("value", value).finish()
                 }
@@ -90,7 +96,11 @@ mod data_types {
         /// Tries to downcast this value type to a scalar
         pub fn try_to_float(self) -> Result<f32, String> {
             match self {
-                ValueType::Float { value } => Ok(value),
+                ValueType::Float {
+                    value,
+                    min: _,
+                    max: _,
+                } => Ok(value),
                 _ => Err("invalid cast".to_string()),
             }
         }

@@ -20,7 +20,11 @@ pub fn speed_node() -> SoundNode {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "speed".to_string(),
-                    value: InputValueConfig::Float { value: 1.0 },
+                    value: InputValueConfig::Float {
+                        value: 1.0,
+                        min: 0.0,
+                        max: f32::MAX,
+                    },
                 },
             ),
             (
