@@ -20,7 +20,7 @@ pub fn sawtooth_node() -> SoundNode {
                 name: "frequency".to_string(),
                 value: InputValueConfig::Float {
                     value: 0.0,
-                    min: 17.0,
+                    min: 0.0,
                     max: 4000.0,
                 },
             },
