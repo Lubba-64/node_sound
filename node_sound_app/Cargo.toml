@@ -5,4 +5,4 @@ edition = "2021"
 
 [dependencies]
 eframe = "0.27.2"
-node_sound_core = { version = "*", path = "../node_sound_core", default-features = false, features = ["non-wasm"]}
+node_sound_core = { version = "*", path = "../node_sound_core"}

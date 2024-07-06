@@ -37,4 +37,3 @@ egui_extras_xt = { version = "*", git = "https://github.com/xTibor/egui_extras_x
 
 [features]
 non-wasm = ["open"]
-vst = []

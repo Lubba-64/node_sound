@@ -1,29 +1,23 @@
 use super::graph_types::InputValueConfig;
-#[cfg(not(feature = "vst"))]
 use super::save_management::write_output_sound;
 use super::save_management::{
     get_current_exe_dir, get_current_working_settings, get_input_midi, get_input_sound,
     save_current_working_settings, save_project_file, ProjectFile, WasmAsyncResolver,
     WorkingFileSettings,
 };
-#[cfg(not(feature = "vst"))]
 use super::save_management::{open_project_file, save_project_file_as};
-#[cfg(not(feature = "vst"))]
 use super::DEFAULT_SAMPLE_RATE;
 use crate::macros::macros::crate_version;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::save_management::get_project_file;
-#[cfg(not(feature = "vst"))]
 use crate::sound_map;
 #[cfg(target_arch = "wasm32")]
 use crate::sound_map::RefSource;
-#[cfg(not(feature = "vst"))]
 use eframe::egui::TextStyle;
 use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers};
 use egui_extras_xt::knobs::AudioKnob;
 pub use egui_node_graph_2::*;
-#[cfg(not(feature = "vst"))]
 use rodio::source::Source;
 #[cfg(target_arch = "wasm32")]
 use rodio::source::UniformSourceIterator;
@@ -31,9 +25,7 @@ pub use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
-#[cfg(not(feature = "vst"))]
 use std::io::{BufWriter, Cursor};
-#[cfg(not(feature = "vst"))]
 use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 use synthrs::midi::MidiSong;
@@ -83,7 +75,6 @@ pub struct SoundGraphUserState {
     pub sound_result_evaluated: bool,
     pub recording_length: usize,
     pub is_saved: bool,
-    #[cfg(feature = "vst")]
     pub vst_output_node_id: Option<NodeId>,
     pub is_done_showing_recording_dialogue: bool,
     #[serde(skip)]
@@ -98,7 +89,6 @@ impl Clone for SoundGraphUserState {
             sound_result_evaluated: self.sound_result_evaluated,
             recording_length: self.recording_length,
             is_saved: self.is_saved,
-            #[cfg(feature = "vst")]
             vst_output_node_id: None,
             is_done_showing_recording_dialogue: self.is_done_showing_recording_dialogue,
             _unserializeable_state: None,
@@ -219,7 +209,12 @@ impl WidgetValueTrait for ValueType {
             ValueType::Float { value, min, max } => {
                 ui.horizontal(|ui| {
                     ui.label(param_name);
-                    ui.add(AudioKnob::new(value).range(*min..=*max).drag_length(50.0).diameter(20.0));
+                    ui.add(
+                        AudioKnob::new(value)
+                            .range(*min..=*max)
+                            .drag_length(50.0)
+                            .diameter(20.0),
+                    );
                     ui.add(DragValue::new(value).speed(0.01).clamp_range(*min..=*max));
                 });
             }
@@ -452,6 +447,7 @@ pub struct SoundNodeGraph {
     #[serde(skip)]
     pub _unserializeable_state: UnserializeableGraphState,
     settings_path: String,
+    pub is_vst: bool,
 }
 
 unsafe impl Send for SoundNodeGraph {}
@@ -464,7 +460,7 @@ fn get_unserializeable_state() -> Option<UnserializeableState> {
     });
 }
 
-fn _new() -> SoundNodeGraph {
+fn _new(is_vst: bool) -> SoundNodeGraph {
     let exe_dir = get_current_exe_dir().expect("could not get app directory");
     let settings_path = std::path::Path::new(&exe_dir).join("node_settings.ron");
 
@@ -495,6 +491,7 @@ fn _new() -> SoundNodeGraph {
         },
         _unserializeable_state: get_unserializeable_graph_state(),
         settings_state: settings_state,
+        is_vst: is_vst,
     }
 }
 
@@ -506,11 +503,11 @@ impl SoundNodeGraph {
             }
         }
 
-        _new()
+        _new(false)
     }
 
     pub fn new_raw() -> Self {
-        _new()
+        _new(true)
     }
 
     fn save_project_file(&mut self, path: &str) {
@@ -587,7 +584,6 @@ impl SoundNodeGraph {
         }
     }
 
-    #[cfg(not(feature = "vst"))]
     fn save_project_settings_as(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self._unserializeable_state.save_as_wasm_future = Some(save_project_file_as(ProjectFile {
             graph_state: self.state.editor_state.clone(),
@@ -595,7 +591,6 @@ impl SoundNodeGraph {
         Ok(())
     }
 
-    #[cfg(not(feature = "vst"))]
     fn combobox(&mut self, ui: &mut egui::Ui) {
         let combobox = egui::ComboBox::from_label("").selected_text("File");
         let _ = combobox.show_ui(ui, |ui| -> Result<(), Box<dyn std::error::Error>> {
@@ -620,7 +615,6 @@ impl SoundNodeGraph {
         });
     }
 
-    #[cfg(feature = "vst")]
     fn update_output_node(&mut self) {
         let mut found = false;
         let mut to_remove: Vec<NodeId> = vec![];
@@ -650,7 +644,6 @@ impl SoundNodeGraph {
             self._unserializeable_state = get_unserializeable_graph_state();
         }
         self.poll_wasm_futures();
-        #[cfg(feature = "vst")]
         self.update_output_node();
 
         ctx.input_mut(|i| {
@@ -664,12 +657,10 @@ impl SoundNodeGraph {
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::widgets::global_dark_light_mode_switch(ui);
-                #[cfg(not(feature = "vst"))]
-                self.combobox(ui);
                 ui.add(egui::Label::new(crate_version!()));
-                #[cfg(not(feature = "vst"))]
-                {
-                    ui.add(egui::Label::new("|"));
+                ui.add(egui::Label::new("|"));
+                if !self.is_vst {
+                    self.combobox(ui);
                     if ui.add(egui::Link::new("tutorial")).clicked() {
                         let _url = "https://www.youtube.com/watch?v=HQrrGoOnNys";
                         #[cfg(feature = "non-wasm")]
@@ -724,8 +715,7 @@ impl SoundNodeGraph {
             }
         }
 
-        #[cfg(not(feature = "vst"))]
-        {
+        if !self.is_vst {
             let mut sound_result = None;
 
             if self.state.user_state.active_modified {
