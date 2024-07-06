@@ -2637,15 +2637,16 @@ dependencies = [
 
 [[package]]
 name = "node_sound_app"
-version = "1.3.7"
+version = "1.3.8"
 dependencies = [
  "eframe",
  "node_sound_core",
+ "wasm-bindgen-futures",
 ]
 
 [[package]]
 name = "node_sound_core"
-version = "1.3.7"
+version = "1.3.8"
 dependencies = [
  "dyn-clone",
  "eframe",
@@ -2674,7 +2675,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_vst"
-version = "1.3.7"
+version = "1.3.8"
 dependencies = [
  "crossbeam",
  "egui",
