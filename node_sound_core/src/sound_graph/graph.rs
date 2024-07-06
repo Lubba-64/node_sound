@@ -219,7 +219,7 @@ impl WidgetValueTrait for ValueType {
             ValueType::Float { value, min, max } => {
                 ui.horizontal(|ui| {
                     ui.label(param_name);
-                    ui.add(AudioKnob::new(value).range(*min..=*max).drag_length(50.0));
+                    ui.add(AudioKnob::new(value).range(*min..=*max).drag_length(50.0).diameter(20.0));
                     ui.add(DragValue::new(value).speed(0.01).clamp_range(*min..=*max));
                 });
             }
