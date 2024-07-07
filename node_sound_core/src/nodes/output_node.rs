@@ -7,7 +7,6 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-#[cfg(feature = "vst")]
 pub fn output_node() -> SoundNode {
     SoundNode {
         name: "Output".to_string(),
@@ -29,7 +28,7 @@ pub fn output_node() -> SoundNode {
         )]),
     }
 }
-#[cfg(feature = "vst")]
+
 pub fn output_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),

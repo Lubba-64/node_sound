@@ -427,11 +427,11 @@ pub struct UnserializeableGraphState {
     >,
 }
 
-pub fn get_unserializeable_graph_state() -> UnserializeableGraphState {
+pub fn get_unserializeable_graph_state(is_vst: bool) -> UnserializeableGraphState {
     let (stream, stream_handle) =
         OutputStream::try_default().expect("could not initialize audio subsystem");
     return UnserializeableGraphState {
-        node_definitions: Some(get_nodes()),
+        node_definitions: Some(get_nodes(is_vst)),
         sink: Some(Sink::try_new(&stream_handle).expect("could not create audio sink")),
         _stream: Some((stream, stream_handle)),
         open_project_file_wasm_future: None,
@@ -489,7 +489,7 @@ fn _new(is_vst: bool) -> SoundNodeGraph {
                 ..Default::default()
             },
         },
-        _unserializeable_state: get_unserializeable_graph_state(),
+        _unserializeable_state: get_unserializeable_graph_state(is_vst),
         settings_state: settings_state,
         is_vst: is_vst,
     }
@@ -641,7 +641,7 @@ impl SoundNodeGraph {
             self.state.user_state._unserializeable_state = get_unserializeable_state();
         }
         if self._unserializeable_state.node_definitions.is_none() {
-            self._unserializeable_state = get_unserializeable_graph_state();
+            self._unserializeable_state = get_unserializeable_graph_state(self.is_vst);
         }
         self.poll_wasm_futures();
         self.update_output_node();

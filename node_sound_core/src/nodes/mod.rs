@@ -67,9 +67,7 @@ mod midi_node;
 use midi_node::{midi_logic, midi_node};
 mod wrapper_node;
 use wrapper_node::{wrapper_logic, wrapper_node};
-#[cfg(feature = "vst")]
 mod output_node;
-#[cfg(feature = "vst")]
 use output_node::{output_logic, output_node};
 
 pub struct SoundNodeProps {
@@ -136,8 +134,8 @@ type SoundNodeOp =
 type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::Error>>;
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
-pub fn get_nodes() -> NodeDefinitions {
-    let nodes: Vec<(SoundNode, Box<SoundNodeOp>)> = vec![
+pub fn get_nodes(is_vst: bool) -> NodeDefinitions {
+    let mut nodes: Vec<(SoundNode, Box<SoundNodeOp>)> = vec![
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -149,7 +147,6 @@ pub fn get_nodes() -> NodeDefinitions {
         (square_node(), Box::new(square_logic)),
         (speed_node(), Box::new(speed_logic)),
         (lfo_node(), Box::new(lfo_logic)),
-        (file_node(), Box::new(file_logic)),
         (clamp_node(), Box::new(clamp_logic)),
         (abs_node(), Box::new(abs_logic)),
         (noise_node(), Box::new(noise_logic)),
@@ -177,11 +174,14 @@ pub fn get_nodes() -> NodeDefinitions {
             Box::new(automated_translate_logic),
         ),
         (const_node(), Box::new(const_logic)),
-        (midi_node(), Box::new(midi_logic)),
         (wrapper_node(), Box::new(wrapper_logic)),
-        #[cfg(feature = "vst")]
-        (output_node(), Box::new(output_logic)),
     ];
+    if is_vst {
+        nodes.push((output_node(), Box::new(output_logic)));
+    } else {
+        nodes.push((midi_node(), Box::new(midi_logic)));
+        nodes.push((file_node(), Box::new(file_logic)));
+    }
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
     ))
