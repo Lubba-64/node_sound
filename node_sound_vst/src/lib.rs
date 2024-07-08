@@ -6,8 +6,9 @@ use node_sound_core::{
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
     },
     sound_map::{self, RefSource},
+    sounds::{SamplesSource, Speed2},
 };
-use pitch_shift::PitchShifter;
+use rodio::source::Speed;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -359,29 +360,21 @@ impl Plugin for NodeSound {
 
                                     let buffer_len = **sample_rate as usize * rec_len;
 
-                                    let samples: Vec<_> = (0..buffer_len)
-                                        .map(|_| sound.next().unwrap_or(0.0).clamp(-1.0, 1.0))
-                                        .collect();
+                                    let samples = SamplesSource::new(
+                                        (0..buffer_len)
+                                            .map(|_| sound.next().unwrap_or(0.0).clamp(-1.0, 1.0))
+                                            .collect(),
+                                    );
 
-                                    fn convert_semitones(f1: f32, f2: f32) -> f32 {
-                                        12.0 * f32::log2(f2 / f1)
-                                    }
-                                    let mut pitch_shifter =
-                                        PitchShifter::new(rec_len * 1000, **sample_rate as usize);
                                     for vidx in 0..128usize {
-                                        let in_buf = &samples;
-                                        let mut out_buf = samples.clone();
-                                        pitch_shifter.shift_pitch(
-                                            2,
-                                            convert_semitones(
-                                                261.63,
-                                                midi_note_to_freq(vidx as u8),
-                                            ),
-                                            in_buf,
-                                            &mut out_buf,
-                                        );
+                                        let mut speeded = Speed2 {
+                                            input: samples.clone(),
+                                            factor: midi_note_to_freq(vidx as u8) / 261.63,
+                                        };
 
-                                        sound_buffers[vidx] = out_buf;
+                                        sound_buffers[vidx] = (0..buffer_len)
+                                            .map(|_| speeded.next().unwrap_or(0.0))
+                                            .collect();
                                     }
                                     **sound_result = Some(sound);
                                 }
