@@ -28,12 +28,10 @@ impl<T: rodio::Source<Item = f32>> Iterator for AutomatedTriangleWave<T> {
     #[inline]
     fn next(&mut self) -> Option<f32> {
         self.num_sample = self.num_sample.wrapping_add(1);
-        let value = 2.0
-            * PI
-            * self.freq.next().unwrap_or(0.0)
+        let value = 2.0 * PI * self.freq.next().unwrap_or(0.0) / 2.0
             * (self.num_sample as f32 % DEFAULT_SAMPLE_RATE as f32)
             / DEFAULT_SAMPLE_RATE as f32;
-        Some(((value % 1.0) - 0.5).abs() * 2.0)
+        Some((((value % 1.0) - 0.5).abs() * 4.0) - 1.0)
     }
 }
 
