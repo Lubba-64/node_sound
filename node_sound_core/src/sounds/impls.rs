@@ -1,7 +1,7 @@
 use super::super::sound_map::RefSourceIter;
 use super::{
-    Abs, Clamp, Lfo, MergeChannels, MidiRenderer, Mod, Noise, SawToothWave, SplitChannels,
-    SquareWave, TriangleWave, Wrapper,
+    Abs, Clamp, Lfo, MergeChannels, MidiRenderer, Mod, Noise, Repeat2, SamplesSource, SawToothWave,
+    Speed2, SplitChannels, SquareWave, TriangleWave, Wrapper,
 };
 use super::{
     AutomatedClamp, AutomatedMod, AutomatedSawToothWave, AutomatedSineWave, AutomatedSquareWave,
@@ -10,7 +10,7 @@ use super::{
 
 use rodio::source::{
     Amplify, BltFilter, ChannelVolume, Delay, FadeIn, Mix, Repeat, SamplesConverter, SineWave,
-    SkipDuration, Spatial, Speed, TakeDuration, Zero,
+    SkipDuration, Spatial, Speed, TakeDuration, UniformSourceIterator, Zero,
 };
 use rodio::Decoder;
 
@@ -22,15 +22,18 @@ impl RefSourceIter<f32> for Noise {}
 impl RefSourceIter<f32> for Zero<f32> {}
 impl RefSourceIter<f32> for ConstWave {}
 impl RefSourceIter<f32> for MidiRenderer {}
+impl RefSourceIter<f32> for SamplesSource {}
 impl<I> RefSourceIter<f32> for Amplify<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for BltFilter<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for Delay<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for FadeIn<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for SplitChannels<I> where I: RefSourceIter<f32> {}
-impl<I> RefSourceIter<f32> for Repeat<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for SkipDuration<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for Spatial<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for Speed<I> where I: RefSourceIter<f32> {}
+impl<I> RefSourceIter<f32> for Repeat<I> where I: RefSourceIter<f32> {}
+impl<I> RefSourceIter<f32> for Speed2<I> where I: RefSourceIter<f32> {}
+impl<I> RefSourceIter<f32> for Repeat2<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for TakeDuration<I> where I: RefSourceIter<f32> {}
 impl<I: RefSourceIter<i16>> RefSourceIter<f32> for SamplesConverter<I, f32> {}
 impl<I> RefSourceIter<f32> for Clamp<I> where I: RefSourceIter<f32> {}
@@ -44,6 +47,7 @@ impl<I> RefSourceIter<f32> for AutomatedSineWave<I> where I: RefSourceIter<f32> 
 impl<I> RefSourceIter<f32> for AutomatedSquareWave<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for AutomatedTriangleWave<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for Wrapper<I> where I: RefSourceIter<f32> {}
+impl<I> RefSourceIter<f32> for UniformSourceIterator<I, f32> where I: RefSourceIter<f32> {}
 impl<I1, I2> RefSourceIter<f32> for Mix<I1, I2>
 where
     I1: RefSourceIter<f32>,

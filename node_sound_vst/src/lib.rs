@@ -78,7 +78,7 @@ pub struct NodeSoundParams {
     /// The amplitude envelope release time. This is the same for every voice.
     #[id = "amp_rel"]
     amp_release_ms: FloatParam,
-    sound_buffers: Arc<Mutex<[(Vec<f32>, Vec<f32>); 128]>>,
+    sound_buffers: Arc<Mutex<[Option<RefSource>; 128]>>,
 }
 
 impl<'a> PersistentField<'a, String> for PluginPresetState {
@@ -111,7 +111,7 @@ impl Default for NodeSound {
 impl Default for NodeSoundParams {
     fn default() -> Self {
         Self {
-            sound_buffers: Arc::new(Mutex::new([0; 128].map(|_| (vec![], vec![])))),
+            sound_buffers: Arc::new(Mutex::new([0; 128].map(|_| None))),
             editor_state: EguiState::from_size(1280, 720),
             plugin_state: PluginPresetState {
                 graph: Arc::new(Mutex::new(sound_graph::graph::SoundNodeGraph::new_raw())),
@@ -369,24 +369,21 @@ impl Plugin for NodeSound {
 
                                     for vidx in 0..128usize {
                                         let speed = midi_note_to_freq(vidx as u8) / 261.63;
-                                        let mut source = UniformSourceIterator::new(
-                                            repeat(Speed2 {
-                                                input: samples.clone(),
-                                                factor: speed,
-                                            }),
-                                            2,
-                                            **sample_rate as u32,
+                                        sound_buffers[vidx] = Some(
+                                            sound_map::clone_sound(sound_map::push_sound::<
+                                                UniformSourceIterator<RefSource, f32>,
+                                            >(
+                                                Box::new(UniformSourceIterator::new(
+                                                    repeat(Speed2 {
+                                                        input: samples.clone(),
+                                                        factor: speed,
+                                                    }),
+                                                    2,
+                                                    **sample_rate as u32,
+                                                )),
+                                            ))
+                                            .expect("expected valid"),
                                         );
-                                        let mut r = vec![];
-                                        let mut l = vec![];
-                                        for i in 0..buffer_len * 2 {
-                                            if i % 2 == 0 {
-                                                l.push(source.next().unwrap_or(0.0))
-                                            } else {
-                                                r.push(source.next().unwrap_or(0.0))
-                                            }
-                                        }
-                                        sound_buffers[vidx] = (l, r);
                                     }
                                     **sound_result = Some(sound);
                                 }
@@ -561,16 +558,14 @@ impl Plugin for NodeSound {
 
             for voice in self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                 for sample_idx in block_start..block_end {
-                    let buffer = &self.params.sound_buffers.lock().expect("expected lock")
+                    let buffer = &mut self.params.sound_buffers.lock().expect("expected lock")
                         [voice.note as usize];
-
-                    if buffer.0.len() > 0 {
-                        output[0][sample_idx] += buffer.0
-                            [(sample_idx + self.current_idx) % (buffer.0.len() - 1)]
-                            .clamp(-1.0, 1.0);
-                        output[1][sample_idx] += buffer.1
-                            [(sample_idx + self.current_idx) % (buffer.0.len() - 1)]
-                            .clamp(-1.0, 1.0);
+                    match buffer {
+                        Some(x) => {
+                            output[0][sample_idx] += x.next().unwrap_or(0.0).clamp(-1.0, 1.0);
+                            output[1][sample_idx] += x.next().unwrap_or(0.0).clamp(-1.0, 1.0);
+                        }
+                        None => {}
                     }
                 }
             }
