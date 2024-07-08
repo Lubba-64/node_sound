@@ -1,12 +1,12 @@
 [package]
 name = "node_sound_core"
-version = "1.3.10"
+version = "1.3.11"
 authors = ["Lubba64"]
 edition = "2021"
 rust-version = "1.56"
 
 [dependencies]
-rodio = { version = "0.17.3", features = ["wasm-bindgen"] }
+rodio = { version = "0.19", features = ["wasm-bindgen"] }
 eframe = { version = "0.27.2", features = ["ron", "serde"] }
 egui_node_graph_2 = { version = "0.4.1", git = "https://github.com/Lubba-64/egui_node_graph_2.git", features = [
     "persistence",

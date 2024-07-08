@@ -6,8 +6,10 @@ use node_sound_core::{
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
     },
     sound_map::{self, RefSource},
+    sounds::{repeat, Repeat2, SamplesSource, Speed2},
 };
 use pitch_shift::PitchShifter;
+use rodio::source::UniformSourceIterator;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -76,7 +78,7 @@ pub struct NodeSoundParams {
     /// The amplitude envelope release time. This is the same for every voice.
     #[id = "amp_rel"]
     amp_release_ms: FloatParam,
-    sound_buffers: Arc<Mutex<[Vec<f32>; 128]>>,
+    sound_buffers: Arc<Mutex<[(Vec<f32>, Vec<f32>); 128]>>,
 }
 
 impl<'a> PersistentField<'a, String> for PluginPresetState {
@@ -109,7 +111,7 @@ impl Default for NodeSound {
 impl Default for NodeSoundParams {
     fn default() -> Self {
         Self {
-            sound_buffers: Arc::new(Mutex::new([0; 128].map(|_| vec![]))),
+            sound_buffers: Arc::new(Mutex::new([0; 128].map(|_| (vec![], vec![])))),
             editor_state: EguiState::from_size(1280, 720),
             plugin_state: PluginPresetState {
                 graph: Arc::new(Mutex::new(sound_graph::graph::SoundNodeGraph::new_raw())),
@@ -359,29 +361,32 @@ impl Plugin for NodeSound {
 
                                     let buffer_len = **sample_rate as usize * rec_len;
 
-                                    let samples: Vec<_> = (0..buffer_len)
-                                        .map(|_| sound.next().unwrap_or(0.0).clamp(-1.0, 1.0))
-                                        .collect();
+                                    let samples = SamplesSource::new(
+                                        (0..buffer_len)
+                                            .map(|_| sound.next().unwrap_or(0.0).clamp(-1.0, 1.0))
+                                            .collect(),
+                                    );
 
-                                    fn convert_semitones(f1: f32, f2: f32) -> f32 {
-                                        12.0 * f32::log2(f2 / f1)
-                                    }
-                                    let mut pitch_shifter =
-                                        PitchShifter::new(rec_len * 1000, **sample_rate as usize);
                                     for vidx in 0..128usize {
-                                        let in_buf = &samples;
-                                        let mut out_buf = samples.clone();
-                                        pitch_shifter.shift_pitch(
+                                        let speed = midi_note_to_freq(vidx as u8) / 261.63;
+                                        let mut source = UniformSourceIterator::new(
+                                            repeat(Speed2 {
+                                                input: samples.clone(),
+                                                factor: speed,
+                                            }),
                                             2,
-                                            convert_semitones(
-                                                261.63,
-                                                midi_note_to_freq(vidx as u8),
-                                            ),
-                                            in_buf,
-                                            &mut out_buf,
+                                            **sample_rate as u32,
                                         );
-
-                                        sound_buffers[vidx] = out_buf;
+                                        let mut r = vec![];
+                                        let mut l = vec![];
+                                        for i in 0..buffer_len * 2 {
+                                            if i % 2 == 0 {
+                                                l.push(source.next().unwrap_or(0.0))
+                                            } else {
+                                                r.push(source.next().unwrap_or(0.0))
+                                            }
+                                        }
+                                        sound_buffers[vidx] = (l, r);
                                     }
                                     **sound_result = Some(sound);
                                 }
@@ -558,12 +563,14 @@ impl Plugin for NodeSound {
                 for sample_idx in block_start..block_end {
                     let buffer = &self.params.sound_buffers.lock().expect("expected lock")
                         [voice.note as usize];
-                    if buffer.len() > 0 {
-                        let sample: f32 = buffer
-                            [(sample_idx + self.current_idx) % (buffer.len() - 1)]
+
+                    if buffer.0.len() > 0 {
+                        output[0][sample_idx] += buffer.0
+                            [(sample_idx + self.current_idx) % (buffer.0.len() - 1)]
                             .clamp(-1.0, 1.0);
-                        output[0][sample_idx] += sample;
-                        output[1][sample_idx] += sample;
+                        output[1][sample_idx] += buffer.1
+                            [(sample_idx + self.current_idx) % (buffer.0.len() - 1)]
+                            .clamp(-1.0, 1.0);
                     }
                 }
             }
