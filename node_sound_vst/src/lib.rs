@@ -558,10 +558,13 @@ impl Plugin for NodeSound {
                 for sample_idx in block_start..block_end {
                     let buffer = &self.params.sound_buffers.lock().expect("expected lock")
                         [voice.note as usize];
-                    let sample: f32 = buffer[(sample_idx + self.current_idx) % (buffer.len() - 1)]
-                        .clamp(-1.0, 1.0);
-                    output[0][sample_idx] += sample;
-                    output[1][sample_idx] += sample;
+                    if buffer.len() > 0 {
+                        let sample: f32 = buffer
+                            [(sample_idx + self.current_idx) % (buffer.len() - 1)]
+                            .clamp(-1.0, 1.0);
+                        output[0][sample_idx] += sample;
+                        output[1][sample_idx] += sample;
+                    }
                 }
             }
 
