@@ -6,9 +6,8 @@ use node_sound_core::{
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
     },
     sound_map::{self, RefSource},
-    sounds::{repeat, Repeat2, SamplesSource, Speed2},
+    sounds::{repeat, SamplesSource, Speed2},
 };
-use pitch_shift::PitchShifter;
 use rodio::source::UniformSourceIterator;
 use std::{
     collections::HashMap,
