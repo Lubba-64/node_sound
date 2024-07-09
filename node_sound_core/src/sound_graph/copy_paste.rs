@@ -106,9 +106,10 @@ pub fn paste_from_clipboard(state: &mut SoundGraphEditorState, cursor_pos: Vec2)
             node.user_data.clone(),
             |_graph, id| {
                 state.node_order.push(id);
-                state
-                    .node_positions
-                    .insert(id, node_pos.clone() + cursor_pos);
+                state.node_positions.insert(
+                    id,
+                    node_pos.clone() + cursor_pos + Vec2 { x: 0.0, y: 1000.0 },
+                );
                 _id = id
             },
         );
