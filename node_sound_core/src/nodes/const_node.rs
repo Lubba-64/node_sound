@@ -20,7 +20,7 @@ pub fn const_node() -> SoundNode {
                 name: "amplitude".to_string(),
                 value: InputValueConfig::Float {
                     value: 1.0,
-                    min: 0.0,
+                    min: -4000.0,
                     max: 4000.0,
                 },
             },

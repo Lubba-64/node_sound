@@ -22,7 +22,7 @@ pub fn translate_node() -> SoundNode {
                     value: InputValueConfig::Float {
                         value: 1.0,
                         max: 4000.0,
-                        min: -1.0,
+                        min: -4000.0,
                     },
                 },
             ),
@@ -35,7 +35,7 @@ pub fn translate_node() -> SoundNode {
                     value: InputValueConfig::Float {
                         value: -1.0,
                         max: 4000.0,
-                        min: -1.0,
+                        min: -4000.0,
                     },
                 },
             ),
@@ -48,7 +48,7 @@ pub fn translate_node() -> SoundNode {
                     value: InputValueConfig::Float {
                         value: 1.0,
                         max: 4000.0,
-                        min: -1.0,
+                        min: -4000.0,
                     },
                 },
             ),
@@ -61,7 +61,7 @@ pub fn translate_node() -> SoundNode {
                     value: InputValueConfig::Float {
                         value: -1.0,
                         max: 4000.0,
-                        min: -1.0,
+                        min: -4000.0,
                     },
                 },
             ),

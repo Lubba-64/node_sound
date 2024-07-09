@@ -555,10 +555,11 @@ impl Plugin for NodeSound {
             output[0][block_start..block_end].fill(0.0);
             output[1][block_start..block_end].fill(0.0);
 
+            let mut sound_buffers = self.params.sound_buffers.lock().expect("expected lock");
+
             for voice in self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                 for sample_idx in block_start..block_end {
-                    let buffer = &mut self.params.sound_buffers.lock().expect("expected lock")
-                        [voice.note as usize];
+                    let buffer = &mut sound_buffers[voice.note as usize];
                     match buffer {
                         Some(x) => {
                             output[0][sample_idx] += x.next().unwrap_or(0.0).clamp(-1.0, 1.0);
