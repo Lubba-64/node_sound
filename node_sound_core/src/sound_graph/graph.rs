@@ -653,6 +653,7 @@ impl SoundNodeGraph {
     }
 
     pub fn update_root(&mut self, ctx: &egui::Context) {
+        self.state.user_state.is_vst = self.is_vst;
         if self.state.user_state._unserializeable_state.is_none() {
             self.state.user_state._unserializeable_state = get_unserializeable_state();
         }
