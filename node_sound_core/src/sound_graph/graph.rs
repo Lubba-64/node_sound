@@ -1,3 +1,4 @@
+use super::copy_paste::{copy_to_clipboard, paste_from_clipboard};
 use super::graph_types::InputValueConfig;
 use super::save_management::write_output_sound;
 use super::save_management::{
@@ -14,10 +15,11 @@ use crate::sound_graph::save_management::get_project_file;
 use crate::sound_map;
 #[cfg(target_arch = "wasm32")]
 use crate::sound_map::RefSource;
-use eframe::egui::TextStyle;
-use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers};
+use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers, Vec2};
+use eframe::egui::{Pos2, TextStyle};
 use egui_extras_xt::knobs::AudioKnob;
 pub use egui_node_graph_2::*;
+use itertools::Itertools;
 use rodio::source::Source;
 #[cfg(target_arch = "wasm32")]
 use rodio::source::UniformSourceIterator;
@@ -34,7 +36,7 @@ use wasm_bindgen::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use web_sys::AudioContext;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct NodeData {
     pub name: String,
 }
@@ -76,6 +78,8 @@ pub struct SoundGraphUserState {
     pub recording_length: usize,
     pub is_saved: bool,
     pub vst_output_node_id: Option<NodeId>,
+    #[serde(skip)]
+    pub is_vst: bool,
     pub is_done_showing_recording_dialogue: bool,
     #[serde(skip)]
     pub _unserializeable_state: Option<UnserializeableState>,
@@ -84,6 +88,7 @@ pub struct SoundGraphUserState {
 impl Clone for SoundGraphUserState {
     fn clone(&self) -> Self {
         Self {
+            is_vst: self.is_vst,
             active_node: self.active_node,
             active_modified: self.active_modified,
             sound_result_evaluated: self.sound_result_evaluated,
@@ -122,6 +127,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct NodeDefinitionUi(pub SoundNode);
+
 impl NodeTemplateTrait for NodeDefinitionUi {
     type NodeData = NodeData;
     type DataType = DataType;
@@ -381,22 +387,25 @@ impl NodeDataTrait for NodeData {
                 user_state.active_modified = true;
             }
         }
-        if !is_recording {
-            if ui.button("⬤ Record").clicked() {
-                if user_state.active_node == ActiveNodeState::NoNode {
-                    responses.push(NodeResponse::User(ActiveNodeState::RecordingNode(node_id)));
+        if !user_state.is_vst {
+            if !is_recording {
+                if ui.button("⬤ Record").clicked() {
+                    if user_state.active_node == ActiveNodeState::NoNode {
+                        responses.push(NodeResponse::User(ActiveNodeState::RecordingNode(node_id)));
+                        user_state.active_modified = true;
+                    }
+                }
+                ui.label("Recording Duration");
+                ui.add(DragValue::new(&mut user_state.recording_length));
+            } else {
+                let button = egui::Button::new(
+                    egui::RichText::new("Recording...").color(egui::Color32::BLACK),
+                )
+                .fill(egui::Color32::GOLD);
+                if ui.add(button).clicked() {
+                    responses.push(NodeResponse::User(ActiveNodeState::NoNode));
                     user_state.active_modified = true;
                 }
-            }
-            ui.label("Recording Duration");
-            ui.add(DragValue::new(&mut user_state.recording_length));
-        } else {
-            let button =
-                egui::Button::new(egui::RichText::new("Recording...").color(egui::Color32::BLACK))
-                    .fill(egui::Color32::GOLD);
-            if ui.add(button).clicked() {
-                responses.push(NodeResponse::User(ActiveNodeState::NoNode));
-                user_state.active_modified = true;
             }
         }
 
@@ -503,11 +512,15 @@ impl SoundNodeGraph {
             }
         }
 
-        _new(false)
+        let mut new_ = _new(false);
+        new_.state.user_state.is_vst = new_.is_vst;
+        new_
     }
 
     pub fn new_raw() -> Self {
-        _new(true)
+        let mut new_ = _new(true);
+        new_.state.user_state.is_vst = new_.is_vst;
+        new_
     }
 
     fn save_project_file(&mut self, path: &str) {
@@ -579,6 +592,7 @@ impl SoundNodeGraph {
                     editor_state: file.1.graph_state.clone(),
                     user_state: SoundGraphUserState::default(),
                 };
+                self.state.user_state.is_vst = self.is_vst;
             }
             None => {}
         }
@@ -597,6 +611,7 @@ impl SoundNodeGraph {
             if ui.add(egui::Button::new("New Project")).clicked() {
                 self.settings_state.latest_saved_file = None;
                 self.state = SoundNodeGraphState::default();
+                self.state.user_state.is_vst = self.is_vst;
             }
             if ui.add(egui::Button::new("Save")).clicked() {
                 match self.settings_state.latest_saved_file.clone() {
@@ -659,6 +674,7 @@ impl SoundNodeGraph {
                 egui::widgets::global_dark_light_mode_switch(ui);
                 ui.add(egui::Label::new(crate_version!()));
                 ui.add(egui::Label::new("|"));
+
                 if !self.is_vst {
                     self.combobox(ui);
                     if ui.add(egui::Link::new("tutorial")).clicked() {
@@ -684,6 +700,19 @@ impl SoundNodeGraph {
                             false => "*",
                         }
                     )));
+                }
+
+                if ui.add(egui::Button::new("copy")).clicked() {
+                    copy_to_clipboard(&mut self.state.editor_state);
+                }
+                if ui.add(egui::Button::new("paste")).clicked() {
+                    let input =
+                        ui.input(|i| i.pointer.latest_pos().unwrap_or(Pos2 { x: 0.0, y: 0.0 }));
+                    let input_vec2 = Vec2 {
+                        x: input.x,
+                        y: input.y,
+                    };
+                    paste_from_clipboard(&mut self.state.editor_state, input_vec2);
                 }
             });
         });
