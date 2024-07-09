@@ -23,7 +23,7 @@ impl<I: Source<Item = f32>> Iterator for Abs<I> {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        Some(self.source.next().unwrap_or(0.0).abs())
+        Some((self.source.next().unwrap_or(0.0).abs() * 2.0) - 1.0)
     }
 }
 
