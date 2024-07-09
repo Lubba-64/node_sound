@@ -1,4 +1,6 @@
-use super::copy_paste::{copy_to_clipboard, paste_from_clipboard};
+use super::copy_paste_del_helpers::{
+    copy_to_clipboard, delete_selected_nodes, paste_from_clipboard,
+};
 use super::graph_types::InputValueConfig;
 use super::save_management::write_output_sound;
 use super::save_management::{
@@ -19,7 +21,6 @@ use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers, Vec2};
 use eframe::egui::{Pos2, TextStyle};
 use egui_extras_xt::knobs::AudioKnob;
 pub use egui_node_graph_2::*;
-use itertools::Itertools;
 use rodio::source::Source;
 #[cfg(target_arch = "wasm32")]
 use rodio::source::UniformSourceIterator;
@@ -713,6 +714,9 @@ impl SoundNodeGraph {
                         y: input.y,
                     };
                     paste_from_clipboard(&mut self.state.editor_state, input_vec2);
+                }
+                if ui.add(egui::Button::new("delete selected")).clicked() {
+                    delete_selected_nodes(&mut self.state.editor_state)
                 }
             });
         });

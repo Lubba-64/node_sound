@@ -18,6 +18,13 @@ struct ClipboardData {
     output_params: HashMap<OutputId, OutputParam<DataType>>,
 }
 
+pub fn delete_selected_nodes(state: &mut SoundGraphEditorState) {
+    for node_id in state.selected_nodes.iter() {
+        state.graph.remove_node(*node_id);
+    }
+    state.selected_nodes = vec![];
+}
+
 pub fn copy_to_clipboard(state: &mut SoundGraphEditorState) {
     let mut clipboard_data = ClipboardData {
         connections: vec![],
