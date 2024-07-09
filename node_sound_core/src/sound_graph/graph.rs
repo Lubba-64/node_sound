@@ -18,6 +18,7 @@ use eframe::egui::TextStyle;
 use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers};
 use egui_extras_xt::knobs::AudioKnob;
 pub use egui_node_graph_2::*;
+use itertools::Itertools;
 use rodio::source::Source;
 #[cfg(target_arch = "wasm32")]
 use rodio::source::UniformSourceIterator;
@@ -122,6 +123,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct NodeDefinitionUi(pub SoundNode);
+
 impl NodeTemplateTrait for NodeDefinitionUi {
     type NodeData = NodeData;
     type DataType = DataType;
@@ -492,6 +494,64 @@ fn _new(is_vst: bool) -> SoundNodeGraph {
         _unserializeable_state: get_unserializeable_graph_state(is_vst),
         settings_state: settings_state,
         is_vst: is_vst,
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+struct ClipboardData {
+    nodes: Vec<NodeData>,
+    connections: Vec<(InputId, OutputId)>,
+}
+
+fn copy_to_clipboard(state: SoundGraphEditorState) {
+    let selected = state.selected_nodes;
+    let clipboard_data = ClipboardData {
+        connections: vec![],
+        nodes: vec![],
+    };
+    for node_id in state.selected_nodes {
+        let node_data = state.graph.nodes.get(node_id);
+        let node = match node_data {
+            Some(x) => x.clone(),
+            None => {
+                continue;
+            }
+        };
+        clipboard_data.nodes.push(node);
+        for input_id in node.inputs.iter().map(|(_, id)| id) {
+            let output_id = state.graph.connections.get(input_id);
+            clipboard_data.connections.push((input_id, output_id));
+        }
+    }
+
+    clipboard_data.nodes = clipboard_data.nodes.iter().unique().collect();
+
+    let mut clipboard = clippers::Clipboard::get();
+    clipboard.write_text("Hello, world!").unwrap();
+    assert_eq!(
+        clipboard.read().unwrap().into_text().unwrap(),
+        "Hello, world!"
+    );
+}
+
+fn paste_from_clipboard(state: SoundGraphEditorState) {
+    let mut clipboard = clippers::Clipboard::get();
+    match clipboard.read() {
+        Some(clippers::ClipperData::Text(text)) => {
+            println!("Clipboard text: {:?}", text);
+        }
+
+        Some(clippers::ClipperData::Image(image)) => {
+            println!("Clipboard image: {}x{} RGBA", image.width(), image.height());
+        }
+
+        Some(data) => {
+            println!("Clipboard data is unknown: {data:?}");
+        }
+
+        None => {
+            println!("Clipboard is empty");
+        }
     }
 }
 
