@@ -6,7 +6,7 @@ use node_sound_core::{
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
     },
     sound_map::{self, RefSource},
-    sounds::{repeat, SamplesSource, Speed2},
+    sounds::{repeat, Speed2},
 };
 use rodio::source::UniformSourceIterator;
 use std::{
@@ -50,7 +50,6 @@ struct Voice {
 
 pub struct NodeSound {
     params: Arc<NodeSoundParams>,
-
     voices: [Option<Voice>; NUM_VOICES as usize],
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
@@ -78,6 +77,7 @@ pub struct NodeSoundParams {
     #[id = "amp_rel"]
     amp_release_ms: FloatParam,
     sound_buffers: Arc<Mutex<[Option<RefSource>; 128]>>,
+    root_sound_id: Arc<Mutex<Option<usize>>>,
 }
 
 impl<'a> PersistentField<'a, String> for PluginPresetState {
@@ -151,6 +151,7 @@ impl Default for NodeSoundParams {
             )
             .with_step_size(0.1)
             .with_unit(" ms"),
+            root_sound_id: Arc::new(Mutex::new(None)),
         }
     }
 }
@@ -317,10 +318,12 @@ impl Plugin for NodeSound {
                 self.params.sound_buffers.clone(),
                 self.sample_rate.clone(),
                 self.sound_result.clone(),
+                self.params.root_sound_id.clone(),
             ),
             |_, _| {},
             move |egui_ctx, _setter, state| {
                 let sound_result = &mut state.3.lock().expect("");
+                let sound_result_id = &mut state.4.lock().expect("");
                 let sample_rate = &state.2.lock().expect("expect lock");
                 let sound_buffers = &mut *state.1.lock().expect("");
                 let state = &mut state.0.lock().expect("");
@@ -341,31 +344,18 @@ impl Plugin for NodeSound {
                                     .unwrap(),
                             ) {
                                 Ok(val) => {
-                                    let mut sound: sound_map::RefSource =
-                                        match sound_map::clone_sound(
-                                            val.try_to_source()
-                                                .expect("expected valid audio source")
-                                                .clone(),
-                                        ) {
-                                            Err(_err) => {
-                                                return;
-                                            }
-                                            Ok(x) => x,
-                                        };
+                                    let source_id = val
+                                        .try_to_source()
+                                        .expect("expected valid audio source")
+                                        .clone();
+                                    let sound = match sound_map::clone_sound(source_id.clone()) {
+                                        Err(_err) => {
+                                            return;
+                                        }
+                                        Ok(x) => x,
+                                    };
 
-                                    let mut rec_len = state.state.user_state.recording_length;
-                                    if rec_len == 0 {
-                                        rec_len = 1;
-                                    }
-
-                                    let buffer_len = **sample_rate as usize * rec_len;
-
-                                    let samples = SamplesSource::new(
-                                        (0..buffer_len)
-                                            .map(|_| sound.next().unwrap_or(0.0).clamp(-1.0, 1.0))
-                                            .collect(),
-                                    );
-
+                                    **sound_result_id = Some(source_id);
                                     for vidx in 0..128usize {
                                         let speed = midi_note_to_freq(vidx as u8) / 261.63;
                                         sound_buffers[vidx] = Some(
@@ -374,7 +364,7 @@ impl Plugin for NodeSound {
                                             >(
                                                 Box::new(UniformSourceIterator::new(
                                                     repeat(Speed2 {
-                                                        input: samples.clone(),
+                                                        input: sound.clone(),
                                                         factor: speed,
                                                     }),
                                                     2,
@@ -419,6 +409,7 @@ impl Plugin for NodeSound {
     ) -> ProcessStatus {
         let num_samples = buffer.samples();
         *self.sample_rate.lock().expect("expect lock") = context.transport().sample_rate;
+        let root_sound_id = *self.params.root_sound_id.lock().expect("expect lock");
         let sample_rate = context.transport().sample_rate;
         let output = buffer.as_slice();
 
@@ -557,13 +548,20 @@ impl Plugin for NodeSound {
 
             let mut sound_buffers = self.params.sound_buffers.lock().expect("expected lock");
 
-            for voice in self.voices.iter_mut().filter_map(|v| v.as_mut()) {
-                for sample_idx in block_start..block_end {
+            let mut voices: Vec<_> = self.voices.iter_mut().filter_map(|v| v.as_mut()).collect();
+            match root_sound_id {
+                Some(x) => sound_map::set_repeats(x, voices.len()),
+                None => {}
+            }
+
+            for sample_idx in block_start..block_end {
+                for voice in &mut voices.iter_mut() {
                     let buffer = &mut sound_buffers[voice.note as usize];
+                    let amp = voice.amp_envelope.next();
                     match buffer {
                         Some(x) => {
-                            output[0][sample_idx] += x.next().unwrap_or(0.0).clamp(-1.0, 1.0);
-                            output[1][sample_idx] += x.next().unwrap_or(0.0).clamp(-1.0, 1.0);
+                            output[0][sample_idx] += x.next().unwrap_or(0.0).clamp(-1.0, 1.0) * amp;
+                            output[1][sample_idx] += x.next().unwrap_or(0.0).clamp(-1.0, 1.0) * amp;
                         }
                         None => {}
                     }
