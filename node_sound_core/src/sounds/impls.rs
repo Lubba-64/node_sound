@@ -1,7 +1,7 @@
 use super::super::sound_map::RefSourceIter;
 use super::{
-    Abs, Clamp, Lfo, MergeChannels, MidiRenderer, Mod, Noise, Repeat2, SamplesSource, SawToothWave,
-    Speed2, SplitChannels, SquareWave, TriangleWave, Wrapper,
+    Abs, Clamp, DawAutomationChannel, Lfo, MergeChannels, MidiRenderer, Mod, Noise, Repeat2,
+    SamplesSource, SawToothWave, Speed2, SplitChannels, SquareWave, TriangleWave, Wrapper,
 };
 use super::{
     AutomatedClamp, AutomatedMod, AutomatedSawToothWave, AutomatedSineWave, AutomatedSquareWave,
@@ -23,6 +23,7 @@ impl RefSourceIter<f32> for Zero<f32> {}
 impl RefSourceIter<f32> for ConstWave {}
 impl RefSourceIter<f32> for MidiRenderer {}
 impl RefSourceIter<f32> for SamplesSource {}
+impl RefSourceIter<f32> for DawAutomationChannel {}
 impl<I> RefSourceIter<f32> for Amplify<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for BltFilter<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for Delay<I> where I: RefSourceIter<f32> {}

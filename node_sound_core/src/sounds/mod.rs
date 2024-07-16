@@ -49,3 +49,5 @@ mod speed2;
 pub use speed2::Speed2;
 mod repeat_infinite2;
 pub use repeat_infinite2::{repeat, Repeat2};
+mod daw_automation_source;
+pub use daw_automation_source::{DawAutomationChannel, DAW_BUFF};
