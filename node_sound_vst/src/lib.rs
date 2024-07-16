@@ -360,7 +360,7 @@ impl Plugin for NodeSound {
                                     let len = DEFAULT_SAMPLE_RATE * 3;
 
                                     let mut sound_buffer = vec![];
-                                    let easing_len = 100;
+                                    let easing_len = 2000;
                                     for n in 0..len {
                                         if n < easing_len {
                                             sound_buffer.push(
@@ -427,7 +427,6 @@ impl Plugin for NodeSound {
     ) -> ProcessStatus {
         let num_samples = buffer.samples();
         *self.sample_rate.lock().expect("expect lock") = context.transport().sample_rate;
-        let root_sound_id = *self.params.root_sound_id.lock().expect("expect lock");
         let sample_rate = context.transport().sample_rate;
         let output = buffer.as_slice();
 
