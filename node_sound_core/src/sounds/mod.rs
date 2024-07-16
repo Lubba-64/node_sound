@@ -49,3 +49,5 @@ mod speed2;
 pub use speed2::Speed2;
 mod repeat_infinite2;
 pub use repeat_infinite2::{repeat, Repeat2};
+mod cloneable_decoder;
+pub use cloneable_decoder::CloneableDecoder;

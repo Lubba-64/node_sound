@@ -36,7 +36,7 @@ pub fn repeat_infinite_logic(props: SoundNodeProps) -> SoundNodeResult {
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<RepeatSource<RefSource>>(Box::new(
-                sound_map::clone_sound(props.get_source("audio 1")?)?.repeat_infinite(),
+                sound_map::clone_sound_ref(props.get_source("audio 1")?)?.repeat_infinite(),
             )),
         },
     )]))

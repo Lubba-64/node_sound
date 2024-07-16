@@ -35,7 +35,7 @@ pub fn automated_sine_logic(props: SoundNodeProps) -> SoundNodeResult {
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<AutomatedSineWave<RefSource>>(Box::new(
-                AutomatedSineWave::new(sound_map::clone_sound(props.get_source("freq")?)?),
+                AutomatedSineWave::new(sound_map::clone_sound_ref(props.get_source("freq")?)?),
             )),
         },
     )]))

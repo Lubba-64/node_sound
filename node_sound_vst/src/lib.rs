@@ -5,8 +5,8 @@ use node_sound_core::{
         self,
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
     },
-    sound_map::{self, RefSource},
-    sounds::{repeat, Speed2},
+    sound_map::{self, GenericSource, RefSource},
+    sounds::{repeat, Repeat2, Speed2},
 };
 use rodio::source::UniformSourceIterator;
 use std::{
@@ -53,7 +53,7 @@ pub struct NodeSound {
     voices: [Option<Voice>; NUM_VOICES as usize],
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
-    sound_result: Arc<Mutex<Option<RefSource>>>,
+    sound_result: Arc<Mutex<Option<GenericSource<f32>>>>,
     current_idx: usize,
 }
 
@@ -76,7 +76,8 @@ pub struct NodeSoundParams {
     /// The amplitude envelope release time. This is the same for every voice.
     #[id = "amp_rel"]
     amp_release_ms: FloatParam,
-    sound_buffers: Arc<Mutex<[Option<RefSource>; 128]>>,
+    sound_buffers:
+        Arc<Mutex<[Option<UniformSourceIterator<Repeat2<Speed2<GenericSource<f32>>>, f32>>; 128]>>,
     root_sound_id: Arc<Mutex<Option<usize>>>,
 }
 
@@ -358,21 +359,14 @@ impl Plugin for NodeSound {
                                     **sound_result_id = Some(source_id);
                                     for vidx in 0..128usize {
                                         let speed = midi_note_to_freq(vidx as u8) / 261.63;
-                                        sound_buffers[vidx] = Some(
-                                            sound_map::clone_sound(sound_map::push_sound::<
-                                                UniformSourceIterator<RefSource, f32>,
-                                            >(
-                                                Box::new(UniformSourceIterator::new(
-                                                    repeat(Speed2 {
-                                                        input: sound.clone(),
-                                                        factor: speed,
-                                                    }),
-                                                    2,
-                                                    **sample_rate as u32,
-                                                )),
-                                            ))
-                                            .expect("expected valid"),
-                                        );
+                                        sound_buffers[vidx] = Some(UniformSourceIterator::new(
+                                            repeat(Speed2 {
+                                                input: sound.clone(),
+                                                factor: speed,
+                                            }),
+                                            2,
+                                            **sample_rate as u32,
+                                        ));
                                     }
                                     **sound_result = Some(sound);
                                 }

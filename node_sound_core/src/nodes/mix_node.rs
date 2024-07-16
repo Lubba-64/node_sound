@@ -48,8 +48,8 @@ pub fn mix_logic(props: SoundNodeProps) -> SoundNodeResult {
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<Mix<RefSource, RefSource>>(Box::new(
-                (sound_map::clone_sound(props.get_source("audio 1")?)?)
-                    .mix(sound_map::clone_sound(props.get_source("audio 2")?)?),
+                (sound_map::clone_sound_ref(props.get_source("audio 1")?)?)
+                    .mix(sound_map::clone_sound_ref(props.get_source("audio 2")?)?),
             )),
         },
     )]))

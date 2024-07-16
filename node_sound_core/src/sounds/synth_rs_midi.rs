@@ -4,6 +4,7 @@ use synthrs::{midi::MidiSong, synthesizer::make_samples_from_midi, wave};
 use crate::sound_graph::DEFAULT_SAMPLE_RATE;
 use std::time::Duration;
 
+#[derive(Clone)]
 pub struct MidiRenderer {
     samples: Vec<f64>,
     num_sample: usize,

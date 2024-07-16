@@ -1,3 +1,4 @@
+use dyn_clone::DynClone;
 use rodio::source::Source;
 use rodio::Sample;
 use std::cell::RefCell;
@@ -8,6 +9,8 @@ pub trait RefSourceIter<Item: Sample>:
     Source<Item = Item> + Iterator<Item = Item> + 'static
 {
 }
+
+pub trait RefSourceIterDynClone<Item: Sample>: DynClone + RefSourceIter<Item> {}
 
 pub struct RepeatN<I: Iterator<Item = f32>> {
     iter: I,
@@ -32,10 +35,19 @@ pub struct GenericSource<T>
 where
     T: Sample,
 {
-    sound: Box<dyn RefSourceIter<T>>,
+    sound: Box<dyn RefSourceIterDynClone<T>>,
 }
 
 impl RefSourceIter<f32> for GenericSource<f32> {}
+impl RefSourceIterDynClone<f32> for GenericSource<f32> {}
+
+impl Clone for GenericSource<f32> {
+    fn clone(&self) -> Self {
+        Self {
+            sound: dyn_clone::clone_box(&*self.sound),
+        }
+    }
+}
 
 unsafe impl<T: Sample> Send for GenericSource<T> {}
 
@@ -43,7 +55,7 @@ impl<T> GenericSource<T>
 where
     T: Sample,
 {
-    fn new(sound: Box<dyn RefSourceIter<T>>) -> Self {
+    fn new(sound: Box<dyn RefSourceIterDynClone<T>>) -> Self {
         Self { sound: sound }
     }
 }
@@ -74,16 +86,18 @@ impl<'a, S: Sample> Source for GenericSource<S> {
     }
 }
 
-pub struct RepeatSource<I: RefSourceIter<f32>> {
+#[derive(Clone)]
+pub struct RepeatSource<I: RefSourceIterDynClone<f32>> {
     source: I,
     pub repeats: usize,
     repeat: usize,
     last: Option<f32>,
 }
 
-impl<I: RefSourceIter<f32>> RefSourceIter<f32> for RepeatSource<I> {}
+impl<I: RefSourceIterDynClone<f32>> RefSourceIter<f32> for RepeatSource<I> {}
+impl<I: RefSourceIterDynClone<f32> + Clone> RefSourceIterDynClone<f32> for RepeatSource<I> {}
 
-impl<I: RefSourceIter<f32>> RepeatSource<I> {
+impl<I: RefSourceIterDynClone<f32>> RepeatSource<I> {
     pub fn new(source: I, repeats: usize) -> Self {
         RepeatSource {
             repeats: repeats,
@@ -94,7 +108,7 @@ impl<I: RefSourceIter<f32>> RepeatSource<I> {
     }
 }
 
-impl<I: RefSourceIter<f32>> Source for RepeatSource<I> {
+impl<I: RefSourceIterDynClone<f32>> Source for RepeatSource<I> {
     fn current_frame_len(&self) -> Option<usize> {
         self.source.current_frame_len()
     }
@@ -112,7 +126,7 @@ impl<I: RefSourceIter<f32>> Source for RepeatSource<I> {
     }
 }
 
-impl<I: RefSourceIter<f32>> Iterator for RepeatSource<I> {
+impl<I: RefSourceIterDynClone<f32>> Iterator for RepeatSource<I> {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -127,16 +141,21 @@ impl<I: RefSourceIter<f32>> Iterator for RepeatSource<I> {
 
 #[derive(Clone)]
 pub struct RefSource {
-    source: Rc<RefCell<dyn RefSourceIter<f32>>>,
+    source: Rc<RefCell<dyn RefSourceIterDynClone<f32>>>,
 }
 
 unsafe impl Send for RefSource {}
 
 impl RefSourceIter<f32> for RefSource {}
+impl RefSourceIterDynClone<f32> for RefSource {}
 
 impl RefSource {
-    pub fn new<I: RefSourceIter<f32>>(source: Rc<RefCell<I>>) -> Self {
+    pub fn new<I: RefSourceIterDynClone<f32>>(source: Rc<RefCell<I>>) -> Self {
         Self { source: source }
+    }
+
+    pub fn clone_inner(&self) -> Box<dyn RefSourceIterDynClone<f32>> {
+        dyn_clone::clone_box(&*(*self.source).borrow())
     }
 }
 
@@ -168,7 +187,7 @@ impl Source for RefSource {
 
 static mut SOUND_QUEUE: Vec<Rc<RefCell<RepeatSource<GenericSource<f32>>>>> = vec![];
 
-pub fn push_sound<I: RefSourceIter<f32>>(sound: Box<dyn RefSourceIter<f32>>) -> usize {
+pub fn push_sound<I: RefSourceIter<f32>>(sound: Box<dyn RefSourceIterDynClone<f32>>) -> usize {
     unsafe {
         SOUND_QUEUE.push(Rc::new(RefCell::new(RepeatSource::new(
             GenericSource::new(sound),
@@ -178,7 +197,7 @@ pub fn push_sound<I: RefSourceIter<f32>>(sound: Box<dyn RefSourceIter<f32>>) -> 
     }
 }
 
-pub fn clone_sound(idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> {
+pub fn clone_sound_ref(idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> {
     if idx >= unsafe { SOUND_QUEUE.len() } {
         return Err(Box::new(std::io::Error::new(
             ErrorKind::Other,
@@ -189,6 +208,23 @@ pub fn clone_sound(idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> 
         SOUND_QUEUE[idx].borrow_mut().repeats += 1;
     }
     return unsafe { Ok(RefSource::new(SOUND_QUEUE[idx].clone())) };
+}
+
+pub fn clone_sound(idx: usize) -> Result<GenericSource<f32>, Box<dyn std::error::Error>> {
+    if idx >= unsafe { SOUND_QUEUE.len() } {
+        return Err(Box::new(std::io::Error::new(
+            ErrorKind::Other,
+            "Sound queue accessed an out of bounds element",
+        )));
+    }
+    unsafe {
+        SOUND_QUEUE[idx].borrow_mut().repeats += 1;
+    }
+    return unsafe {
+        Ok(GenericSource::new(
+            RefSource::new(SOUND_QUEUE[idx].clone()).clone_inner(),
+        ))
+    };
 }
 
 pub fn sound_queue_len() -> usize {

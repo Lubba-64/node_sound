@@ -89,7 +89,7 @@ pub fn translate_logic(props: SoundNodeProps) -> SoundNodeResult {
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<TranslateWave<RefSource>>(Box::new(TranslateWave::new(
-                sound_map::clone_sound(props.get_source("audio 1")?)?,
+                sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
                 props.get_float("start_min")?,
                 props.get_float("start_max")?,
                 props.get_float("end_min")?,

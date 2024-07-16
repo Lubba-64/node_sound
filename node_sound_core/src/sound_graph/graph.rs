@@ -10,7 +10,6 @@ use super::save_management::{
 };
 use super::save_management::{open_project_file, save_project_file_as};
 use super::DEFAULT_SAMPLE_RATE;
-use crate::macros::macros::crate_version;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::save_management::get_project_file;
@@ -674,7 +673,7 @@ impl SoundNodeGraph {
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::widgets::global_dark_light_mode_switch(ui);
-                ui.add(egui::Label::new(crate_version!()));
+                ui.add(egui::Label::new(env!("CARGO_PKG_VERSION")));
                 ui.add(egui::Label::new("|"));
 
                 if !self.is_vst {
@@ -837,12 +836,12 @@ impl SoundNodeGraph {
                     ActiveNodeState::PlayingNode(_) => {
                         if self.state.user_state.active_modified {
                             sound_map::set_repeats(x, 1);
-                            let sound: sound_map::RefSource = match sound_map::clone_sound(x) {
+                            let sound: sound_map::RefSource = match sound_map::clone_sound_ref(x) {
                                 Err(_) => {
                                     let x = sound_map::push_sound::<Zero<f32>>(Box::new(
                                         Zero::<f32>::new(1, DEFAULT_SAMPLE_RATE),
                                     ));
-                                    sound_map::clone_sound(x).unwrap()
+                                    sound_map::clone_sound_ref(x).unwrap()
                                 }
                                 Ok(x) => x,
                             };
@@ -913,12 +912,12 @@ impl SoundNodeGraph {
                             && !self.state.user_state.is_done_showing_recording_dialogue
                         {
                             sound_map::set_repeats(x, 1);
-                            let source = match sound_map::clone_sound(x) {
+                            let source = match sound_map::clone_sound_ref(x) {
                                 Err(_) => {
                                     let x = sound_map::push_sound::<Zero<f32>>(Box::new(
                                         Zero::new(1, DEFAULT_SAMPLE_RATE),
                                     ));
-                                    sound_map::clone_sound(x).unwrap()
+                                    sound_map::clone_sound_ref(x).unwrap()
                                 }
                                 Ok(x) => x,
                             };

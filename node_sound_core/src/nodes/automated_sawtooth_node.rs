@@ -35,7 +35,7 @@ pub fn automated_sawtooth_logic(props: SoundNodeProps) -> SoundNodeResult {
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<AutomatedSawToothWave<RefSource>>(Box::new(
-                AutomatedSawToothWave::new(sound_map::clone_sound(props.get_source("freq")?)?),
+                AutomatedSawToothWave::new(sound_map::clone_sound_ref(props.get_source("freq")?)?),
             )),
         },
     )]))

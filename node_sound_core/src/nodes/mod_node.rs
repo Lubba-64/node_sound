@@ -50,7 +50,7 @@ pub fn mod_logic(props: SoundNodeProps) -> SoundNodeResult {
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<Mod<RefSource>>(Box::new(Mod::new(
-                sound_map::clone_sound(props.get_source("audio 1")?)?,
+                sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
                 props.get_float("mod")?,
             ))),
         },

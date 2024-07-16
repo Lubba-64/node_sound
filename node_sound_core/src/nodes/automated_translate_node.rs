@@ -75,11 +75,11 @@ pub fn automated_translate_logic(props: SoundNodeProps) -> SoundNodeResult {
             value: sound_map::push_sound::<
                 AutomatedTranslateWave<RefSource, RefSource, RefSource, RefSource, RefSource>,
             >(Box::new(AutomatedTranslateWave::new(
-                sound_map::clone_sound(props.get_source("audio 1")?)?,
-                sound_map::clone_sound(props.get_source("start_min")?)?,
-                sound_map::clone_sound(props.get_source("start_max")?)?,
-                sound_map::clone_sound(props.get_source("end_min")?)?,
-                sound_map::clone_sound(props.get_source("end_max")?)?,
+                sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
+                sound_map::clone_sound_ref(props.get_source("start_min")?)?,
+                sound_map::clone_sound_ref(props.get_source("start_max")?)?,
+                sound_map::clone_sound_ref(props.get_source("end_min")?)?,
+                sound_map::clone_sound_ref(props.get_source("end_max")?)?,
             ))),
         },
     )]))

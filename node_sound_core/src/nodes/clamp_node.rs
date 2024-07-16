@@ -63,7 +63,7 @@ pub fn clamp_logic(props: SoundNodeProps) -> SoundNodeResult {
         "out".to_string(),
         ValueType::AudioSource {
             value: sound_map::push_sound::<Clamp<RefSource>>(Box::new(Clamp::new(
-                sound_map::clone_sound(props.get_source("audio 1")?)?,
+                sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
                 Some(props.get_float("min")?),
                 Some(props.get_float("max")?),
             ))),
