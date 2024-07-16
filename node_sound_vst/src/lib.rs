@@ -4,9 +4,10 @@ use node_sound_core::{
     sound_graph::{
         self,
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
+        DEFAULT_SAMPLE_RATE,
     },
-    sound_map::{self, GenericSource, RefSource},
-    sounds::{repeat, Repeat2, Speed2},
+    sound_map::{self, GenericSource},
+    sounds::{repeat, Repeat2, SamplesSource, Speed2},
 };
 use rodio::source::UniformSourceIterator;
 use std::{
@@ -77,7 +78,7 @@ pub struct NodeSoundParams {
     #[id = "amp_rel"]
     amp_release_ms: FloatParam,
     sound_buffers:
-        Arc<Mutex<[Option<UniformSourceIterator<Repeat2<Speed2<GenericSource<f32>>>, f32>>; 128]>>,
+        Arc<Mutex<[Option<UniformSourceIterator<Repeat2<Speed2<SamplesSource>>, f32>>; 128]>>,
     root_sound_id: Arc<Mutex<Option<usize>>>,
 }
 
@@ -349,19 +350,42 @@ impl Plugin for NodeSound {
                                         .try_to_source()
                                         .expect("expected valid audio source")
                                         .clone();
-                                    let sound = match sound_map::clone_sound(source_id.clone()) {
+                                    let mut sound = match sound_map::clone_sound(source_id.clone())
+                                    {
                                         Err(_err) => {
                                             return;
                                         }
                                         Ok(x) => x,
                                     };
+                                    let len = DEFAULT_SAMPLE_RATE * 3;
 
+                                    let mut sound_buffer = vec![];
+                                    let easing_len = 100;
+                                    for n in 0..len {
+                                        if n < easing_len {
+                                            sound_buffer.push(
+                                                ezing::sine_inout(n as f32 / easing_len as f32)
+                                                    * sound.next().unwrap_or(0.0),
+                                            )
+                                        }
+                                        if n > len - easing_len {
+                                            sound_buffer.push(
+                                                ezing::sine_inout(
+                                                    1.0 - ((n - len - 100) as f32
+                                                        / easing_len as f32),
+                                                ) * sound.next().unwrap_or(0.0),
+                                            )
+                                        } else {
+                                            sound_buffer.push(sound.next().unwrap_or(0.0))
+                                        }
+                                    }
+                                    let sound_rendered = SamplesSource::new(sound_buffer);
                                     **sound_result_id = Some(source_id);
                                     for vidx in 0..128usize {
                                         let speed = midi_note_to_freq(vidx as u8) / 261.63;
                                         sound_buffers[vidx] = Some(UniformSourceIterator::new(
                                             repeat(Speed2 {
-                                                input: sound.clone(),
+                                                input: sound_rendered.clone(),
                                                 factor: speed,
                                             }),
                                             2,
@@ -542,14 +566,8 @@ impl Plugin for NodeSound {
 
             let mut sound_buffers = self.params.sound_buffers.lock().expect("expected lock");
 
-            let mut voices: Vec<_> = self.voices.iter_mut().filter_map(|v| v.as_mut()).collect();
-            match root_sound_id {
-                Some(x) => sound_map::set_repeats(x, voices.len()),
-                None => {}
-            }
-
             for sample_idx in block_start..block_end {
-                for voice in &mut voices.iter_mut() {
+                for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                     let buffer = &mut sound_buffers[voice.note as usize];
                     let amp = voice.amp_envelope.next();
                     match buffer {

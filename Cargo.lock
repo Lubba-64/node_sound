@@ -1679,6 +1679,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ezing"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "566e88319a9d235613fa84128a4b24450923bf0380d472f161b324936b18a7d1"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "fastrand"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2753,6 +2762,7 @@ version = "1.5.2"
 dependencies = [
  "crossbeam",
  "egui",
+ "ezing",
  "lock_api",
  "nih_plug",
  "nih_plug_egui",
