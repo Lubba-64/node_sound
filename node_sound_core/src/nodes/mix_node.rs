@@ -5,7 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sound_map::{self, RefSource};
 
 use egui_node_graph_2::InputParamKind;
-use rodio::source::Mix;
+use rodio::source::{Amplify, Mix};
 use rodio::Source;
 use std::collections::BTreeMap;
 
@@ -47,9 +47,10 @@ pub fn mix_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<Mix<RefSource, RefSource>>(Box::new(
+            value: sound_map::push_sound::<Amplify<Mix<RefSource, RefSource>>>(Box::new(
                 (sound_map::clone_sound_ref(props.get_source("audio 1")?)?)
-                    .mix(sound_map::clone_sound_ref(props.get_source("audio 2")?)?),
+                    .mix(sound_map::clone_sound_ref(props.get_source("audio 2")?)?)
+                    .amplify(0.5),
             )),
         },
     )]))
