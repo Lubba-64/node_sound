@@ -381,8 +381,21 @@ impl Plugin for NodeSound {
                                     }
                                     let sound_rendered = SamplesSource::new(sound_buffer);
                                     **sound_result_id = Some(source_id);
+
+                                    fn to_semitones(f1: f32, f2: f32) -> f32 {
+                                        12.0 * f32::log2(f2 / f1)
+                                    }
+                                    fn from_semitones(f2: f32, n: f32) -> f32 {
+                                        f2 / 2.0_f32.powf(n / 12.0)
+                                    }
+
                                     for vidx in 0..128usize {
-                                        let speed = midi_note_to_freq(vidx as u8) / 261.63;
+                                        let speed = from_semitones(
+                                            261.63,
+                                            to_semitones(midi_note_to_freq(vidx as u8), 261.63)
+                                                + 10.5,
+                                        ) / 261.63;
+
                                         sound_buffers[vidx] = Some(UniformSourceIterator::new(
                                             repeat(Speed2 {
                                                 input: sound_rendered.clone(),
