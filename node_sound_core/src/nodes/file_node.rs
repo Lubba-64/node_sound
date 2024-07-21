@@ -5,10 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sound_map;
 use crate::sounds::CloneableDecoder;
 use egui_node_graph_2::InputParamKind;
-use rodio::source::SamplesConverter;
-use rodio::Decoder;
 use std::collections::BTreeMap;
-use std::io::Cursor;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
@@ -48,9 +45,9 @@ pub fn file_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<SamplesConverter<Decoder<Cursor<&Vec<u8>>>, f32>>(
-                Box::new(CloneableDecoder::new(file.1.clone())),
-            ),
+            value: sound_map::push_sound::<CloneableDecoder>(Box::new(CloneableDecoder::new(
+                file.1.clone(),
+            ))),
         },
     )]))
 }

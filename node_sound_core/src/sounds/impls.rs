@@ -1,5 +1,3 @@
-use crate::sound_map::RefSourceIterDynClone;
-
 use super::super::sound_map::RefSourceIter;
 use super::{
     Abs, Clamp, CloneableDecoder, Lfo, MergeChannels, MidiRenderer, Mod, Noise, Repeat2,
@@ -9,6 +7,7 @@ use super::{
     AutomatedClamp, AutomatedMod, AutomatedSawToothWave, AutomatedSineWave, AutomatedSquareWave,
     AutomatedTranslateWave, AutomatedTriangleWave, ConstWave, Signum, TranslateWave,
 };
+use crate::sound_map::RefSourceIterDynClone;
 
 use rodio::source::{
     Amplify, BltFilter, ChannelVolume, Delay, FadeIn, Mix, Repeat, SamplesConverter, SineWave,

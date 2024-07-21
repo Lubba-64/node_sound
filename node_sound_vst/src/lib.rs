@@ -6,7 +6,7 @@ use node_sound_core::{
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
         DEFAULT_SAMPLE_RATE,
     },
-    sound_map::{self, GenericSource},
+    sound_map::{self, GenericSource, RefSource},
     sounds::{repeat, Repeat2, SamplesSource, Speed2},
 };
 use rodio::source::UniformSourceIterator;
@@ -54,7 +54,7 @@ pub struct NodeSound {
     voices: [Option<Voice>; NUM_VOICES as usize],
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
-    sound_result: Arc<Mutex<Option<GenericSource<f32>>>>,
+    sound_result: Arc<Mutex<Option<RefSource<'static>>>>,
     current_idx: usize,
 }
 
@@ -350,13 +350,13 @@ impl Plugin for NodeSound {
                                         .try_to_source()
                                         .expect("expected valid audio source")
                                         .clone();
-                                    let mut sound = match sound_map::clone_sound(source_id.clone())
-                                    {
-                                        Err(_err) => {
-                                            return;
-                                        }
-                                        Ok(x) => x,
-                                    };
+                                    let mut sound =
+                                        match sound_map::clone_sound_ref(source_id.clone()) {
+                                            Err(_err) => {
+                                                return;
+                                            }
+                                            Ok(x) => x,
+                                        };
                                     let len = DEFAULT_SAMPLE_RATE * 3;
 
                                     let mut sound_buffer = vec![];
