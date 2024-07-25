@@ -6,7 +6,7 @@ use node_sound_core::{
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
     },
     sound_map::{self, GenericSource},
-    sounds::{Repeat2, Speed2, DAW_BUFF},
+    sounds::{Speed2, DAW_BUFF},
 };
 use rodio::source::UniformSourceIterator;
 use std::{
