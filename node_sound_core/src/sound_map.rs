@@ -149,19 +149,19 @@ impl Iterator for RefSource {
 
 impl Source for RefSource {
     fn current_frame_len(&self) -> Option<usize> {
-        self.source.borrow_mut().current_frame_len()
+        self.source.borrow().current_frame_len()
     }
 
     fn channels(&self) -> u16 {
-        self.source.borrow_mut().channels()
+        self.source.borrow().channels()
     }
 
     fn sample_rate(&self) -> u32 {
-        self.source.borrow_mut().sample_rate()
+        self.source.borrow().sample_rate()
     }
 
     fn total_duration(&self) -> Option<std::time::Duration> {
-        self.source.borrow_mut().total_duration()
+        self.source.borrow().total_duration()
     }
 }
 
