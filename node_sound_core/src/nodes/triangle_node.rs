@@ -38,7 +38,7 @@ pub fn triangle_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<TriangleWave>(Box::new(TriangleWave::new(
+            value: sound_map::push_sound(Box::new(TriangleWave::new(
                 props.get_float("frequency")?,
             ))),
         },

@@ -4,10 +4,9 @@ use node_sound_core::{
     sound_graph::{
         self,
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
-        DEFAULT_SAMPLE_RATE,
     },
-    sound_map::{self, GenericSource, RefSource},
-    sounds::{repeat, Repeat2, SamplesSource, Speed2},
+    sound_map::{self, GenericSource},
+    sounds::{Repeat2, Speed2},
 };
 use rodio::source::UniformSourceIterator;
 use std::{
@@ -54,7 +53,7 @@ pub struct NodeSound {
     voices: [Option<Voice>; NUM_VOICES as usize],
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
-    sound_result: Arc<Mutex<Option<RefSource<'static>>>>,
+    sound_result: Arc<Mutex<Option<GenericSource<f32>>>>,
     current_idx: usize,
 }
 
@@ -78,7 +77,7 @@ pub struct NodeSoundParams {
     #[id = "amp_rel"]
     amp_release_ms: FloatParam,
     sound_buffers:
-        Arc<Mutex<[Option<UniformSourceIterator<Repeat2<Speed2<SamplesSource>>, f32>>; 128]>>,
+        Arc<Mutex<[Option<UniformSourceIterator<Speed2<GenericSource<f32>>, f32>>; 128]>>,
     root_sound_id: Arc<Mutex<Option<usize>>>,
 }
 
@@ -350,36 +349,13 @@ impl Plugin for NodeSound {
                                         .try_to_source()
                                         .expect("expected valid audio source")
                                         .clone();
-                                    let mut sound =
-                                        match sound_map::clone_sound_ref(source_id.clone()) {
-                                            Err(_err) => {
-                                                return;
-                                            }
-                                            Ok(x) => x,
-                                        };
-                                    let len = DEFAULT_SAMPLE_RATE * 3;
+                                    let sound = match sound_map::clone_sound(source_id.clone()) {
+                                        Err(_err) => {
+                                            return;
+                                        }
+                                        Ok(x) => x,
+                                    };
 
-                                    let mut sound_buffer = vec![];
-                                    let easing_len = 2000;
-                                    for n in 0..len {
-                                        if n < easing_len {
-                                            sound_buffer.push(
-                                                ezing::sine_inout(n as f32 / easing_len as f32)
-                                                    * sound.next().unwrap_or(0.0),
-                                            )
-                                        }
-                                        if n > len - easing_len {
-                                            sound_buffer.push(
-                                                ezing::sine_inout(
-                                                    1.0 - ((n - len - 100) as f32
-                                                        / easing_len as f32),
-                                                ) * sound.next().unwrap_or(0.0),
-                                            )
-                                        } else {
-                                            sound_buffer.push(sound.next().unwrap_or(0.0))
-                                        }
-                                    }
-                                    let sound_rendered = SamplesSource::new(sound_buffer);
                                     **sound_result_id = Some(source_id);
 
                                     fn to_semitones(f1: f32, f2: f32) -> f32 {
@@ -397,10 +373,10 @@ impl Plugin for NodeSound {
                                         ) / 261.63;
 
                                         sound_buffers[vidx] = Some(UniformSourceIterator::new(
-                                            repeat(Speed2 {
-                                                input: sound_rendered.clone(),
+                                            Speed2 {
+                                                input: sound.clone(),
                                                 factor: speed,
-                                            }),
+                                            },
                                             2,
                                             **sample_rate as u32,
                                         ));
@@ -408,12 +384,14 @@ impl Plugin for NodeSound {
                                     **sound_result = Some(sound);
                                 }
                                 Err(_err) => {
+                                    *sound_buffers = [0; 128].map(|_| None);
                                     sound_map::clear();
                                     **sound_result = None
                                 }
                             };
                         }
                         None => {
+                            *sound_buffers = [0; 128].map(|_| None);
                             sound_map::clear();
                             **sound_result = None
                         }

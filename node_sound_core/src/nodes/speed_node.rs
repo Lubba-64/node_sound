@@ -50,7 +50,7 @@ pub fn speed_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<Speed<RefSource>>(Box::new(
+            value: sound_map::push_sound(Box::new(
                 sound_map::clone_sound(props.get_source("audio 1")?)?
                     .speed(props.get_float("speed")?),
             )),

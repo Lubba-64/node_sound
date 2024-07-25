@@ -54,7 +54,7 @@ pub fn midi_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<MidiRenderer>(Box::new(MidiRenderer::new(
+            value: sound_map::push_sound(Box::new(MidiRenderer::new(
                 sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
                 file.unwrap().1,
             ))),

@@ -34,9 +34,9 @@ pub fn automated_triangle_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<AutomatedTriangleWave<RefSource>>(Box::new(
-                AutomatedTriangleWave::new(sound_map::clone_sound_ref(props.get_source("freq")?)?),
-            )),
+            value: sound_map::push_sound(Box::new(AutomatedTriangleWave::new(
+                sound_map::clone_sound_ref(props.get_source("freq")?)?,
+            ))),
         },
     )]))
 }

@@ -53,7 +53,7 @@ pub fn noise_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<Noise>(Box::new(Noise::new(
+            value: sound_map::push_sound(Box::new(Noise::new(
                 props.get_float("min")?,
                 props.get_float("max")?,
             ))),

@@ -54,13 +54,11 @@ pub fn automated_clamp_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<AutomatedClamp<RefSource, RefSource, RefSource>>(
-                Box::new(AutomatedClamp::new(
-                    sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
-                    sound_map::clone_sound_ref(props.get_source("min")?)?,
-                    sound_map::clone_sound_ref(props.get_source("max")?)?,
-                )),
-            ),
+            value: sound_map::push_sound(Box::new(AutomatedClamp::new(
+                sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
+                sound_map::clone_sound_ref(props.get_source("min")?)?,
+                sound_map::clone_sound_ref(props.get_source("max")?)?,
+            ))),
         },
     )]))
 }

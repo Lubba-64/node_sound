@@ -45,12 +45,10 @@ pub fn automated_mod_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<AutomatedMod<RefSource, RefSource>>(Box::new(
-                AutomatedMod::new(
-                    sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
-                    sound_map::clone_sound_ref(props.get_source("mod")?)?,
-                ),
-            )),
+            value: sound_map::push_sound(Box::new(AutomatedMod::new(
+                sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
+                sound_map::clone_sound_ref(props.get_source("mod")?)?,
+            ))),
         },
     )]))
 }

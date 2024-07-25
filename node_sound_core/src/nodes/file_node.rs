@@ -45,9 +45,7 @@ pub fn file_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<CloneableDecoder>(Box::new(CloneableDecoder::new(
-                file.1.clone(),
-            ))),
+            value: sound_map::push_sound(Box::new(CloneableDecoder::new(file.1.clone()))),
         },
     )]))
 }

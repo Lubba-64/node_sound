@@ -838,9 +838,10 @@ impl SoundNodeGraph {
                             sound_map::set_repeats(x, 1);
                             let sound: sound_map::RefSource = match sound_map::clone_sound_ref(x) {
                                 Err(_) => {
-                                    let x = sound_map::push_sound::<Zero<f32>>(Box::new(
-                                        Zero::<f32>::new(1, DEFAULT_SAMPLE_RATE),
-                                    ));
+                                    let x = sound_map::push_sound(Box::new(Zero::<f32>::new(
+                                        1,
+                                        DEFAULT_SAMPLE_RATE,
+                                    )));
                                     sound_map::clone_sound_ref(x).unwrap()
                                 }
                                 Ok(x) => x,
@@ -914,9 +915,10 @@ impl SoundNodeGraph {
                             sound_map::set_repeats(x, 1);
                             let source = match sound_map::clone_sound_ref(x) {
                                 Err(_) => {
-                                    let x = sound_map::push_sound::<Zero<f32>>(Box::new(
-                                        Zero::new(1, DEFAULT_SAMPLE_RATE),
-                                    ));
+                                    let x = sound_map::push_sound(Box::new(Zero::new(
+                                        1,
+                                        DEFAULT_SAMPLE_RATE,
+                                    )));
                                     sound_map::clone_sound_ref(x).unwrap()
                                 }
                                 Ok(x) => x,

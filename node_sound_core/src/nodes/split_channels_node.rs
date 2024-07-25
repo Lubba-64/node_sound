@@ -49,7 +49,7 @@ pub fn split_channels_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound::<SplitChannels<RefSource>>(Box::new(SplitChannels::new(
+            value: sound_map::push_sound(Box::new(SplitChannels::new(
                 sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
                 props.get_float("channel")?.round() as u16,
             ))),
