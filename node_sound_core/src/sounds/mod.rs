@@ -51,3 +51,5 @@ mod repeat_infinite2;
 pub use repeat_infinite2::{repeat, Repeat2};
 mod cloneable_decoder;
 pub use cloneable_decoder::CloneableDecoder;
+mod daw_automation_source;
+pub use daw_automation_source::{DawAutomationChannel, DAW_BUFF};

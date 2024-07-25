@@ -69,7 +69,8 @@ mod wrapper_node;
 use wrapper_node::{wrapper_logic, wrapper_node};
 mod output_node;
 use output_node::{output_logic, output_node};
-
+mod daw_automation_source_node;
+use daw_automation_source_node::{daw_automations_logic, daw_automations_node};
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -178,6 +179,7 @@ pub fn get_nodes(is_vst: bool) -> NodeDefinitions {
     ];
     if is_vst {
         nodes.push((output_node(), Box::new(output_logic)));
+        nodes.push((daw_automations_node(), Box::new(daw_automations_logic)))
     } else {
         nodes.push((midi_node(), Box::new(midi_logic)));
         nodes.push((file_node(), Box::new(file_logic)));

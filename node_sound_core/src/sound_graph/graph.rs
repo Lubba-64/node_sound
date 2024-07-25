@@ -26,6 +26,7 @@ use rodio::source::UniformSourceIterator;
 pub use rodio::source::Zero;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::io::{BufWriter, Cursor};
 use std::path::Path;
@@ -184,17 +185,36 @@ impl NodeTemplateTrait for NodeDefinitionUi {
     }
 }
 
-pub struct NodeDefinitionsUi<'a>(&'a NodeDefinitions);
+pub struct NodeDefinitionsUi<'a>(&'a NodeDefinitions, &'a SoundNodeGraphState);
 impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
     type Item = NodeDefinitionUi;
 
     fn all_kinds(&self) -> Vec<Self::Item> {
+        let mut contains: HashSet<String> = HashSet::new();
+        for node_id in self.1.editor_state.graph.iter_nodes() {
+            contains.insert(
+                self.1.editor_state.graph.nodes[node_id]
+                    .user_data
+                    .name
+                    .to_string(),
+            );
+        }
         self.0
              .0
             .values()
             .cloned()
             .map(|x| x.0)
             .map(NodeDefinitionUi)
+            .filter(|x| {
+                for node in vec!["Output", "DAW Automation"].iter() {
+                    if contains.contains(&node.to_string())
+                        && x.0.name.to_string() == node.to_string()
+                    {
+                        return false;
+                    }
+                }
+                true
+            })
             .collect()
     }
 }
@@ -469,7 +489,7 @@ fn get_unserializeable_state() -> Option<UnserializeableState> {
     });
 }
 
-fn _new(is_vst: bool) -> SoundNodeGraph {
+fn new_sound_node_graph(is_vst: bool) -> SoundNodeGraph {
     let exe_dir = get_current_exe_dir().expect("could not get app directory");
     let settings_path = std::path::Path::new(&exe_dir).join("node_settings.ron");
 
@@ -512,13 +532,13 @@ impl SoundNodeGraph {
             }
         }
 
-        let mut new_ = _new(false);
+        let mut new_ = new_sound_node_graph(false);
         new_.state.user_state.is_vst = new_.is_vst;
         new_
     }
 
     pub fn new_raw() -> Self {
-        let mut new_ = _new(true);
+        let mut new_ = new_sound_node_graph(true);
         new_.state.user_state.is_vst = new_.is_vst;
         new_
     }
@@ -632,19 +652,13 @@ impl SoundNodeGraph {
 
     fn update_output_node(&mut self) {
         let mut found = false;
-        let mut to_remove: Vec<NodeId> = vec![];
         for node in self.state.editor_state.graph.iter_nodes() {
             let found_match =
                 self.state.editor_state.graph.nodes.get(node).unwrap().label == "Output";
-            if found_match && found {
-                to_remove.push(node);
-            } else if found_match {
+            if found_match {
                 found = true;
                 self.state.user_state.vst_output_node_id = Some(node)
             }
-        }
-        for node in to_remove {
-            self.state.editor_state.graph.remove_node(node);
         }
         if !found {
             self.state.user_state.vst_output_node_id = None;
@@ -731,6 +745,7 @@ impl SoundNodeGraph {
                             .node_definitions
                             .as_ref()
                             .unwrap(),
+                        &self.state.clone(),
                     ),
                     &mut self.state.user_state,
                     Vec::default(),

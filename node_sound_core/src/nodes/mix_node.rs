@@ -47,11 +47,7 @@ pub fn mix_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-<<<<<<< HEAD
             value: sound_map::push_sound(Box::new(
-=======
-            value: sound_map::push_sound::<Mix<RefSource, RefSource>>(Box::new(
->>>>>>> 407096b06a510eb51621aa9b03664926c7d68c0a
                 (sound_map::clone_sound_ref(props.get_source("audio 1")?)?)
                     .mix(sound_map::clone_sound_ref(props.get_source("audio 2")?)?),
             )),

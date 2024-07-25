@@ -6,7 +6,7 @@ use node_sound_core::{
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
     },
     sound_map::{self, GenericSource},
-    sounds::{Repeat2, Speed2},
+    sounds::{Repeat2, Speed2, DAW_BUFF},
 };
 use rodio::source::UniformSourceIterator;
 use std::{
@@ -78,6 +78,42 @@ pub struct NodeSoundParams {
     amp_release_ms: FloatParam,
     sound_buffers:
         Arc<Mutex<[Option<UniformSourceIterator<Speed2<GenericSource<f32>>, f32>>; 128]>>,
+    #[id = "a1"]
+    pub a1: FloatParam,
+    #[id = "a2"]
+    pub a2: FloatParam,
+    #[id = "a3"]
+    pub a3: FloatParam,
+    #[id = "a4"]
+    pub a4: FloatParam,
+    #[id = "a5"]
+    pub a5: FloatParam,
+    #[id = "a6"]
+    pub a6: FloatParam,
+    #[id = "a7"]
+    pub a7: FloatParam,
+    #[id = "a8"]
+    pub a8: FloatParam,
+    #[id = "a9"]
+    pub a9: FloatParam,
+    #[id = "a10"]
+    pub a10: FloatParam,
+    #[id = "a11"]
+    pub a11: FloatParam,
+    #[id = "a12"]
+    pub a12: FloatParam,
+    #[id = "a13"]
+    pub a13: FloatParam,
+    #[id = "a14"]
+    pub a14: FloatParam,
+    #[id = "a15"]
+    pub a15: FloatParam,
+    #[id = "a16"]
+    pub a16: FloatParam,
+    #[id = "a17"]
+    pub a17: FloatParam,
+    #[id = "a18"]
+    pub a18: FloatParam,
     root_sound_id: Arc<Mutex<Option<usize>>>,
 }
 
@@ -96,9 +132,9 @@ impl<'a> PersistentField<'a, String> for PluginPresetState {
 
 impl Default for NodeSound {
     fn default() -> Self {
+        let params = NodeSoundParams::default();
         Self {
-            params: Arc::new(NodeSoundParams::default()),
-
+            params: Arc::new(params),
             voices: [0; NUM_VOICES as usize].map(|_| None),
             next_internal_voice_id: 0,
             sample_rate: Arc::new(Mutex::new(48000.0)),
@@ -108,8 +144,42 @@ impl Default for NodeSound {
     }
 }
 
+macro_rules! mkparam {
+    ($field: ident, $name: literal) => {
+        let $field = FloatParam::new(
+            $name,
+            0.0,
+            FloatRange::Linear {
+                min: -1.0,
+                max: 1.0,
+            },
+        )
+        .with_smoother(SmoothingStyle::None)
+        .with_step_size(0.01);
+    };
+}
+
 impl Default for NodeSoundParams {
     fn default() -> Self {
+        mkparam! {a1, "A1"}
+        mkparam! {a2, "A2"}
+        mkparam! {a3, "A3"}
+        mkparam! {b1, "B1"}
+        mkparam! {b2, "B2"}
+        mkparam! {b3, "B3"}
+        mkparam! {c1, "C1"}
+        mkparam! {c2, "C2"}
+        mkparam! {c3, "C3"}
+        mkparam! {d1, "D1"}
+        mkparam! {d2, "D2"}
+        mkparam! {d3, "D3"}
+        mkparam! {e1, "E1"}
+        mkparam! {e2, "E2"}
+        mkparam! {e3, "E3"}
+        mkparam! {f1, "F1"}
+        mkparam! {f2, "F2"}
+        mkparam! {f3, "F3"}
+
         Self {
             sound_buffers: Arc::new(Mutex::new([0; 128].map(|_| None))),
             editor_state: EguiState::from_size(1280, 720),
@@ -153,6 +223,24 @@ impl Default for NodeSoundParams {
             .with_step_size(0.1)
             .with_unit(" ms"),
             root_sound_id: Arc::new(Mutex::new(None)),
+            a1,
+            a2,
+            a3,
+            a4: b1,
+            a5: b2,
+            a6: b3,
+            a7: c1,
+            a8: c2,
+            a9: c3,
+            a10: d1,
+            a11: d2,
+            a12: d3,
+            a13: e1,
+            a14: e2,
+            a15: e3,
+            a16: f1,
+            a17: f2,
+            a18: f3,
         }
     }
 }
@@ -285,6 +373,15 @@ impl NodeSound {
             }
         }
     }
+}
+
+macro_rules! mkparamgetter {
+    ($field: ident, $idx: literal, $self: ident) => {
+        let $field = $self.params.$field.value();
+        unsafe {
+            DAW_BUFF[$idx] = Some($field);
+        }
+    };
 }
 
 impl Plugin for NodeSound {
@@ -427,7 +524,6 @@ impl Plugin for NodeSound {
 
         while block_start < num_samples {
             let this_sample_internal_voice_id_start = self.next_internal_voice_id;
-
             'events: loop {
                 match next_event {
                     // If the event happens now, then we'll keep processing events
@@ -560,6 +656,24 @@ impl Plugin for NodeSound {
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                     let buffer = &mut sound_buffers[voice.note as usize];
                     let amp = voice.amp_envelope.next();
+                    mkparamgetter!(a1, 0, self);
+                    mkparamgetter!(a2, 1, self);
+                    mkparamgetter!(a3, 2, self);
+                    mkparamgetter!(a4, 3, self);
+                    mkparamgetter!(a5, 4, self);
+                    mkparamgetter!(a6, 5, self);
+                    mkparamgetter!(a7, 6, self);
+                    mkparamgetter!(a8, 7, self);
+                    mkparamgetter!(a9, 8, self);
+                    mkparamgetter!(a10, 9, self);
+                    mkparamgetter!(a11, 10, self);
+                    mkparamgetter!(a12, 11, self);
+                    mkparamgetter!(a13, 12, self);
+                    mkparamgetter!(a14, 13, self);
+                    mkparamgetter!(a15, 14, self);
+                    mkparamgetter!(a16, 15, self);
+                    mkparamgetter!(a17, 16, self);
+                    mkparamgetter!(a18, 17, self);
                     match buffer {
                         Some(x) => {
                             output[0][sample_idx] += x.next().unwrap_or(0.0).clamp(-1.0, 1.0) * amp;

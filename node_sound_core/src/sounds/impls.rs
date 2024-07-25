@@ -1,7 +1,8 @@
 use super::super::sound_map::RefSourceIter;
 use super::{
-    Abs, Clamp, CloneableDecoder, Lfo, MergeChannels, MidiRenderer, Mod, Noise, Repeat2,
-    SamplesSource, SawToothWave, Speed2, SplitChannels, SquareWave, TriangleWave, Wrapper,
+    Abs, Clamp, CloneableDecoder, DawAutomationChannel, Lfo, MergeChannels, MidiRenderer, Mod,
+    Noise, Repeat2, SamplesSource, SawToothWave, Speed2, SplitChannels, SquareWave, TriangleWave,
+    Wrapper,
 };
 use super::{
     AutomatedClamp, AutomatedMod, AutomatedSawToothWave, AutomatedSineWave, AutomatedSquareWave,
@@ -25,6 +26,7 @@ impl RefSourceIter<f32> for ConstWave {}
 impl RefSourceIter<f32> for MidiRenderer {}
 impl RefSourceIter<f32> for SamplesSource {}
 impl RefSourceIter<f32> for CloneableDecoder {}
+impl RefSourceIter<f32> for DawAutomationChannel {}
 impl<I> RefSourceIter<f32> for Amplify<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for BltFilter<I> where I: RefSourceIter<f32> {}
 impl<I> RefSourceIter<f32> for Delay<I> where I: RefSourceIter<f32> {}
@@ -102,6 +104,7 @@ impl RefSourceIterDynClone<f32> for ConstWave {}
 impl RefSourceIterDynClone<f32> for MidiRenderer {}
 impl RefSourceIterDynClone<f32> for SamplesSource {}
 impl RefSourceIterDynClone<f32> for CloneableDecoder {}
+impl RefSourceIterDynClone<f32> for DawAutomationChannel {}
 impl<I: Clone> RefSourceIterDynClone<f32> for Amplify<I> where I: RefSourceIterDynClone<f32> {}
 impl<I: Clone> RefSourceIterDynClone<f32> for BltFilter<I> where I: RefSourceIterDynClone<f32> {}
 impl<I: Clone> RefSourceIterDynClone<f32> for Delay<I> where I: RefSourceIterDynClone<f32> {}
