@@ -1,6 +1,6 @@
 use dyn_clone::DynClone;
 use rodio::source::Source;
-use rodio::Sample;
+use rodio::{Decoder, Sample};
 use std::cell::RefCell;
 use std::io::ErrorKind;
 use std::rc::Rc;
@@ -10,6 +10,11 @@ pub trait RefSourceIter<Item: Sample>:
 {
 }
 pub trait RefSourceIterDynClone<Item: Sample>: DynClone + RefSourceIter<Item> {}
+
+impl<I> RefSourceIter<f32> for I where I: Iterator<Item = f32> + Source + 'static {}
+impl<T: std::io::Read + std::io::Seek + 'static> RefSourceIter<i16> for Decoder<T> {}
+
+impl<I> RefSourceIterDynClone<f32> for I where I: RefSourceIter<f32> + Clone {}
 
 pub struct RepeatN<I: Iterator<Item = f32>> {
     iter: I,
@@ -36,9 +41,6 @@ where
 {
     sound: Box<dyn RefSourceIterDynClone<T>>,
 }
-
-impl RefSourceIter<f32> for GenericSource<f32> {}
-impl RefSourceIterDynClone<f32> for GenericSource<f32> {}
 
 impl Clone for GenericSource<f32> {
     fn clone(&self) -> Self {
@@ -91,9 +93,6 @@ pub struct RepeatSource<I: RefSourceIterDynClone<f32>> {
     repeat: usize,
     last: Option<f32>,
 }
-
-impl<I: RefSourceIterDynClone<f32>> RefSourceIter<f32> for RepeatSource<I> {}
-impl<I: RefSourceIterDynClone<f32> + Clone> RefSourceIterDynClone<f32> for RepeatSource<I> {}
 
 impl<I: RefSourceIterDynClone<f32>> RepeatSource<I> {
     pub fn new(source: I, repeats: usize) -> Self {
@@ -152,9 +151,6 @@ impl Clone for RefSource {
 }
 
 unsafe impl Send for RefSource {}
-
-impl RefSourceIter<f32> for RefSource {}
-impl RefSourceIterDynClone<f32> for RefSource {}
 
 impl RefSource {
     pub fn new<I: RefSourceIterDynClone<f32>>(source: Rc<RefCell<I>>) -> Self {

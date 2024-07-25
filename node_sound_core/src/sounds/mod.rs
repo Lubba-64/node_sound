@@ -1,4 +1,3 @@
-mod impls;
 mod triangle;
 pub use triangle::TriangleWave;
 mod square;
