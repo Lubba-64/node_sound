@@ -16,25 +16,6 @@ impl<T: std::io::Read + std::io::Seek + 'static> RefSourceIter<i16> for Decoder<
 
 impl<I> RefSourceIterDynClone<f32> for I where I: RefSourceIter<f32> + Clone {}
 
-pub struct RepeatN<I: Iterator<Item = f32>> {
-    iter: I,
-    repeats: usize,
-    repeat: usize,
-    last: Option<f32>,
-}
-
-impl<I: Iterator<Item = f32>> Iterator for RepeatN<I> {
-    type Item = f32;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.repeat == 0 {
-            self.repeat = self.repeats;
-            self.last = self.iter.next();
-        }
-        self.repeat -= 1;
-        return self.last;
-    }
-}
-
 pub struct GenericSource<T>
 where
     T: Sample,
