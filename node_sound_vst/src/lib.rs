@@ -164,21 +164,21 @@ impl Default for NodeSoundParams {
         mkparam! {a1, "A1"}
         mkparam! {a2, "A2"}
         mkparam! {a3, "A3"}
-        mkparam! {b1, "B1"}
-        mkparam! {b2, "B2"}
-        mkparam! {b3, "B3"}
-        mkparam! {c1, "C1"}
-        mkparam! {c2, "C2"}
-        mkparam! {c3, "C3"}
-        mkparam! {d1, "D1"}
-        mkparam! {d2, "D2"}
-        mkparam! {d3, "D3"}
-        mkparam! {e1, "E1"}
-        mkparam! {e2, "E2"}
-        mkparam! {e3, "E3"}
-        mkparam! {f1, "F1"}
-        mkparam! {f2, "F2"}
-        mkparam! {f3, "F3"}
+        mkparam! {a4, "A4"}
+        mkparam! {a5, "A5"}
+        mkparam! {a6, "A6"}
+        mkparam! {a7, "A7"}
+        mkparam! {a8, "A8"}
+        mkparam! {a9, "A9"}
+        mkparam! {a10, "A10"}
+        mkparam! {a11, "A11"}
+        mkparam! {a12, "A12"}
+        mkparam! {a13, "A13"}
+        mkparam! {a14, "A14"}
+        mkparam! {a15, "A15"}
+        mkparam! {a16, "A16"}
+        mkparam! {a17, "A17"}
+        mkparam! {a18, "A18"}
 
         Self {
             sound_buffers: Arc::new(Mutex::new([0; 128].map(|_| None))),
@@ -226,21 +226,21 @@ impl Default for NodeSoundParams {
             a1,
             a2,
             a3,
-            a4: b1,
-            a5: b2,
-            a6: b3,
-            a7: c1,
-            a8: c2,
-            a9: c3,
-            a10: d1,
-            a11: d2,
-            a12: d3,
-            a13: e1,
-            a14: e2,
-            a15: e3,
-            a16: f1,
-            a17: f2,
-            a18: f3,
+            a4,
+            a5,
+            a6,
+            a7,
+            a8,
+            a9,
+            a10,
+            a11,
+            a12,
+            a13,
+            a14,
+            a15,
+            a16,
+            a17,
+            a18,
         }
     }
 }
