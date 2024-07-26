@@ -2719,7 +2719,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_app"
-version = "1.6.1"
+version = "1.7.0"
 dependencies = [
  "eframe",
  "node_sound_core",
@@ -2728,7 +2728,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_core"
-version = "1.6.1"
+version = "1.7.0"
 dependencies = [
  "clippers",
  "dyn-clone",
@@ -2758,7 +2758,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_vst"
-version = "1.6.1"
+version = "1.7.0"
 dependencies = [
  "crossbeam",
  "egui",
@@ -2774,7 +2774,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_vst_effect"
-version = "1.6.1"
+version = "1.7.0"
 dependencies = [
  "crossbeam",
  "egui",
