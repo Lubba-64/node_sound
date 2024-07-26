@@ -80,7 +80,7 @@ pub struct SoundGraphUserState {
     pub is_saved: bool,
     pub vst_output_node_id: Option<NodeId>,
     #[serde(skip)]
-    pub is_vst: bool,
+    pub is_vst: VstType,
     pub is_done_showing_recording_dialogue: bool,
     #[serde(skip)]
     pub _unserializeable_state: Option<UnserializeableState>,
@@ -89,7 +89,7 @@ pub struct SoundGraphUserState {
 impl Clone for SoundGraphUserState {
     fn clone(&self) -> Self {
         Self {
-            is_vst: self.is_vst,
+            is_vst: self.is_vst.clone(),
             active_node: self.active_node,
             active_modified: self.active_modified,
             sound_result_evaluated: self.sound_result_evaluated,
@@ -407,7 +407,7 @@ impl NodeDataTrait for NodeData {
                 user_state.active_modified = true;
             }
         }
-        if !user_state.is_vst {
+        if user_state.is_vst == VstType::None {
             if !is_recording {
                 if ui.button("⬤ Record").clicked() {
                     if user_state.active_node == ActiveNodeState::NoNode {
@@ -456,7 +456,7 @@ pub struct UnserializeableGraphState {
     >,
 }
 
-pub fn get_unserializeable_graph_state(is_vst: bool) -> UnserializeableGraphState {
+pub fn get_unserializeable_graph_state(is_vst: VstType) -> UnserializeableGraphState {
     let (stream, stream_handle) =
         OutputStream::try_default().expect("could not initialize audio subsystem");
     return UnserializeableGraphState {
@@ -468,6 +468,14 @@ pub fn get_unserializeable_graph_state(is_vst: bool) -> UnserializeableGraphStat
     };
 }
 
+#[derive(Serialize, Deserialize, Default, Clone, PartialEq, Eq)]
+pub enum VstType {
+    Effect,
+    Synth,
+    #[default]
+    None,
+}
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct SoundNodeGraph {
     pub settings_state: WorkingFileSettings,
@@ -476,7 +484,7 @@ pub struct SoundNodeGraph {
     #[serde(skip)]
     pub _unserializeable_state: UnserializeableGraphState,
     settings_path: String,
-    pub is_vst: bool,
+    pub is_vst: VstType,
 }
 
 unsafe impl Send for SoundNodeGraph {}
@@ -489,7 +497,7 @@ fn get_unserializeable_state() -> Option<UnserializeableState> {
     });
 }
 
-fn new_sound_node_graph(is_vst: bool) -> SoundNodeGraph {
+fn new_sound_node_graph(is_vst: VstType) -> SoundNodeGraph {
     let exe_dir = get_current_exe_dir().expect("could not get app directory");
     let settings_path = std::path::Path::new(&exe_dir).join("node_settings.ron");
 
@@ -518,28 +526,34 @@ fn new_sound_node_graph(is_vst: bool) -> SoundNodeGraph {
                 ..Default::default()
             },
         },
-        _unserializeable_state: get_unserializeable_graph_state(is_vst),
+        _unserializeable_state: get_unserializeable_graph_state(is_vst.clone()),
         settings_state: settings_state,
         is_vst: is_vst,
     }
 }
 
 impl SoundNodeGraph {
-    pub fn new(cc: Option<&eframe::CreationContext<'_>>) -> Self {
+    pub fn new_app(cc: Option<&eframe::CreationContext<'_>>) -> Self {
         if cc.is_some() {
             if let Some(storage) = cc.unwrap().storage {
                 return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
             }
         }
 
-        let mut new_ = new_sound_node_graph(false);
-        new_.state.user_state.is_vst = new_.is_vst;
+        let mut new_ = new_sound_node_graph(VstType::None);
+        new_.state.user_state.is_vst = new_.is_vst.clone();
         new_
     }
 
-    pub fn new_raw() -> Self {
-        let mut new_ = new_sound_node_graph(true);
-        new_.state.user_state.is_vst = new_.is_vst;
+    pub fn new_vst_synth() -> Self {
+        let mut new_ = new_sound_node_graph(VstType::Synth);
+        new_.state.user_state.is_vst = new_.is_vst.clone();
+        new_
+    }
+
+    pub fn new_vst_effect() -> Self {
+        let mut new_ = new_sound_node_graph(VstType::Effect);
+        new_.state.user_state.is_vst = new_.is_vst.clone();
         new_
     }
 
@@ -612,7 +626,7 @@ impl SoundNodeGraph {
                     editor_state: file.1.graph_state.clone(),
                     user_state: SoundGraphUserState::default(),
                 };
-                self.state.user_state.is_vst = self.is_vst;
+                self.state.user_state.is_vst = self.is_vst.clone();
             }
             None => {}
         }
@@ -631,7 +645,7 @@ impl SoundNodeGraph {
             if ui.add(egui::Button::new("New Project")).clicked() {
                 self.settings_state.latest_saved_file = None;
                 self.state = SoundNodeGraphState::default();
-                self.state.user_state.is_vst = self.is_vst;
+                self.state.user_state.is_vst = self.is_vst.clone();
             }
             if ui.add(egui::Button::new("Save")).clicked() {
                 match self.settings_state.latest_saved_file.clone() {
@@ -666,12 +680,12 @@ impl SoundNodeGraph {
     }
 
     pub fn update_root(&mut self, ctx: &egui::Context) {
-        self.state.user_state.is_vst = self.is_vst;
+        self.state.user_state.is_vst = self.is_vst.clone();
         if self.state.user_state._unserializeable_state.is_none() {
             self.state.user_state._unserializeable_state = get_unserializeable_state();
         }
         if self._unserializeable_state.node_definitions.is_none() {
-            self._unserializeable_state = get_unserializeable_graph_state(self.is_vst);
+            self._unserializeable_state = get_unserializeable_graph_state(self.is_vst.clone());
         }
         self.poll_wasm_futures();
         self.update_output_node();
@@ -690,7 +704,7 @@ impl SoundNodeGraph {
                 ui.add(egui::Label::new(env!("CARGO_PKG_VERSION")));
                 ui.add(egui::Label::new("|"));
 
-                if !self.is_vst {
+                if self.is_vst == VstType::None {
                     self.combobox(ui);
                     if ui.add(egui::Link::new("tutorial")).clicked() {
                         let _url = "https://www.youtube.com/watch?v=HQrrGoOnNys";
@@ -763,7 +777,7 @@ impl SoundNodeGraph {
             }
         }
 
-        if !self.is_vst {
+        if self.is_vst == VstType::None {
             let mut sound_result = None;
 
             if self.state.user_state.active_modified {

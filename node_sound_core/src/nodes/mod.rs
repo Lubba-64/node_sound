@@ -14,7 +14,10 @@ use triangle_node::{triangle_logic, triangle_node};
 mod square_node;
 use square_node::{square_logic, square_node};
 mod delay_node;
-use crate::sound_graph::graph_types::{InputParameter, Output, ValueType};
+use crate::sound_graph::{
+    graph::VstType,
+    graph_types::{InputParameter, Output, ValueType},
+};
 use delay_node::{delay_logic, delay_node};
 use std::collections::HashMap;
 mod amplify_node;
@@ -71,6 +74,8 @@ mod output_node;
 use output_node::{output_logic, output_node};
 mod daw_automation_source_node;
 use daw_automation_source_node::{daw_automations_logic, daw_automations_node};
+mod daw_input_node;
+use daw_input_node::{daw_input_logic, daw_input_node};
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -135,7 +140,7 @@ type SoundNodeOp =
 type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::Error>>;
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
-pub fn get_nodes(is_vst: bool) -> NodeDefinitions {
+pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
     let mut nodes: Vec<(SoundNode, Box<SoundNodeOp>)> = vec![
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
@@ -176,13 +181,21 @@ pub fn get_nodes(is_vst: bool) -> NodeDefinitions {
         ),
         (const_node(), Box::new(const_logic)),
         (wrapper_node(), Box::new(wrapper_logic)),
+        (daw_input_node(), Box::new(daw_input_logic)),
     ];
-    if is_vst {
-        nodes.push((output_node(), Box::new(output_logic)));
-        nodes.push((daw_automations_node(), Box::new(daw_automations_logic)))
-    } else {
-        nodes.push((midi_node(), Box::new(midi_logic)));
-        nodes.push((file_node(), Box::new(file_logic)));
+    match is_vst {
+        VstType::Effect => {
+            nodes.push((output_node(), Box::new(output_logic)));
+            nodes.push((daw_automations_node(), Box::new(daw_automations_logic)))
+        }
+        VstType::None => {
+            nodes.push((midi_node(), Box::new(midi_logic)));
+            nodes.push((file_node(), Box::new(file_logic)));
+        }
+        VstType::Synth => {
+            nodes.push((output_node(), Box::new(output_logic)));
+            nodes.push((daw_automations_node(), Box::new(daw_automations_logic)))
+        }
     }
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

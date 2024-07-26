@@ -184,7 +184,9 @@ impl Default for NodeSoundParams {
             sound_buffers: Arc::new(Mutex::new([0; 128].map(|_| None))),
             editor_state: EguiState::from_size(1280, 720),
             plugin_state: PluginPresetState {
-                graph: Arc::new(Mutex::new(sound_graph::graph::SoundNodeGraph::new_raw())),
+                graph: Arc::new(Mutex::new(
+                    sound_graph::graph::SoundNodeGraph::new_vst_synth(),
+                )),
             },
             gain: FloatParam::new(
                 "Gain",
