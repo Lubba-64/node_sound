@@ -19,6 +19,7 @@ pub struct NodeSound {
     params: Arc<NodeSoundParams>,
     sample_rate: Arc<Mutex<f32>>,
     sound_result: Arc<Mutex<Option<UniformSourceIterator<GenericSource<f32>, f32>>>>,
+    idx: u8,
 }
 
 pub struct PluginPresetState {
@@ -90,6 +91,7 @@ impl Default for NodeSound {
             params: Arc::new(params),
             sample_rate: Arc::new(Mutex::new(48000.0)),
             sound_result: Arc::new(Mutex::new(None)),
+            idx: 0,
         }
     }
 }
@@ -177,18 +179,11 @@ impl Plugin for NodeSound {
 
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
-    const AUDIO_IO_LAYOUTS: &'static [AudioIOLayout] = &[
-        AudioIOLayout {
-            main_input_channels: NonZeroU32::new(2),
-            main_output_channels: NonZeroU32::new(2),
-            ..AudioIOLayout::const_default()
-        },
-        AudioIOLayout {
-            main_input_channels: NonZeroU32::new(1),
-            main_output_channels: NonZeroU32::new(1),
-            ..AudioIOLayout::const_default()
-        },
-    ];
+    const AUDIO_IO_LAYOUTS: &'static [AudioIOLayout] = &[AudioIOLayout {
+        main_input_channels: NonZeroU32::new(1),
+        main_output_channels: NonZeroU32::new(1),
+        ..AudioIOLayout::const_default()
+    }];
 
     type SysExMessage = ();
     type BackgroundTask = ();
@@ -241,10 +236,9 @@ impl Plugin for NodeSound {
                                     };
 
                                     **sound_result_id = Some(source_id);
-
                                     **sound_result = Some(UniformSourceIterator::new(
                                         sound,
-                                        2,
+                                        1,
                                         **sample_rate as u32,
                                     ));
                                 }
@@ -282,34 +276,36 @@ impl Plugin for NodeSound {
         *self.sample_rate.lock().expect("expect lock") = context.transport().sample_rate;
         let sample_rate = context.transport().sample_rate;
         let mut sound_result = self.sound_result.lock().expect("expected lock");
-        match &mut *sound_result {
-            Some(x) => {
-                for mut channel_samples in buffer.iter_samples() {
-                    for sample in channel_samples.iter_mut() {
-                        unsafe { DAW_INPUT = Some((sample_rate as u32, *sample)) }
-                        mkparamgetter!(a1, 0, self);
-                        mkparamgetter!(a2, 1, self);
-                        mkparamgetter!(a3, 2, self);
-                        mkparamgetter!(a4, 3, self);
-                        mkparamgetter!(a5, 4, self);
-                        mkparamgetter!(a6, 5, self);
-                        mkparamgetter!(a7, 6, self);
-                        mkparamgetter!(a8, 7, self);
-                        mkparamgetter!(a9, 8, self);
-                        mkparamgetter!(a10, 9, self);
-                        mkparamgetter!(a11, 10, self);
-                        mkparamgetter!(a12, 11, self);
-                        mkparamgetter!(a13, 12, self);
-                        mkparamgetter!(a14, 13, self);
-                        mkparamgetter!(a15, 14, self);
-                        mkparamgetter!(a16, 15, self);
-                        mkparamgetter!(a17, 16, self);
-                        mkparamgetter!(a18, 17, self);
-                        *sample = x.next().unwrap_or(0.0).clamp(-1.0, 1.0);
-                    }
-                }
+        self.idx = 0;
+        let sound_result = match &mut *sound_result {
+            Some(x) => x,
+            None => return ProcessStatus::Normal,
+        };
+
+        for mut channel_samples in buffer.iter_samples() {
+            for sample in channel_samples.iter_mut() {
+                unsafe { DAW_INPUT = Some((sample_rate as u32, *sample)) }
+                mkparamgetter!(a1, 0, self);
+                mkparamgetter!(a2, 1, self);
+                mkparamgetter!(a3, 2, self);
+                mkparamgetter!(a4, 3, self);
+                mkparamgetter!(a5, 4, self);
+                mkparamgetter!(a6, 5, self);
+                mkparamgetter!(a7, 6, self);
+                mkparamgetter!(a8, 7, self);
+                mkparamgetter!(a9, 8, self);
+                mkparamgetter!(a10, 9, self);
+                mkparamgetter!(a11, 10, self);
+                mkparamgetter!(a12, 11, self);
+                mkparamgetter!(a13, 12, self);
+                mkparamgetter!(a14, 13, self);
+                mkparamgetter!(a15, 14, self);
+                mkparamgetter!(a16, 15, self);
+                mkparamgetter!(a17, 16, self);
+                mkparamgetter!(a18, 17, self);
+                *sample = sound_result.next().unwrap_or(0.0).clamp(-1.0, 1.0);
             }
-            None => {}
+            self.idx += 1;
         }
 
         ProcessStatus::Normal
