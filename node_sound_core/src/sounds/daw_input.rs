@@ -3,17 +3,15 @@ use rodio::Source;
 use crate::sound_graph::DEFAULT_SAMPLE_RATE;
 use std::time::Duration;
 
-pub static mut DAW_INPUT: Option<(u32, Vec<f32>)> = None;
+pub static mut DAW_INPUT: Option<(u32, f32)> = None;
 
 #[derive(Clone)]
-pub struct DawInputChannel {
-    idx: usize,
-}
+pub struct DawInputChannel {}
 
 impl DawInputChannel {
     #[inline]
     pub fn new() -> Self {
-        Self { idx: 0 }
+        Self {}
     }
 }
 
@@ -25,13 +23,7 @@ impl Iterator for DawInputChannel {
         unsafe {
             match DAW_INPUT.as_ref() {
                 None => None,
-                Some(x) => {
-                    self.idx += 1;
-                    if self.idx >= x.1.len() {
-                        self.idx = 0;
-                    }
-                    Some(x.1[self.idx])
-                }
+                Some(x) => Some(x.1),
             }
         }
     }

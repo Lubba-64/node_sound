@@ -8,6 +8,7 @@ use node_sound_core::{
     sound_map::{self, GenericSource},
     sounds::{DAW_BUFF, DAW_INPUT},
 };
+use rodio::source::UniformSourceIterator;
 
 use std::{
     collections::HashMap,
@@ -17,7 +18,7 @@ use std::{
 pub struct NodeSound {
     params: Arc<NodeSoundParams>,
     sample_rate: Arc<Mutex<f32>>,
-    sound_result: Arc<Mutex<Option<GenericSource<f32>>>>,
+    sound_result: Arc<Mutex<Option<UniformSourceIterator<GenericSource<f32>, f32>>>>,
 }
 
 pub struct PluginPresetState {
@@ -30,15 +31,6 @@ pub struct NodeSoundParams {
     editor_state: Arc<EguiState>,
     #[persist = "editor-preset"]
     plugin_state: PluginPresetState,
-    /// A voice's gain. This can be polyphonically modulated.
-    #[id = "gain"]
-    gain: FloatParam,
-    /// The amplitude envelope attack time. This is the same for every voice.
-    #[id = "amp_atk"]
-    amp_attack_ms: FloatParam,
-    /// The amplitude envelope release time. This is the same for every voice.
-    #[id = "amp_rel"]
-    amp_release_ms: FloatParam,
     #[id = "a1"]
     pub a1: FloatParam,
     #[id = "a2"]
@@ -145,41 +137,6 @@ impl Default for NodeSoundParams {
                     sound_graph::graph::SoundNodeGraph::new_vst_effect(),
                 )),
             },
-            gain: FloatParam::new(
-                "Gain",
-                util::db_to_gain(-12.0),
-                // Because we're representing gain as decibels the range is already logarithmic
-                FloatRange::Linear {
-                    min: util::db_to_gain(-36.0),
-                    max: util::db_to_gain(0.0),
-                },
-            )
-            .with_smoother(SmoothingStyle::Logarithmic(5.0))
-            .with_unit(" dB")
-            .with_value_to_string(formatters::v2s_f32_gain_to_db(2))
-            .with_string_to_value(formatters::s2v_f32_gain_to_db()),
-            amp_attack_ms: FloatParam::new(
-                "Attack",
-                200.0,
-                FloatRange::Skewed {
-                    min: 0.0,
-                    max: 2000.0,
-                    factor: FloatRange::skew_factor(-1.0),
-                },
-            )
-            .with_step_size(0.1)
-            .with_unit(" ms"),
-            amp_release_ms: FloatParam::new(
-                "Release",
-                100.0,
-                FloatRange::Skewed {
-                    min: 0.0,
-                    max: 2000.0,
-                    factor: FloatRange::skew_factor(-1.0),
-                },
-            )
-            .with_step_size(0.1)
-            .with_unit(" ms"),
             root_sound_id: Arc::new(Mutex::new(None)),
             a1,
             a2,
@@ -213,7 +170,7 @@ macro_rules! mkparamgetter {
 }
 
 impl Plugin for NodeSound {
-    const NAME: &'static str = "Node Sound";
+    const NAME: &'static str = "Node Sound Effect";
     const VENDOR: &'static str = "Lubba64";
     const URL: &'static str = "https://lubba-64.github.io/";
     const EMAIL: &'static str = "Lubba64@gmail.com";
@@ -233,9 +190,6 @@ impl Plugin for NodeSound {
         },
     ];
 
-    const MIDI_INPUT: MidiConfig = MidiConfig::None;
-    const SAMPLE_ACCURATE_AUTOMATION: bool = true;
-
     type SysExMessage = ();
     type BackgroundTask = ();
 
@@ -250,12 +204,14 @@ impl Plugin for NodeSound {
                 self.params.plugin_state.graph.clone(),
                 self.sound_result.clone(),
                 self.params.root_sound_id.clone(),
+                self.sample_rate.clone(),
             ),
             |_, _| {},
             move |egui_ctx, _setter, state| {
-                let sound_result = &mut state.1.lock().expect("");
-                let sound_result_id = &mut state.2.lock().expect("");
-                let state = &mut state.0.lock().expect("");
+                let sound_result = &mut state.1.lock().expect("expected lock");
+                let sound_result_id = &mut state.2.lock().expect("expected lock");
+                let sample_rate = &mut state.3.lock().expect("expected lock");
+                let state = &mut state.0.lock().expect("expected lock");
 
                 state.update_root(egui_ctx);
                 if sound_result.is_none() || state.state.user_state.active_node.is_playing() {
@@ -286,7 +242,11 @@ impl Plugin for NodeSound {
 
                                     **sound_result_id = Some(source_id);
 
-                                    **sound_result = Some(sound);
+                                    **sound_result = Some(UniformSourceIterator::new(
+                                        sound,
+                                        2,
+                                        **sample_rate as u32,
+                                    ));
                                 }
                                 Err(_err) => {
                                     sound_map::clear();
@@ -319,57 +279,37 @@ impl Plugin for NodeSound {
         _aux: &mut AuxiliaryBuffers,
         context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        let num_samples = buffer.samples();
         *self.sample_rate.lock().expect("expect lock") = context.transport().sample_rate;
         let sample_rate = context.transport().sample_rate;
-        let input_output = buffer.as_slice();
-
-        let mut samples_interleaved = Vec::with_capacity(num_samples * 2);
-        for idx in 0..num_samples {
-            samples_interleaved[idx * 2] = input_output[0][idx];
-            samples_interleaved[idx * 2 + 1] = input_output[1][idx];
-        }
-
-        unsafe { DAW_INPUT = Some((sample_rate as u32, samples_interleaved)) }
-
         let mut sound_result = self.sound_result.lock().expect("expected lock");
-
-        let mut output = [
-            Vec::with_capacity(num_samples),
-            Vec::with_capacity(num_samples),
-        ];
         match &mut *sound_result {
             Some(x) => {
-                for idx in 0..num_samples {
-                    mkparamgetter!(a1, 0, self);
-                    mkparamgetter!(a2, 1, self);
-                    mkparamgetter!(a3, 2, self);
-                    mkparamgetter!(a4, 3, self);
-                    mkparamgetter!(a5, 4, self);
-                    mkparamgetter!(a6, 5, self);
-                    mkparamgetter!(a7, 6, self);
-                    mkparamgetter!(a8, 7, self);
-                    mkparamgetter!(a9, 8, self);
-                    mkparamgetter!(a10, 9, self);
-                    mkparamgetter!(a11, 10, self);
-                    mkparamgetter!(a12, 11, self);
-                    mkparamgetter!(a13, 12, self);
-                    mkparamgetter!(a14, 13, self);
-                    mkparamgetter!(a15, 14, self);
-                    mkparamgetter!(a16, 15, self);
-                    mkparamgetter!(a17, 16, self);
-                    mkparamgetter!(a18, 17, self);
-                    output[0][idx] = x.next().unwrap_or(0.0).clamp(-1.0, 1.0);
-                    output[1][idx] = x.next().unwrap_or(0.0).clamp(-1.0, 1.0);
+                for mut channel_samples in buffer.iter_samples() {
+                    for sample in channel_samples.iter_mut() {
+                        unsafe { DAW_INPUT = Some((sample_rate as u32, *sample)) }
+                        mkparamgetter!(a1, 0, self);
+                        mkparamgetter!(a2, 1, self);
+                        mkparamgetter!(a3, 2, self);
+                        mkparamgetter!(a4, 3, self);
+                        mkparamgetter!(a5, 4, self);
+                        mkparamgetter!(a6, 5, self);
+                        mkparamgetter!(a7, 6, self);
+                        mkparamgetter!(a8, 7, self);
+                        mkparamgetter!(a9, 8, self);
+                        mkparamgetter!(a10, 9, self);
+                        mkparamgetter!(a11, 10, self);
+                        mkparamgetter!(a12, 11, self);
+                        mkparamgetter!(a13, 12, self);
+                        mkparamgetter!(a14, 13, self);
+                        mkparamgetter!(a15, 14, self);
+                        mkparamgetter!(a16, 15, self);
+                        mkparamgetter!(a17, 16, self);
+                        mkparamgetter!(a18, 17, self);
+                        *sample = x.next().unwrap_or(0.0).clamp(-1.0, 1.0);
+                    }
                 }
             }
             None => {}
-        }
-
-        for (channel_idx, mut channel_samples) in buffer.iter_samples().enumerate() {
-            for (idx, sample) in channel_samples.iter_mut().enumerate() {
-                *sample = output[channel_idx][idx]
-            }
         }
 
         ProcessStatus::Normal
