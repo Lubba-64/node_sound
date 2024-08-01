@@ -25,11 +25,12 @@ impl WavetableOscillator {
         self
     }
 
-    fn get_sample(&mut self) -> f32 {
-        let sample = self.lerp();
+    fn get_sample(&mut self) -> Option<f32> {
         self.index += self.index_increment;
-        self.index %= self.wave_table.len() as f32;
-        return sample;
+        if self.index > self.wave_table.len() as f32 {
+            return None;
+        }
+        return Some(self.lerp());
     }
 
     fn lerp(&self) -> f32 {
@@ -66,6 +67,6 @@ impl Iterator for WavetableOscillator {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        return Some(self.get_sample());
+        return self.get_sample();
     }
 }

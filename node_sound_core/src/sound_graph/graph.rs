@@ -13,6 +13,7 @@ use super::DEFAULT_SAMPLE_RATE;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::save_management::get_project_file;
+use crate::sound_graph::WAVE_TABLE_SIZE;
 use crate::sound_map;
 #[cfg(target_arch = "wasm32")]
 use crate::sound_map::RefSource;
@@ -245,14 +246,14 @@ fn plot(value: &mut Option<Vec<f32>>, ui: &mut egui::Ui, id: usize) {
     };
 
     if value.len() == 0 {
-        value.extend(Vec::with_capacity(100).iter());
+        value.extend(Vec::with_capacity(WAVE_TABLE_SIZE).iter());
         println!("bruh");
         return;
     }
 
-    let points: PlotPoints = (0..100)
+    let points: PlotPoints = (0..WAVE_TABLE_SIZE)
         .map(|i| {
-            let x = i as f64 * 0.1;
+            let x = i as f64 * 10.0 / WAVE_TABLE_SIZE as f64;
             [x, value[i].into()]
         })
         .collect();
@@ -278,8 +279,10 @@ fn plot(value: &mut Option<Vec<f32>>, ui: &mut egui::Ui, id: usize) {
                     if y > -1.0 && y < 1.0 && mouse_down {
                         match plot_ui.pointer_coordinate() {
                             Some(x) => {
-                                let idx_rev_hope =
-                                    ((x.x - x.x % 0.1) / 0.1).clamp(0.0, 999.0).round() as usize;
+                                let idx_rev_hope = ((x.x - x.x % 0.1) / 0.1)
+                                    .clamp(0.0, (WAVE_TABLE_SIZE - 1) as f64)
+                                    .round()
+                                    as usize;
                                 value[idx_rev_hope] = x.y as f32;
                             }
                             None => {}
