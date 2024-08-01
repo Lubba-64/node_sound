@@ -17,6 +17,7 @@ mod data_types {
         Duration,
         AudioFile,
         MidiFile,
+        Graph,
     }
 
     #[derive(Clone, Default, Serialize, Deserialize)]
@@ -40,6 +41,10 @@ mod data_types {
         MidiFile {
             value: Option<(String, MidiSong)>,
         },
+        Graph {
+            value: Option<Vec<f32>>,
+            id: usize,
+        },
     }
 
     impl Default for &ValueType {
@@ -55,6 +60,7 @@ mod data_types {
         Duration { value: f32 },
         AudioFile {},
         MidiFile {},
+        Graph { value: Vec<f32> },
     }
 
     impl Debug for ValueType {
@@ -79,6 +85,10 @@ mod data_types {
                 Self::MidiFile { value: _ } => f
                     .debug_struct("Midi")
                     .field("value", &"Anonymous MidiFile")
+                    .finish(),
+                Self::Graph { value: _, id: _ } => f
+                    .debug_struct("Graph")
+                    .field("value", &"Anonymous Graph")
                     .finish(),
             }
         }
@@ -121,6 +131,12 @@ mod data_types {
         pub fn try_to_midi(self) -> Result<Option<(String, MidiSong)>, String> {
             match self {
                 ValueType::MidiFile { value } => Ok(value),
+                _ => Err("invalid cast".to_string()),
+            }
+        }
+        pub fn try_to_graph(self) -> Result<Option<Vec<f32>>, String> {
+            match self {
+                ValueType::Graph { value, id: _ } => Ok(value),
                 _ => Err("invalid cast".to_string()),
             }
         }

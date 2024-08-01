@@ -16,10 +16,11 @@ use crate::sound_graph::save_management::get_project_file;
 use crate::sound_map;
 #[cfg(target_arch = "wasm32")]
 use crate::sound_map::RefSource;
-use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers, Vec2};
+use eframe::egui::{self, vec2, DragValue, KeyboardShortcut, Modifiers, Vec2};
 use eframe::egui::{Pos2, TextStyle};
 use egui_extras_xt::knobs::AudioKnob;
 pub use egui_node_graph_2::*;
+use egui_plot::PlotBounds;
 use rodio::source::Source;
 #[cfg(target_arch = "wasm32")]
 use rodio::source::UniformSourceIterator;
@@ -81,9 +82,11 @@ pub struct SoundGraphUserState {
     pub vst_output_node_id: Option<NodeId>,
     #[serde(skip)]
     pub is_vst: VstType,
+    #[serde(skip)]
     pub is_done_showing_recording_dialogue: bool,
     #[serde(skip)]
     pub _unserializeable_state: Option<UnserializeableState>,
+    pub wave_shaper_graph_id: Option<usize>,
 }
 
 impl Clone for SoundGraphUserState {
@@ -98,6 +101,7 @@ impl Clone for SoundGraphUserState {
             vst_output_node_id: None,
             is_done_showing_recording_dialogue: self.is_done_showing_recording_dialogue,
             _unserializeable_state: None,
+            wave_shaper_graph_id: self.wave_shaper_graph_id,
         }
     }
 }
@@ -111,6 +115,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::AudioFile => egui::Color32::from_rgb(100, 100, 150),
             DataType::None => egui::Color32::from_rgb(100, 100, 100),
             DataType::MidiFile => egui::Color32::from_rgb(150, 100, 100),
+            DataType::Graph => egui::Color32::from_rgb(150, 100, 100),
         }
     }
 
@@ -122,6 +127,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::AudioFile => Cow::Borrowed("File"),
             DataType::None => Cow::Borrowed("None"),
             DataType::MidiFile => Cow::Borrowed("Midi"),
+            DataType::Graph => Cow::Borrowed("Graph"),
         }
     }
 }
@@ -174,6 +180,14 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                     },
                     InputValueConfig::AudioFile {} => ValueType::AudioFile { value: None },
                     InputValueConfig::MidiFile {} => ValueType::MidiFile { value: None },
+                    InputValueConfig::Graph { value } => {
+                        user_state.wave_shaper_graph_id =
+                            Some(user_state.wave_shaper_graph_id.unwrap_or(0) + 1);
+                        ValueType::Graph {
+                            value: Some(value.clone()),
+                            id: user_state.wave_shaper_graph_id.unwrap(),
+                        }
+                    }
                 },
                 input.1.kind,
                 true,
@@ -219,6 +233,66 @@ impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
     }
 }
 
+fn plot(value: &mut Option<Vec<f32>>, ui: &mut egui::Ui, id: usize) {
+    use egui_plot::{Line, Plot, PlotPoints};
+
+    let value = match value {
+        Some(x) => x,
+        None => {
+            println!("oh dear");
+            return;
+        }
+    };
+
+    if value.len() == 0 {
+        value.extend(Vec::with_capacity(100).iter());
+        println!("bruh");
+        return;
+    }
+
+    let points: PlotPoints = (0..100)
+        .map(|i| {
+            let x = i as f64 * 0.1;
+            [x, value[i].into()]
+        })
+        .collect();
+    let line = Line::new(points);
+    let mouse_down = ui.input(|x| x.pointer.button_down(egui::PointerButton::Primary));
+
+    Plot::new(id.to_string())
+        .view_aspect(2.0)
+        .allow_drag(false)
+        .min_size(vec2(400.0, 100.0))
+        .allow_zoom(false)
+        .allow_scroll(false)
+        .height(200.0)
+        .width(1000.0)
+        .allow_double_click_reset(false)
+        .center_y_axis(true)
+        .y_axis_width(1)
+        .show(ui, |plot_ui| {
+            plot_ui.set_plot_bounds(PlotBounds::from_min_max([0.0, -1.0], [10.0, 1.0]));
+            match plot_ui.ctx().pointer_interact_pos() {
+                Some(x) => {
+                    let y = plot_ui.plot_from_screen(x).y;
+                    if y > -1.0 && y < 1.0 && mouse_down {
+                        match plot_ui.pointer_coordinate() {
+                            Some(x) => {
+                                let idx_rev_hope =
+                                    ((x.x - x.x % 0.1) / 0.1).clamp(0.0, 999.0).round() as usize;
+                                value[idx_rev_hope] = x.y as f32;
+                            }
+                            None => {}
+                        }
+                    }
+                }
+                None => {}
+            }
+
+            plot_ui.line(line)
+        });
+}
+
 impl WidgetValueTrait for ValueType {
     type Response = ActiveNodeState;
     type UserState = SoundGraphUserState;
@@ -232,6 +306,7 @@ impl WidgetValueTrait for ValueType {
         _node_data: &Self::NodeData,
     ) -> Vec<ActiveNodeState> {
         match self {
+            ValueType::Graph { value, id } => plot(value, ui, *id),
             ValueType::Float { value, min, max } => {
                 ui.horizontal(|ui| {
                     ui.label(param_name);

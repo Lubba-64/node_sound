@@ -11,6 +11,7 @@ use sine_node::{sine_logic, sine_node};
 use std::{collections::BTreeMap, time::Duration};
 use synthrs::midi::MidiSong;
 use triangle_node::{triangle_logic, triangle_node};
+use wave_shaper_node::{wave_shaper_logic, wave_shaper_node};
 mod square_node;
 use square_node::{square_logic, square_node};
 mod delay_node;
@@ -76,6 +77,8 @@ mod daw_automation_source_node;
 use daw_automation_source_node::{daw_automations_logic, daw_automations_node};
 mod daw_input_node;
 use daw_input_node::{daw_input_logic, daw_input_node};
+mod wave_shaper_node;
+
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -126,6 +129,14 @@ impl SoundNodeProps {
             .unwrap_or_default()
             .clone()
             .try_to_midi()?)
+    }
+    fn get_graph(&self, name: &str) -> Result<Option<Vec<f32>>, Box<dyn std::error::Error>> {
+        Ok(self
+            .inputs
+            .get(name)
+            .unwrap_or_default()
+            .clone()
+            .try_to_graph()?)
     }
 }
 
@@ -182,6 +193,7 @@ pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
         (const_node(), Box::new(const_logic)),
         (wrapper_node(), Box::new(wrapper_logic)),
         (daw_input_node(), Box::new(daw_input_logic)),
+        (wave_shaper_node(), Box::new(wave_shaper_logic)),
     ];
     match is_vst {
         VstType::Effect => {

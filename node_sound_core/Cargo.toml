@@ -3,7 +3,7 @@ name = "node_sound_core"
 version = "1.7.0"
 authors = ["Lubba64"]
 edition = "2021"
-rust-version = "1.56"
+rust-version = "1.80"
 
 [dependencies]
 rodio = { version = "0.19", features = ["wasm-bindgen"] }
@@ -36,6 +36,7 @@ egui_extras_xt = { version = "*", git = "https://github.com/xTibor/egui_extras_x
     "knobs",
 ] }
 clippers = "0.1.2"
+egui_plot = "0.27.2"
 
 
 [features]
