@@ -2733,11 +2733,12 @@ dependencies = [
  "eframe",
  "node_sound_core",
  "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]
 name = "node_sound_core"
-version = "1.8.1"
+version = "1.8.2"
 dependencies = [
  "clippers",
  "dyn-clone",
@@ -2749,6 +2750,7 @@ dependencies = [
  "getrandom 0.2.15",
  "hound",
  "itertools 0.13.0",
+ "js-sys",
  "open",
  "pitch_shift",
  "rand 0.8.5",
@@ -2768,7 +2770,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_vst"
-version = "1.8.1"
+version = "1.8.2"
 dependencies = [
  "crossbeam",
  "egui",
@@ -2784,7 +2786,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_vst_effect"
-version = "1.8.1"
+version = "1.8.2"
 dependencies = [
  "crossbeam",
  "egui",

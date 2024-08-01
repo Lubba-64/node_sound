@@ -22,6 +22,7 @@ use eframe::egui::{Pos2, TextStyle};
 use egui_extras_xt::knobs::AudioKnob;
 pub use egui_node_graph_2::*;
 use egui_plot::PlotBounds;
+use futures::executor;
 use rodio::source::Source;
 #[cfg(target_arch = "wasm32")]
 use rodio::source::UniformSourceIterator;
@@ -819,7 +820,10 @@ impl SoundNodeGraph {
                         x: input.x,
                         y: input.y,
                     };
-                    paste_from_clipboard(&mut self.state.editor_state, input_vec2);
+                    executor::block_on(paste_from_clipboard(
+                        &mut self.state.editor_state,
+                        input_vec2,
+                    ));
                 }
                 if ui.add(egui::Button::new("delete selected")).clicked() {
                     delete_selected_nodes(&mut self.state.editor_state)
