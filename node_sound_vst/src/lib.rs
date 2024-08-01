@@ -4,6 +4,7 @@ use node_sound_core::{
     sound_graph::{
         self,
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
+        MIDDLE_C_FREQ,
     },
     sound_map::{self, GenericSource},
     sounds::{Speed2, DAW_BUFF},
@@ -466,10 +467,12 @@ impl Plugin for NodeSound {
 
                                     for vidx in 0..128usize {
                                         let speed = from_semitones(
-                                            261.63,
-                                            to_semitones(midi_note_to_freq(vidx as u8), 261.63)
-                                                + 10.5,
-                                        ) / 261.63;
+                                            MIDDLE_C_FREQ,
+                                            to_semitones(
+                                                midi_note_to_freq(vidx as u8),
+                                                MIDDLE_C_FREQ,
+                                            ) + 10.5,
+                                        ) / MIDDLE_C_FREQ;
 
                                         sound_buffers[vidx] = Some(UniformSourceIterator::new(
                                             Speed2 {
