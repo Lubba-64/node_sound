@@ -35,7 +35,7 @@ fn main() {
             .start(
                 "the_canvas_id", // hardcode it
                 web_options,
-                Box::new(|cc| Box::new(sound_graph::graph::SoundNodeGraph::new(Some(cc)))),
+                Box::new(|cc| Box::new(sound_graph::graph::SoundNodeGraph::new_app(Some(cc)))),
             )
             .await
             .expect("failed to start eframe");

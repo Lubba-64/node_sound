@@ -7,3 +7,4 @@ edition = "2021"
 eframe = "0.27.2"
 node_sound_core = { version = "*", path = "../node_sound_core", default-features = false }
 wasm-bindgen-futures = "0.4.42"
+web-sys = { version = "0.3.69", features = ["Clipboard", "Navigator"] }
