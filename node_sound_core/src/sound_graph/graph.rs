@@ -1,7 +1,7 @@
 use super::copy_paste_del_helpers::{
     copy_to_clipboard, delete_selected_nodes, paste_from_clipboard,
 };
-use super::graph_types::InputValueConfig;
+use super::graph_types::{InputValueConfig, Note, NoteValue, Octave};
 use super::save_management::write_output_sound;
 use super::save_management::{
     get_current_exe_dir, get_current_working_settings, get_input_midi, get_input_sound,
@@ -17,7 +17,7 @@ use crate::sound_graph::WAVE_TABLE_SIZE;
 use crate::sound_map;
 #[cfg(target_arch = "wasm32")]
 use crate::sound_map::RefSource;
-use eframe::egui::{self, vec2, DragValue, KeyboardShortcut, Modifiers, Vec2};
+use eframe::egui::{self, vec2, ComboBox, DragValue, KeyboardShortcut, Modifiers, Vec2};
 use eframe::egui::{Pos2, TextStyle};
 use egui_extras_xt::knobs::AudioKnob;
 pub use egui_node_graph_2::*;
@@ -176,6 +176,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                         value: *value,
                         min: *min,
                         max: *max,
+                        note: NoteValue::default(),
                     },
                     InputValueConfig::Duration { value } => ValueType::Duration {
                         value: Duration::from_secs_f32(*value),
@@ -311,7 +312,12 @@ impl WidgetValueTrait for ValueType {
     ) -> Vec<ActiveNodeState> {
         match self {
             ValueType::Graph { value, id } => plot(value, ui, *id),
-            ValueType::Float { value, min, max } => {
+            ValueType::Float {
+                value,
+                min,
+                max,
+                note,
+            } => {
                 ui.horizontal(|ui| {
                     ui.label(param_name);
                     ui.add(
@@ -321,6 +327,111 @@ impl WidgetValueTrait for ValueType {
                             .diameter(20.0),
                     );
                     ui.add(DragValue::new(value).speed(0.01).clamp_range(*min..=*max));
+
+                    let note_combo = ComboBox::from_label(note.1.to_string());
+                    let octave_combo = ComboBox::from_label(note.0.to_string());
+
+                    let octave_res = octave_combo
+                        .show_ui(ui, |ui| -> Result<Octave, ()> {
+                            if ui.add(egui::Button::new(Octave::O0.to_string())).clicked() {
+                                return Ok(Octave::O0);
+                            }
+                            if ui.add(egui::Button::new(Octave::O1.to_string())).clicked() {
+                                return Ok(Octave::O1);
+                            }
+                            if ui.add(egui::Button::new(Octave::O2.to_string())).clicked() {
+                                return Ok(Octave::O2);
+                            }
+                            if ui.add(egui::Button::new(Octave::O3.to_string())).clicked() {
+                                return Ok(Octave::O3);
+                            }
+                            if ui.add(egui::Button::new(Octave::O4.to_string())).clicked() {
+                                return Ok(Octave::O4);
+                            }
+                            if ui.add(egui::Button::new(Octave::O5.to_string())).clicked() {
+                                return Ok(Octave::O5);
+                            }
+                            if ui.add(egui::Button::new(Octave::O6.to_string())).clicked() {
+                                return Ok(Octave::O6);
+                            }
+                            if ui.add(egui::Button::new(Octave::O7.to_string())).clicked() {
+                                return Ok(Octave::O7);
+                            }
+                            if ui.add(egui::Button::new(Octave::O8.to_string())).clicked() {
+                                return Ok(Octave::O8);
+                            }
+                            return Err(());
+                        })
+                        .inner
+                        .unwrap_or(Err(()));
+                    let note_res = note_combo
+                        .show_ui(ui, |ui| -> Result<Note, ()> {
+                            if ui.add(egui::Button::new(Note::C.to_string())).clicked() {
+                                return Ok(Note::C);
+                            }
+
+                            if ui.add(egui::Button::new(Note::CS.to_string())).clicked() {
+                                return Ok(Note::CS);
+                            }
+
+                            if ui.add(egui::Button::new(Note::D.to_string())).clicked() {
+                                return Ok(Note::D);
+                            }
+
+                            if ui.add(egui::Button::new(Note::DS.to_string())).clicked() {
+                                return Ok(Note::DS);
+                            }
+
+                            if ui.add(egui::Button::new(Note::E.to_string())).clicked() {
+                                return Ok(Note::E);
+                            }
+
+                            if ui.add(egui::Button::new(Note::F.to_string())).clicked() {
+                                return Ok(Note::F);
+                            }
+
+                            if ui.add(egui::Button::new(Note::FS.to_string())).clicked() {
+                                return Ok(Note::FS);
+                            }
+
+                            if ui.add(egui::Button::new(Note::G.to_string())).clicked() {
+                                return Ok(Note::G);
+                            }
+
+                            if ui.add(egui::Button::new(Note::GS.to_string())).clicked() {
+                                return Ok(Note::GS);
+                            }
+
+                            if ui.add(egui::Button::new(Note::A.to_string())).clicked() {
+                                return Ok(Note::A);
+                            }
+
+                            if ui.add(egui::Button::new(Note::AS.to_string())).clicked() {
+                                return Ok(Note::AS);
+                            }
+
+                            if ui.add(egui::Button::new(Note::B.to_string())).clicked() {
+                                return Ok(Note::B);
+                            }
+                            return Err(());
+                        })
+                        .inner
+                        .unwrap_or(Err(()));
+                    match (note_res, octave_res) {
+                        (Ok(note_res), Err(_)) => {
+                            *note = NoteValue(note.0.clone(), note_res);
+                            *value = note.match_freq();
+                        }
+                        (Err(_), Ok(octave_res)) => {
+                            *note = NoteValue(octave_res, note.1.clone());
+                            *value = note.match_freq();
+                        }
+                        (Ok(note_res), Ok(octave_res)) => {
+                            *note = NoteValue(octave_res, note_res);
+                            *value = note.match_freq();
+                        }
+                        (Err(_), Err(_)) => {}
+                    }
                 });
             }
             ValueType::Duration { value } => {
