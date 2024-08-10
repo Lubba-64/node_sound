@@ -56,3 +56,5 @@ mod daw_input;
 pub use daw_input::{DawInputChannel, DAW_INPUT};
 mod wave_table;
 pub use wave_table::WavetableOscillator;
+mod automated_wave_table;
+pub use automated_wave_table::AutomatedWavetableOscillator;

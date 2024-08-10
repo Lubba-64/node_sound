@@ -77,8 +77,9 @@ mod daw_automation_source_node;
 use daw_automation_source_node::{daw_automations_logic, daw_automations_node};
 mod daw_input_node;
 use daw_input_node::{daw_input_logic, daw_input_node};
+mod automated_wave_shaper_node;
 mod wave_shaper_node;
-
+use automated_wave_shaper_node::{automated_wave_shaper_logic, automated_wave_shaper_node};
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -194,6 +195,10 @@ pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
         (wrapper_node(), Box::new(wrapper_logic)),
         (daw_input_node(), Box::new(daw_input_logic)),
         (wave_shaper_node(), Box::new(wave_shaper_logic)),
+        (
+            automated_wave_shaper_node(),
+            Box::new(automated_wave_shaper_logic),
+        ),
     ];
     match is_vst {
         VstType::Effect => {
