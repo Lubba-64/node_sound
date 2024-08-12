@@ -1,6 +1,6 @@
 [package]
 name = "node_sound_app"
-version =  "1.9.1"
+version =  "1.9.2"
 edition = "2021"
 
 [dependencies]
