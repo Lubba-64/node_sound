@@ -19,6 +19,7 @@ use util::midi_note_to_freq;
 const NUM_VOICES: u32 = 16;
 const GAIN_POLY_MOD_ID: u32 = 0;
 const MAX_BLOCK_SIZE: usize = 64;
+const MIDI_NOTES_LEN: u8 = 128;
 
 /// Data for a single synth voice. In a real synth where performance matter, you may want to use a
 /// struct of arrays instead of having a struct for each voice.
@@ -77,8 +78,18 @@ pub struct NodeSoundParams {
     /// The amplitude envelope release time. This is the same for every voice.
     #[id = "amp_rel"]
     amp_release_ms: FloatParam,
-    sound_buffers:
-        Arc<Mutex<[Option<UniformSourceIterator<Speed2<GenericSource<f32>>, f32>>; 128]>>,
+    source_sound_buffers: Arc<
+        Mutex<
+            [Option<UniformSourceIterator<Speed2<GenericSource<f32>>, f32>>;
+                MIDI_NOTES_LEN as usize],
+        >,
+    >,
+    voice_sound_buffers: Arc<
+        Mutex<
+            [Option<UniformSourceIterator<Speed2<GenericSource<f32>>, f32>>;
+                MIDI_NOTES_LEN as usize],
+        >,
+    >,
     #[id = "a1"]
     pub a1: FloatParam,
     #[id = "a2"]
@@ -182,7 +193,8 @@ impl Default for NodeSoundParams {
         mkparam! {a18, "A18"}
 
         Self {
-            sound_buffers: Arc::new(Mutex::new([0; 128].map(|_| None))),
+            source_sound_buffers: Arc::new(Mutex::new([0; MIDI_NOTES_LEN as usize].map(|_| None))),
+            voice_sound_buffers: Arc::new(Mutex::new([0; MIDI_NOTES_LEN as usize].map(|_| None))),
             editor_state: EguiState::from_size(1280, 720),
             plugin_state: PluginPresetState {
                 graph: Arc::new(Mutex::new(
@@ -416,7 +428,7 @@ impl Plugin for NodeSound {
             self.params.editor_state.clone(),
             (
                 self.params.plugin_state.graph.clone(),
-                self.params.sound_buffers.clone(),
+                self.params.source_sound_buffers.clone(),
                 self.sample_rate.clone(),
                 self.sound_result.clone(),
                 self.params.root_sound_id.clone(),
@@ -465,7 +477,7 @@ impl Plugin for NodeSound {
                                         f2 / 2.0_f32.powf(n / 12.0)
                                     }
 
-                                    for vidx in 0..128usize {
+                                    for vidx in 0..MIDI_NOTES_LEN as usize {
                                         let speed = from_semitones(
                                             MIDDLE_C_FREQ,
                                             to_semitones(
@@ -486,14 +498,14 @@ impl Plugin for NodeSound {
                                     **sound_result = Some(sound);
                                 }
                                 Err(_err) => {
-                                    *sound_buffers = [0; 128].map(|_| None);
+                                    *sound_buffers = [0; MIDI_NOTES_LEN as usize].map(|_| None);
                                     sound_map::clear();
                                     **sound_result = None
                                 }
                             };
                         }
                         None => {
-                            *sound_buffers = [0; 128].map(|_| None);
+                            *sound_buffers = [0; MIDI_NOTES_LEN as usize].map(|_| None);
                             sound_map::clear();
                             **sound_result = None
                         }
@@ -529,6 +541,8 @@ impl Plugin for NodeSound {
 
         while block_start < num_samples {
             let this_sample_internal_voice_id_start = self.next_internal_voice_id;
+
+            let mut notes_to_reset = vec![];
             'events: loop {
                 match next_event {
                     // If the event happens now, then we'll keep processing events
@@ -547,7 +561,7 @@ impl Plugin for NodeSound {
                                 ));
                                 amp_envelope.reset(0.0);
                                 amp_envelope.set_target(sample_rate, 1.0);
-
+                                notes_to_reset.push(note as usize);
                                 let voice =
                                     self.start_voice(context, timing, voice_id, channel, note);
                                 voice.velocity_sqrt = velocity.sqrt();
@@ -655,11 +669,23 @@ impl Plugin for NodeSound {
             output[0][block_start..block_end].fill(0.0);
             output[1][block_start..block_end].fill(0.0);
 
-            let mut sound_buffers = self.params.sound_buffers.lock().expect("expected lock");
+            let mut sound_buffers = self
+                .params
+                .source_sound_buffers
+                .lock()
+                .expect("expected lock");
+            let mut voice_sound_buffers = self
+                .params
+                .voice_sound_buffers
+                .lock()
+                .expect("expected lock");
+            for note in notes_to_reset {
+                voice_sound_buffers[note] = sound_buffers[note].clone();
+            }
 
             for sample_idx in block_start..block_end {
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
-                    let buffer = &mut sound_buffers[voice.note as usize];
+                    let buffer = &mut voice_sound_buffers[voice.note as usize];
                     let amp = voice.amp_envelope.next();
                     mkparamgetter!(a1, 0, self);
                     mkparamgetter!(a2, 1, self);
