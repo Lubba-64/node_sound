@@ -10,7 +10,6 @@ pub struct AutomatedWavetableOscillator<I: Source<Item = f32>> {
     wave_table: Vec<f32>,
     freq: UniformSourceIterator<I, f32>,
     index: f32,
-    index_increment: f32,
 }
 
 impl<I: Source<Item = f32>> AutomatedWavetableOscillator<I> {
@@ -20,7 +19,6 @@ impl<I: Source<Item = f32>> AutomatedWavetableOscillator<I> {
             wave_table: wave_table,
             index: 0.0,
             freq: UniformSourceIterator::new(freq, 1, DEFAULT_SAMPLE_RATE),
-            index_increment: 0.0,
         };
     }
 

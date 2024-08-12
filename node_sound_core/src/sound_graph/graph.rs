@@ -268,8 +268,8 @@ fn plot(value: &mut Option<Vec<f32>>, ui: &mut egui::Ui, id: usize) {
         .min_size(vec2(400.0, 100.0))
         .allow_zoom(false)
         .allow_scroll(false)
-        .height(200.0)
-        .width(1000.0)
+        .height(100.0)
+        .width(500.0)
         .allow_double_click_reset(false)
         .center_y_axis(true)
         .y_axis_width(1)
@@ -328,10 +328,9 @@ impl WidgetValueTrait for ValueType {
                     );
                     ui.add(DragValue::new(value).speed(0.01).clamp_range(*min..=*max));
 
-                    let note_combo = ComboBox::from_label(note.1.to_string());
-                    let octave_combo = ComboBox::from_label(note.0.to_string());
-
-                    let octave_res = octave_combo
+                    let octave_res = ComboBox::new(format!("octave_{}", param_name), "")
+                        .selected_text(note.0.to_string())
+                        .width(20.0)
                         .show_ui(ui, |ui| -> Result<Octave, ()> {
                             if ui.add(egui::Button::new(Octave::O0.to_string())).clicked() {
                                 return Ok(Octave::O0);
@@ -364,7 +363,9 @@ impl WidgetValueTrait for ValueType {
                         })
                         .inner
                         .unwrap_or(Err(()));
-                    let note_res = note_combo
+                    let note_res = ComboBox::new(format!("note_{}", param_name), "")
+                        .selected_text(note.1.to_string())
+                        .width(20.0)
                         .show_ui(ui, |ui| -> Result<Note, ()> {
                             if ui.add(egui::Button::new(Note::C.to_string())).clicked() {
                                 return Ok(Note::C);

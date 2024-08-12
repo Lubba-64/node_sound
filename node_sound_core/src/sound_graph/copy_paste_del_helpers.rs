@@ -86,47 +86,12 @@ pub fn copy_to_clipboard(state: &mut SoundGraphEditorState) {
             .write_text(ron::ser::to_string(&clipboard_data).expect("expect serialize to work..."))
             .unwrap();
     }
-    #[cfg(target_arch = "wasm32")]
-    {
-        let window = web_sys::window().expect("window"); // { obj: val };
-        let nav = window.navigator().clipboard();
-        match nav {
-            Some(a) => {
-                a.write_text(
-                    ron::ser::to_string(&clipboard_data)
-                        .expect("expect serialize to work...")
-                        .as_str(),
-                );
-            }
-            None => {}
-        };
-    }
 }
 
 pub async fn paste_from_clipboard(state: &mut SoundGraphEditorState, cursor_pos: Vec2) {
     #[allow(unused_mut)]
     let mut data: Option<ClipboardData> = None;
 
-    #[cfg(target_arch = "wasm32")]
-    {
-        let window = web_sys::window().expect("window"); // { obj: val };
-        let nav = window.navigator().clipboard();
-        match nav {
-            Some(a) => match wasm_bindgen_futures::JsFuture::from(a.read_text()).await {
-                Ok(x) => {
-                    let text: String = x.as_string().unwrap_or("".to_string());
-                    match ron::de::from_str(text.as_str()) {
-                        Ok(text) => {
-                            data = Some(text);
-                        }
-                        Err(_) => {}
-                    }
-                }
-                Err(_) => {}
-            },
-            None => {}
-        };
-    }
     #[cfg(feature = "non-wasm")]
     {
         let mut clipboard = clippers::Clipboard::get();
