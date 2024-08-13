@@ -669,7 +669,7 @@ impl Plugin for NodeSound {
             output[0][block_start..block_end].fill(0.0);
             output[1][block_start..block_end].fill(0.0);
 
-            let mut sound_buffers = self
+            let sound_buffers = self
                 .params
                 .source_sound_buffers
                 .lock()
