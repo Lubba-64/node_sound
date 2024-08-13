@@ -28,7 +28,10 @@ impl<I: Source<Item = f32>> Iterator for Wrapper<I> {
         self.last = match (self.source.next(), self.last) {
             (Some(x), Some(y)) => {
                 if x + y > 1.0 {
-                    return Some(-1.0);
+                    return Some(-1.0 + x + y - 1.0);
+                }
+                if x + y < -1.0 {
+                    return Some(1.0 - x + y + 1.0);
                 }
                 Some(x + y)
             }
