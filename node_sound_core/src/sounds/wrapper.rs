@@ -25,18 +25,18 @@ impl<I: Source<Item = f32>> Iterator for Wrapper<I> {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        let last = self.last;
-        self.last = match (self.source.next(), last) {
+        self.last = match (self.source.next(), self.last) {
             (Some(x), Some(y)) => {
                 if x + y > 1.0 {
                     return Some(-1.0);
                 }
                 Some(x + y)
             }
-            (None, _) => Some(0.0),
-            (_, None) => Some(-1.0),
+            (None, Some(y)) => Some(y),
+            (Some(x), None) => Some(x),
+            _ => Some(0.0),
         };
-        Some(last.unwrap_or(0.0))
+        Some(self.last.unwrap_or(0.0))
     }
 }
 
