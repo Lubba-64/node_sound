@@ -9,7 +9,7 @@ use node_sound_core::{
     sound_map::{self, GenericSource},
     sounds::{Speed2, DAW_BUFF},
 };
-use rodio::source::{self, UniformSourceIterator};
+use rodio::source::UniformSourceIterator;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -55,7 +55,6 @@ pub struct NodeSound {
     voices: [Option<Voice>; NUM_VOICES as usize],
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
-    sound_result: Arc<Mutex<Option<GenericSource<f32>>>>,
     current_idx: usize,
 }
 
@@ -150,7 +149,6 @@ impl Default for NodeSound {
             voices: [0; NUM_VOICES as usize].map(|_| None),
             next_internal_voice_id: 0,
             sample_rate: Arc::new(Mutex::new(48000.0)),
-            sound_result: Arc::new(Mutex::new(None)),
             current_idx: 0,
         }
     }
