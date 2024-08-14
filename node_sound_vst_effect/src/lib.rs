@@ -73,7 +73,8 @@ pub struct NodeSoundParams {
 
 impl<'a> PersistentField<'a, String> for PluginPresetState {
     fn set(&self, new_value: String) {
-        *self.graph.lock().expect("expected to lock") = ron::de::from_str(&new_value).expect("");
+        *self.graph.lock().expect("expected to lock") =
+            ron::de::from_str(&new_value).expect("expect deserialize");
     }
 
     fn map<F, R>(&self, f: F) -> R

@@ -1296,7 +1296,9 @@ fn evaluate_input<'a>(
             // Calling this will populate the cache
             match evaluate_node(graph, graph[other_output_id].node, outputs_cache, all_nodes) {
                 Ok(x) => x,
-                Err(_x) => panic!("eval failed"),
+                Err(_x) => ValueType::AudioSource {
+                    value: sound_map::push_sound(Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE))),
+                },
             };
 
             // Now that we know the value is cached, return it

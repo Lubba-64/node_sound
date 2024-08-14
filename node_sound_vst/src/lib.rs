@@ -9,7 +9,7 @@ use node_sound_core::{
     sound_map::{self, GenericSource},
     sounds::{Speed2, DAW_BUFF},
 };
-use rodio::source::UniformSourceIterator;
+use rodio::source::{self, UniformSourceIterator};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -430,19 +430,17 @@ impl Plugin for NodeSound {
                 self.params.plugin_state.graph.clone(),
                 self.params.source_sound_buffers.clone(),
                 self.sample_rate.clone(),
-                self.sound_result.clone(),
                 self.params.root_sound_id.clone(),
             ),
             |_, _| {},
             move |egui_ctx, _setter, state| {
-                let sound_result = &mut state.3.lock().expect("");
-                let sound_result_id = &mut state.4.lock().expect("");
+                let sound_result_id = &mut state.3.lock().expect("expected lock");
                 let sample_rate = &state.2.lock().expect("expect lock");
-                let sound_buffers = &mut *state.1.lock().expect("");
-                let state = &mut state.0.lock().expect("");
-
+                let sound_buffers = &mut *state.1.lock().expect("expected lock");
+                let state = &mut state.0.lock().expect("expected lock");
+                let mut clear = false;
                 state.update_root(egui_ctx);
-                if sound_result.is_none() || state.state.user_state.active_node.is_playing() {
+                if sound_result_id.is_none() || state.state.user_state.active_node.is_playing() {
                     state.state.user_state.active_node = ActiveNodeState::NoNode;
                     match state.state.user_state.vst_output_node_id {
                         Some(x) => {
@@ -457,18 +455,22 @@ impl Plugin for NodeSound {
                                     .unwrap(),
                             ) {
                                 Ok(val) => {
-                                    let source_id = val
-                                        .try_to_source()
-                                        .expect("expected valid audio source")
-                                        .clone();
-                                    let sound = match sound_map::clone_sound(source_id.clone()) {
+                                    let source_id = val.try_to_source();
+                                    let sound = match source_id {
                                         Err(_err) => {
+                                            **sound_result_id = None;
                                             return;
                                         }
-                                        Ok(x) => x,
+                                        Ok(source_id) => {
+                                            **sound_result_id = Some(source_id);
+                                            match sound_map::clone_sound(source_id.clone()) {
+                                                Err(_err) => {
+                                                    return;
+                                                }
+                                                Ok(x) => x,
+                                            }
+                                        }
                                     };
-
-                                    **sound_result_id = Some(source_id);
 
                                     fn to_semitones(f1: f32, f2: f32) -> f32 {
                                         12.0 * f32::log2(f2 / f1)
@@ -495,21 +497,21 @@ impl Plugin for NodeSound {
                                             **sample_rate as u32,
                                         ));
                                     }
-                                    **sound_result = Some(sound);
                                 }
                                 Err(_err) => {
-                                    *sound_buffers = [0; MIDI_NOTES_LEN as usize].map(|_| None);
-                                    sound_map::clear();
-                                    **sound_result = None
+                                    clear = true;
                                 }
                             };
                         }
                         None => {
-                            *sound_buffers = [0; MIDI_NOTES_LEN as usize].map(|_| None);
-                            sound_map::clear();
-                            **sound_result = None
+                            clear = true;
                         }
                     }
+                }
+                if clear {
+                    *sound_buffers = [0; MIDI_NOTES_LEN as usize].map(|_| None);
+                    sound_map::clear();
+                    **sound_result_id = None
                 }
             },
         )
