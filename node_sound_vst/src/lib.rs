@@ -483,7 +483,11 @@ impl Plugin for NodeSound {
                                             to_semitones(
                                                 midi_note_to_freq(vidx as u8),
                                                 MIDDLE_C_FREQ,
-                                            ) + 10.5,
+                                            ) + 10.5
+                                                + 1.8
+                                                - 0.5
+                                                + 0.2
+                                                + 0.1,
                                         ) / MIDDLE_C_FREQ;
 
                                         sound_buffers[vidx] = Some(UniformSourceIterator::new(
