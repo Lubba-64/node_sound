@@ -1,5 +1,5 @@
 use rodio::Source;
-use rune::runtime::RuntimeContext;
+use rune::runtime::{RuntimeContext, Shared};
 use rune::Unit;
 
 use crate::sound_graph::DEFAULT_SAMPLE_RATE;
@@ -23,6 +23,7 @@ pub struct CodeSource<
     input4: UniformSourceIterator<I4, I4::Item>,
     input5: UniformSourceIterator<I5, I5::Item>,
     code: Arc<Unit>,
+    memory: Vec<f64>,
     runtime: Arc<RuntimeContext>,
 }
 
@@ -53,6 +54,7 @@ impl<
             input5: UniformSourceIterator::new(source5, 2, DEFAULT_SAMPLE_RATE),
             code: Arc::new(setup(code, context)?),
             runtime,
+            memory: vec![],
         })
     }
 }
@@ -70,22 +72,28 @@ impl<
     #[inline]
     fn next(&mut self) -> Option<f32> {
         let mut vm = Vm::new(self.runtime.clone(), self.code.clone());
-        return Some(
-            rune::from_value::<f64>(
-                vm.call(
-                    ["process"],
-                    (
-                        self.input1.next(),
-                        self.input2.next(),
-                        self.input3.next(),
-                        self.input4.next(),
-                        self.input5.next(),
-                    ),
-                )
-                .unwrap_or(rune::Value::Float(0.0)),
+        let result = rune::from_value::<Option<(f64, Vec<f64>)>>(
+            vm.call(
+                ["process"],
+                (
+                    self.input1.next(),
+                    self.input2.next(),
+                    self.input3.next(),
+                    self.input4.next(),
+                    self.input5.next(),
+                    self.memory.clone(),
+                ),
             )
-            .unwrap_or(0.0) as f32,
-        );
+            .unwrap_or(rune::Value::Option(Shared::new(None).unwrap())),
+        )
+        .unwrap_or(Some((0.0, vec![])));
+        return match result {
+            Some(x) => {
+                self.memory = x.1;
+                Some(x.0 as f32)
+            }
+            None => None,
+        };
     }
 }
 

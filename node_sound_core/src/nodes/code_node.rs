@@ -65,17 +65,16 @@ pub fn code_node() -> SoundNode {
                     kind: InputParamKind::ConnectionOnly,
                     name: "code".to_string(),
                     value: InputValueConfig::Code {
-                        value: "
-pub fn process(input1, input2, input3, input4, input5){
-    (
-    input1.unwrap_or(0.0) + 
-    input2.unwrap_or(0.0) + 
-    input3.unwrap_or(0.0) + 
-    input4.unwrap_or(0.0) + 
-    input5.unwrap_or(0.0)
-    ) 
-    / 5.0
-}"
+                        value: "pub fn process(input1, input2, input3, input4, input5, memory){
+if memory.len() == 0{
+memory.push(0.0);
+}    
+memory.push((input1.unwrap_or(0.0) + memory[0] % 1.0) * 2.0 - 1.0);
+memory.remove(0);
+Some((
+     memory[0], memory))
+}
+    "
                         .to_string(),
                     },
                 },
