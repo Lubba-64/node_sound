@@ -17,9 +17,7 @@ use crate::sound_graph::WAVE_TABLE_SIZE;
 use crate::sound_map;
 #[cfg(target_arch = "wasm32")]
 use crate::sound_map::RefSource;
-use eframe::egui::{
-    self, vec2, ComboBox, DragValue, KeyboardShortcut, Layout, Modifiers, Rect, Vec2,
-};
+use eframe::egui::{self, vec2, ComboBox, DragValue, KeyboardShortcut, Modifiers, Vec2};
 use eframe::egui::{Pos2, TextStyle};
 use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
 use egui_extras_xt::knobs::AudioKnob;
@@ -34,7 +32,6 @@ use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ffi::OsStr;
-use std::fmt::format;
 use std::io::{BufWriter, Cursor};
 use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
