@@ -17,8 +17,11 @@ use crate::sound_graph::WAVE_TABLE_SIZE;
 use crate::sound_map;
 #[cfg(target_arch = "wasm32")]
 use crate::sound_map::RefSource;
-use eframe::egui::{self, vec2, ComboBox, DragValue, KeyboardShortcut, Modifiers, Vec2};
+use eframe::egui::{
+    self, vec2, ComboBox, DragValue, KeyboardShortcut, Layout, Modifiers, Rect, Vec2,
+};
 use eframe::egui::{Pos2, TextStyle};
+use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
 use egui_extras_xt::knobs::AudioKnob;
 pub use egui_node_graph_2::*;
 use egui_plot::PlotBounds;
@@ -31,6 +34,7 @@ use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ffi::OsStr;
+use std::fmt::format;
 use std::io::{BufWriter, Cursor};
 use std::path::Path;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
@@ -118,6 +122,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::None => egui::Color32::from_rgb(100, 100, 100),
             DataType::MidiFile => egui::Color32::from_rgb(150, 100, 100),
             DataType::Graph => egui::Color32::from_rgb(150, 100, 100),
+            DataType::Code => egui::Color32::from_rgb(150, 100, 100),
         }
     }
 
@@ -130,6 +135,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::None => Cow::Borrowed("None"),
             DataType::MidiFile => Cow::Borrowed("Midi"),
             DataType::Graph => Cow::Borrowed("Graph"),
+            DataType::Code => Cow::Borrowed("Code"),
         }
     }
 }
@@ -171,6 +177,9 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                 input.0.clone(),
                 input.1.data_type,
                 match &input.1.value {
+                    InputValueConfig::Code { value } => ValueType::Code {
+                        value: value.clone(),
+                    },
                     InputValueConfig::AudioSource {} => ValueType::AudioSource { value: 0 },
                     InputValueConfig::Float { value, min, max } => ValueType::Float {
                         value: *value,
@@ -242,14 +251,12 @@ fn plot(value: &mut Option<Vec<f32>>, ui: &mut egui::Ui, id: usize) {
     let value = match value {
         Some(x) => x,
         None => {
-            println!("oh dear");
             return;
         }
     };
 
     if value.len() == 0 {
         value.extend(Vec::with_capacity(WAVE_TABLE_SIZE).iter());
-        println!("bruh");
         return;
     }
 
@@ -311,6 +318,16 @@ impl WidgetValueTrait for ValueType {
         _node_data: &Self::NodeData,
     ) -> Vec<ActiveNodeState> {
         match self {
+            ValueType::Code { value } => egui::Resize::default().show(ui, |ui| {
+                CodeEditor::default()
+                    .id_source("code editor")
+                    .with_rows(24)
+                    .with_fontsize(14.0)
+                    .with_theme(ColorTheme::GRUVBOX)
+                    .with_syntax(Syntax::rust())
+                    .with_numlines(true)
+                    .show(ui, value);
+            }),
             ValueType::Graph { value, id } => plot(value, ui, *id),
             ValueType::Float {
                 value,
@@ -881,14 +898,17 @@ impl SoundNodeGraph {
         self.poll_wasm_futures();
         self.update_output_node();
 
-        ctx.input_mut(|i| {
-            if i.consume_shortcut(&KeyboardShortcut::new(Modifiers::CTRL, egui::Key::S)) {
-                match self.settings_state.latest_saved_file.clone() {
-                    Some(x) => self.save_project_file(&x),
-                    None => {}
+        if self.is_vst == VstType::None {
+            ctx.input_mut(|i| {
+                if i.consume_shortcut(&KeyboardShortcut::new(Modifiers::CTRL, egui::Key::S)) {
+                    match self.settings_state.latest_saved_file.clone() {
+                        Some(x) => self.save_project_file(&x),
+                        None => {}
+                    }
                 }
-            }
-        });
+            });
+        }
+
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::widgets::global_dark_light_mode_switch(ui);

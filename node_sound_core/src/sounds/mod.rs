@@ -58,3 +58,5 @@ mod wave_table;
 pub use wave_table::WavetableOscillator;
 mod automated_wave_table;
 pub use automated_wave_table::AutomatedWavetableOscillator;
+mod code_source;
+pub use code_source::CodeSource;

@@ -1,4 +1,5 @@
 mod mix_node;
+use code_node::{code_logic, code_node};
 use mix_node::{mix_logic, mix_node};
 mod duration_node;
 mod sawtooth_node;
@@ -80,6 +81,8 @@ use daw_input_node::{daw_input_logic, daw_input_node};
 mod automated_wave_shaper_node;
 mod wave_shaper_node;
 use automated_wave_shaper_node::{automated_wave_shaper_logic, automated_wave_shaper_node};
+mod code_node;
+
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -139,6 +142,14 @@ impl SoundNodeProps {
             .clone()
             .try_to_graph()?)
     }
+    fn get_code(&self, name: &str) -> Result<String, Box<dyn std::error::Error>> {
+        Ok(self
+            .inputs
+            .get(name)
+            .unwrap_or_default()
+            .clone()
+            .try_to_code()?)
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -193,15 +204,16 @@ pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
         ),
         (const_node(), Box::new(const_logic)),
         (wrapper_node(), Box::new(wrapper_logic)),
-        (daw_input_node(), Box::new(daw_input_logic)),
         (wave_shaper_node(), Box::new(wave_shaper_logic)),
         (
             automated_wave_shaper_node(),
             Box::new(automated_wave_shaper_logic),
         ),
+        (code_node(), Box::new(code_logic)),
     ];
     match is_vst {
         VstType::Effect => {
+            nodes.push((daw_input_node(), Box::new(daw_input_logic)));
             nodes.push((output_node(), Box::new(output_logic)));
             nodes.push((daw_automations_node(), Box::new(daw_automations_logic)))
         }

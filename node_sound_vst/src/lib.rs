@@ -436,7 +436,9 @@ impl Plugin for NodeSound {
                 let sample_rate = &state.2.lock().expect("expect lock");
                 let sound_buffers = &mut *state.1.lock().expect("expected lock");
                 let state = &mut state.0.lock().expect("expected lock");
+
                 let mut clear = false;
+
                 state.update_root(egui_ctx);
                 if sound_result_id.is_none() || state.state.user_state.active_node.is_playing() {
                     state.state.user_state.active_node = ActiveNodeState::NoNode;

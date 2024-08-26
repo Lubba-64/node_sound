@@ -233,10 +233,14 @@ mod data_types {
         AudioFile,
         MidiFile,
         Graph,
+        Code,
     }
 
     #[derive(Clone, Default, Serialize, Deserialize)]
     pub enum ValueType {
+        Code {
+            value: String,
+        },
         #[default]
         None,
         AudioSource {
@@ -277,6 +281,7 @@ mod data_types {
         AudioFile {},
         MidiFile {},
         Graph { value: Vec<f32> },
+        Code { value: String },
     }
 
     impl Debug for ValueType {
@@ -306,6 +311,10 @@ mod data_types {
                 Self::Graph { value: _, id: _ } => f
                     .debug_struct("Graph")
                     .field("value", &"Anonymous Graph")
+                    .finish(),
+                Self::Code { value: _ } => f
+                    .debug_struct("Code")
+                    .field("value", &"Anonymous Code")
                     .finish(),
             }
         }
@@ -355,6 +364,12 @@ mod data_types {
         pub fn try_to_graph(self) -> Result<Option<Vec<f32>>, String> {
             match self {
                 ValueType::Graph { value, id: _ } => Ok(value),
+                _ => Err("invalid cast".to_string()),
+            }
+        }
+        pub fn try_to_code(self) -> Result<String, String> {
+            match self {
+                ValueType::Code { value } => Ok(value),
                 _ => Err("invalid cast".to_string()),
             }
         }
