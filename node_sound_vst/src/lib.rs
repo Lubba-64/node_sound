@@ -456,15 +456,16 @@ impl Plugin for NodeSound {
                                 Ok(val) => {
                                     let source_id = val.try_to_source();
                                     let sound = match source_id {
-                                        Err(_err) => {
-                                            return;
-                                        }
+                                        Err(_err) => GenericSource::new(Box::new(Zero::new(
+                                            1,
+                                            DEFAULT_SAMPLE_RATE,
+                                        ))),
                                         Ok(source_id) => {
                                             **sound_result_id = Some(source_id);
                                             match sound_map::clone_sound(source_id.clone()) {
-                                                Err(_err) => {
-                                                    return;
-                                                }
+                                                Err(_err) => GenericSource::new(Box::new(
+                                                    Zero::new(1, DEFAULT_SAMPLE_RATE),
+                                                )),
                                                 Ok(x) => x,
                                             }
                                         }
