@@ -92,7 +92,7 @@ impl<
                 self.memory = x.1;
                 Some(x.0 as f32)
             }
-            None => None,
+            None => Some(0.0),
         };
     }
 }

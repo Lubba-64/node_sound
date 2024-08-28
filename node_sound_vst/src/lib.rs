@@ -4,12 +4,12 @@ use node_sound_core::{
     sound_graph::{
         self,
         graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
-        MIDDLE_C_FREQ,
+        DEFAULT_SAMPLE_RATE, MIDDLE_C_FREQ,
     },
     sound_map::{self, GenericSource},
     sounds::{Speed2, DAW_BUFF},
 };
-use rodio::source::UniformSourceIterator;
+use rodio::source::{UniformSourceIterator, Zero};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -438,7 +438,6 @@ impl Plugin for NodeSound {
                 let state = &mut state.0.lock().expect("expected lock");
 
                 let mut clear = false;
-
                 state.update_root(egui_ctx);
                 if sound_result_id.is_none() || state.state.user_state.active_node.is_playing() {
                     state.state.user_state.active_node = ActiveNodeState::NoNode;
@@ -458,7 +457,6 @@ impl Plugin for NodeSound {
                                     let source_id = val.try_to_source();
                                     let sound = match source_id {
                                         Err(_err) => {
-                                            **sound_result_id = None;
                                             return;
                                         }
                                         Ok(source_id) => {

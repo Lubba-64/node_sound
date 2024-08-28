@@ -662,12 +662,21 @@ pub struct UnserializeableGraphState {
 }
 
 pub fn get_unserializeable_graph_state(is_vst: VstType) -> UnserializeableGraphState {
-    let (stream, stream_handle) =
-        OutputStream::try_default().expect("could not initialize audio subsystem");
+    if is_vst == VstType::None {
+        let (stream, stream_handle) =
+            OutputStream::try_default().expect("could not initialize audio subsystem");
+        return UnserializeableGraphState {
+            node_definitions: Some(get_nodes(is_vst)),
+            sink: Some(Sink::try_new(&stream_handle).expect("could not create audio sink")),
+            _stream: Some((stream, stream_handle)),
+            open_project_file_wasm_future: None,
+            save_as_wasm_future: None,
+        };
+    }
     return UnserializeableGraphState {
         node_definitions: Some(get_nodes(is_vst)),
-        sink: Some(Sink::try_new(&stream_handle).expect("could not create audio sink")),
-        _stream: Some((stream, stream_handle)),
+        sink: None,
+        _stream: None,
         open_project_file_wasm_future: None,
         save_as_wasm_future: None,
     };
@@ -1240,10 +1249,7 @@ pub fn evaluate_node<'a>(
     let mut closure = |name: String| {
         (
             name.clone(),
-            match evaluate_input(graph, node_id, name.as_str(), outputs_cache, all_nodes) {
-                Ok(x) => x,
-                Err(_x) => panic!("Input resolution failed"),
-            },
+            evaluate_input(graph, node_id, name.as_str(), outputs_cache, all_nodes),
         )
     };
     let input_to_name = HashMap::from_iter(
@@ -1258,10 +1264,7 @@ pub fn evaluate_node<'a>(
     })?;
 
     for (name, value) in &res {
-        match populate_output(graph, outputs_cache, node_id, &name, value.clone()) {
-            Ok(_x) => (),
-            Err(_x) => panic!("Output failed to populate"),
-        }
+        populate_output(graph, outputs_cache, node_id, &name, value.clone());
     }
 
     match res.get("out") {
@@ -1279,13 +1282,13 @@ fn populate_output<'a>(
     node_id: NodeId,
     param_name: &'a str,
     value: ValueType,
-) -> Result<ValueType, &'a str> {
+) -> ValueType {
     let output_id = match graph[node_id].get_output(param_name) {
         Ok(x) => x,
         Err(_x) => panic!("EGUI node graph error"),
     };
     outputs_cache.insert(output_id, value.clone());
-    Ok(value)
+    value
 }
 
 fn evaluate_input<'a>(
@@ -1294,39 +1297,28 @@ fn evaluate_input<'a>(
     param_name: &'a str,
     outputs_cache: &'a mut OutputsCache,
     all_nodes: &'a NodeDefinitions,
-) -> Result<ValueType, &'a str> {
+) -> ValueType {
     let input_id = match graph[node_id].get_input(param_name) {
         Ok(x) => x,
         Err(_x) => panic!("EGUI node graph error"),
     };
 
-    // The output of another node is connected.
     if let Some(other_output_id) = graph.connection(input_id) {
-        // The value was already computed due to the evaluation of some other
-        // node. We simply return value from the cache.
         if let Some(other_value) = outputs_cache.get(&other_output_id) {
-            Ok(other_value.clone())
-        }
-        // This is the first time encountering this node, so we need to
-        // recursively evaluate it.
-        else {
-            // Calling this will populate the cache
+            other_value.clone()
+        } else {
             match evaluate_node(graph, graph[other_output_id].node, outputs_cache, all_nodes) {
                 Ok(x) => x,
                 Err(_x) => ValueType::AudioSource {
                     value: sound_map::push_sound(Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE))),
                 },
             };
-
-            // Now that we know the value is cached, return it
-            Ok(outputs_cache
+            outputs_cache
                 .get(&other_output_id)
                 .expect("Cache should be populated")
-                .clone())
+                .clone()
         }
-    }
-    // No existing connection, take the inline value instead.
-    else {
-        Ok(graph[input_id].value.clone())
+    } else {
+        graph[input_id].value.clone()
     }
 }

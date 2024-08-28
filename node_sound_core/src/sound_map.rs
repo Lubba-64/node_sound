@@ -36,7 +36,7 @@ impl<T> GenericSource<T>
 where
     T: Sample,
 {
-    fn new(sound: Box<dyn RefSourceIterDynClone<T>>) -> Self {
+    pub fn new(sound: Box<dyn RefSourceIterDynClone<T>>) -> Self {
         Self { sound: sound }
     }
 }
