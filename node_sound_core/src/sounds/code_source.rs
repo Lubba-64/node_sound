@@ -22,9 +22,19 @@ pub struct CodeSource<
     input3: UniformSourceIterator<I3, I3::Item>,
     input4: UniformSourceIterator<I4, I4::Item>,
     input5: UniformSourceIterator<I5, I5::Item>,
-    code: Arc<Unit>,
     memory: Vec<f64>,
-    runtime: Arc<RuntimeContext>,
+    vm: VmClone,
+}
+
+struct VmClone(Vm, Arc<Unit>, Arc<RuntimeContext>);
+impl Clone for VmClone {
+    fn clone(&self) -> Self {
+        Self {
+            0: Vm::new(self.2.clone(), self.1.clone()),
+            1: self.1.clone(),
+            2: self.2.clone(),
+        }
+    }
 }
 
 impl<
@@ -46,14 +56,15 @@ impl<
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let context = Context::with_default_modules()?;
         let runtime = Arc::new(context.runtime()?);
+        let code = Arc::new(setup(code, context)?);
         Ok(Self {
             input1: UniformSourceIterator::new(source1, 2, DEFAULT_SAMPLE_RATE),
             input2: UniformSourceIterator::new(source2, 2, DEFAULT_SAMPLE_RATE),
             input3: UniformSourceIterator::new(source3, 2, DEFAULT_SAMPLE_RATE),
             input4: UniformSourceIterator::new(source4, 2, DEFAULT_SAMPLE_RATE),
             input5: UniformSourceIterator::new(source5, 2, DEFAULT_SAMPLE_RATE),
-            code: Arc::new(setup(code, context)?),
-            runtime,
+
+            vm: VmClone(Vm::new(runtime.clone(), code.clone()), code, runtime),
             memory: vec![],
         })
     }
@@ -71,9 +82,8 @@ impl<
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        let mut vm = Vm::new(self.runtime.clone(), self.code.clone());
         let result = rune::from_value::<Option<(f64, Vec<f64>)>>(
-            vm.call(
+            self.vm.0.call(
                 ["process"],
                 (
                     self.input1.next(),
