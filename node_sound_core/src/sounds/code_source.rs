@@ -1,5 +1,5 @@
 use rodio::Source;
-use rune::runtime::{RuntimeContext, Shared};
+use rune::runtime::RuntimeContext;
 use rune::Unit;
 
 use crate::sound_graph::DEFAULT_SAMPLE_RATE;
@@ -84,16 +84,13 @@ impl<
                     self.memory.clone(),
                 ),
             )
-            .unwrap_or(rune::Value::Option(Shared::new(None).unwrap())),
+            .unwrap_or_default(),
         )
         .unwrap_or(Some((0.0, vec![])));
-        return match result {
-            Some(x) => {
-                self.memory = x.1;
-                Some(x.0 as f32)
-            }
-            None => Some(0.0),
-        };
+        return result.map(|x| {
+            self.memory = x.1;
+            return x.0 as f32;
+        });
     }
 }
 

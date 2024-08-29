@@ -1315,7 +1315,9 @@ fn evaluate_input<'a>(
             };
             outputs_cache
                 .get(&other_output_id)
-                .expect("Cache should be populated")
+                .unwrap_or(&ValueType::AudioSource {
+                    value: sound_map::push_sound(Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE))),
+                })
                 .clone()
         }
     } else {
