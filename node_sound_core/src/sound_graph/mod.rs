@@ -5,3 +5,6 @@ pub const DEFAULT_SAMPLE_RATE: u32 = 44100;
 pub const MIDDLE_C_FREQ: f32 = 261.63;
 pub const WAVE_TABLE_SIZE: usize = 100;
 pub mod copy_paste_del_helpers;
+mod float_selector;
+pub mod note;
+pub mod wave_table_graph;
