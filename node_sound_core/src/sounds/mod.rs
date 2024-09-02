@@ -60,3 +60,5 @@ mod automated_wave_table;
 pub use automated_wave_table::AutomatedWavetableOscillator;
 mod code_source;
 pub use code_source::CodeSource;
+mod mod_raw;
+pub use mod_raw::RawMod;

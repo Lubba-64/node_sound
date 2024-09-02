@@ -1,3 +1,4 @@
+mod code_node;
 mod mix_node;
 use code_node::{code_logic, code_node};
 use mix_node::{mix_logic, mix_node};
@@ -81,7 +82,8 @@ use daw_input_node::{daw_input_logic, daw_input_node};
 mod automated_wave_shaper_node;
 mod wave_shaper_node;
 use automated_wave_shaper_node::{automated_wave_shaper_logic, automated_wave_shaper_node};
-mod code_node;
+mod mod_raw_node;
+pub use mod_raw_node::{mod_raw_logic, mod_raw_node};
 
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
@@ -184,6 +186,7 @@ pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
         (merge_channels_node(), Box::new(merge_channels_logic)),
         (reverb_node(), Box::new(reverb_logic)),
         (mod_node(), Box::new(mod_logic)),
+        (mod_raw_node(), Box::new(mod_raw_logic)),
         (translate_node(), Box::new(translate_logic)),
         (
             automated_sawtooth_node(),

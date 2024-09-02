@@ -5,12 +5,12 @@ use rodio::source::UniformSourceIterator;
 use std::time::Duration;
 
 #[derive(Clone)]
-pub struct Mod<I: Source<Item = f32>> {
+pub struct RawMod<I: Source<Item = f32>> {
     source: UniformSourceIterator<I, I::Item>,
     mod_by: f32,
 }
 
-impl<I: Source<Item = f32>> Mod<I> {
+impl<I: Source<Item = f32>> RawMod<I> {
     #[inline]
     pub fn new(source: I, mod_by: f32) -> Self {
         Self {
@@ -20,17 +20,16 @@ impl<I: Source<Item = f32>> Mod<I> {
     }
 }
 
-impl<I: Source<Item = f32>> Iterator for Mod<I> {
+impl<I: Source<Item = f32>> Iterator for RawMod<I> {
     type Item = f32;
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        let _next = self.source.next().unwrap_or(0.0);
-        Some(_next - (_next % self.mod_by))
+        Some(self.source.next().unwrap_or(0.0) % self.mod_by)
     }
 }
 
-impl<I: Source<Item = f32>> Source for Mod<I> {
+impl<I: Source<Item = f32>> Source for RawMod<I> {
     #[inline]
     fn current_frame_len(&self) -> Option<usize> {
         None
