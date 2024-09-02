@@ -62,3 +62,5 @@ mod code_source;
 pub use code_source::CodeSource;
 mod mod_raw;
 pub use mod_raw::RawMod;
+mod helpers;
+pub use helpers::samples_from_source;
