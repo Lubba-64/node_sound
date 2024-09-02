@@ -7,9 +7,12 @@ use node_sound_core::{
         DEFAULT_SAMPLE_RATE, MIDDLE_C_FREQ,
     },
     sound_map::{self, GenericSource},
-    sounds::{Speed2, DAW_BUFF},
+    sounds::DAW_BUFF,
 };
-use rodio::source::{UniformSourceIterator, Zero};
+use rodio::{
+    source::{Speed, UniformSourceIterator, Zero},
+    Source,
+};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -79,13 +82,13 @@ pub struct NodeSoundParams {
     amp_release_ms: FloatParam,
     source_sound_buffers: Arc<
         Mutex<
-            [Option<UniformSourceIterator<Speed2<GenericSource<f32>>, f32>>;
+            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
                 MIDI_NOTES_LEN as usize],
         >,
     >,
     voice_sound_buffers: Arc<
         Mutex<
-            [Option<UniformSourceIterator<Speed2<GenericSource<f32>>, f32>>;
+            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
                 MIDI_NOTES_LEN as usize],
         >,
     >,
@@ -492,10 +495,7 @@ impl Plugin for NodeSound {
                                         ) / MIDDLE_C_FREQ;
 
                                         sound_buffers[vidx] = Some(UniformSourceIterator::new(
-                                            Speed2 {
-                                                input: sound.clone(),
-                                                factor: speed,
-                                            },
+                                            sound.clone().speed(speed),
                                             2,
                                             **sample_rate as u32,
                                         ));
