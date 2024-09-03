@@ -1,7 +1,7 @@
 use super::copy_paste_del_helpers::{
     copy_to_clipboard, delete_selected_nodes, paste_from_clipboard,
 };
-use super::graph_types::{InputValueConfig, Note, NoteValue, Octave};
+use super::graph_types::InputValueConfig;
 use super::save_management::write_output_sound;
 use super::save_management::{
     get_current_exe_dir, get_current_working_settings, get_input_midi, get_input_sound,
@@ -9,20 +9,18 @@ use super::save_management::{
     WorkingFileSettings,
 };
 use super::save_management::{open_project_file, save_project_file_as};
-use super::DEFAULT_SAMPLE_RATE;
+use super::wave_table_graph::wave_table_graph;
+use super::{float_selector, DEFAULT_SAMPLE_RATE};
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::save_management::get_project_file;
-use crate::sound_graph::WAVE_TABLE_SIZE;
 use crate::sound_map;
 #[cfg(target_arch = "wasm32")]
 use crate::sound_map::RefSource;
-use eframe::egui::{self, vec2, ComboBox, DragValue, KeyboardShortcut, Modifiers, Vec2};
+use eframe::egui::{self, DragValue, KeyboardShortcut, Modifiers, Vec2};
 use eframe::egui::{Pos2, TextStyle};
 use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
-use egui_extras_xt::knobs::AudioKnob;
 pub use egui_node_graph_2::*;
-use egui_plot::PlotBounds;
 use futures::executor;
 use rodio::source::Source;
 #[cfg(target_arch = "wasm32")]
@@ -182,7 +180,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                         value: *value,
                         min: *min,
                         max: *max,
-                        note: NoteValue::default(),
+                        note: super::note::NoteValue::default(),
                     },
                     InputValueConfig::Duration { value } => ValueType::Duration {
                         value: Duration::from_secs_f32(*value),
@@ -242,66 +240,6 @@ impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
     }
 }
 
-fn plot(value: &mut Option<Vec<f32>>, ui: &mut egui::Ui, id: usize) {
-    use egui_plot::{Line, Plot, PlotPoints};
-
-    let value = match value {
-        Some(x) => x,
-        None => {
-            return;
-        }
-    };
-
-    if value.len() == 0 {
-        value.extend(Vec::with_capacity(WAVE_TABLE_SIZE).iter());
-        return;
-    }
-
-    let points: PlotPoints = (0..WAVE_TABLE_SIZE)
-        .map(|i| {
-            let x = i as f64 * 10.0 / WAVE_TABLE_SIZE as f64;
-            [x, value[i].into()]
-        })
-        .collect();
-    let line = Line::new(points);
-    let mouse_down = ui.input(|x| x.pointer.button_down(egui::PointerButton::Primary));
-
-    Plot::new(id.to_string())
-        .view_aspect(2.0)
-        .allow_drag(false)
-        .min_size(vec2(400.0, 100.0))
-        .allow_zoom(false)
-        .allow_scroll(false)
-        .height(100.0)
-        .width(500.0)
-        .allow_double_click_reset(false)
-        .center_y_axis(true)
-        .y_axis_width(1)
-        .show(ui, |plot_ui| {
-            plot_ui.set_plot_bounds(PlotBounds::from_min_max([0.0, -1.0], [10.0, 1.0]));
-            match plot_ui.ctx().pointer_interact_pos() {
-                Some(x) => {
-                    let y = plot_ui.plot_from_screen(x).y;
-                    if y > -1.0 && y < 1.0 && mouse_down {
-                        match plot_ui.pointer_coordinate() {
-                            Some(x) => {
-                                let idx_rev_hope = ((x.x - x.x % 0.1) / 0.1)
-                                    .clamp(0.0, (WAVE_TABLE_SIZE - 1) as f64)
-                                    .round()
-                                    as usize;
-                                value[idx_rev_hope] = x.y as f32;
-                            }
-                            None => {}
-                        }
-                    }
-                }
-                None => {}
-            }
-
-            plot_ui.line(line)
-        });
-}
-
 impl WidgetValueTrait for ValueType {
     type Response = ActiveNodeState;
     type UserState = SoundGraphUserState;
@@ -325,130 +263,13 @@ impl WidgetValueTrait for ValueType {
                     .with_numlines(true)
                     .show(ui, value);
             }),
-            ValueType::Graph { value, id } => plot(value, ui, *id),
+            ValueType::Graph { value, id } => wave_table_graph(value, ui, *id),
             ValueType::Float {
                 value,
                 min,
                 max,
                 note,
-            } => {
-                ui.horizontal(|ui| {
-                    ui.label(param_name);
-                    ui.add(
-                        AudioKnob::new(value)
-                            .range(*min..=*max)
-                            .drag_length(50.0)
-                            .diameter(20.0),
-                    );
-                    ui.add(DragValue::new(value).speed(0.01).clamp_range(*min..=*max));
-
-                    let octave_res = ComboBox::new(format!("octave_{}", param_name), "")
-                        .selected_text(note.0.to_string())
-                        .width(20.0)
-                        .show_ui(ui, |ui| -> Result<Octave, ()> {
-                            if ui.add(egui::Button::new(Octave::O0.to_string())).clicked() {
-                                return Ok(Octave::O0);
-                            }
-                            if ui.add(egui::Button::new(Octave::O1.to_string())).clicked() {
-                                return Ok(Octave::O1);
-                            }
-                            if ui.add(egui::Button::new(Octave::O2.to_string())).clicked() {
-                                return Ok(Octave::O2);
-                            }
-                            if ui.add(egui::Button::new(Octave::O3.to_string())).clicked() {
-                                return Ok(Octave::O3);
-                            }
-                            if ui.add(egui::Button::new(Octave::O4.to_string())).clicked() {
-                                return Ok(Octave::O4);
-                            }
-                            if ui.add(egui::Button::new(Octave::O5.to_string())).clicked() {
-                                return Ok(Octave::O5);
-                            }
-                            if ui.add(egui::Button::new(Octave::O6.to_string())).clicked() {
-                                return Ok(Octave::O6);
-                            }
-                            if ui.add(egui::Button::new(Octave::O7.to_string())).clicked() {
-                                return Ok(Octave::O7);
-                            }
-                            if ui.add(egui::Button::new(Octave::O8.to_string())).clicked() {
-                                return Ok(Octave::O8);
-                            }
-                            return Err(());
-                        })
-                        .inner
-                        .unwrap_or(Err(()));
-                    let note_res = ComboBox::new(format!("note_{}", param_name), "")
-                        .selected_text(note.1.to_string())
-                        .width(20.0)
-                        .show_ui(ui, |ui| -> Result<Note, ()> {
-                            if ui.add(egui::Button::new(Note::C.to_string())).clicked() {
-                                return Ok(Note::C);
-                            }
-
-                            if ui.add(egui::Button::new(Note::CS.to_string())).clicked() {
-                                return Ok(Note::CS);
-                            }
-
-                            if ui.add(egui::Button::new(Note::D.to_string())).clicked() {
-                                return Ok(Note::D);
-                            }
-
-                            if ui.add(egui::Button::new(Note::DS.to_string())).clicked() {
-                                return Ok(Note::DS);
-                            }
-
-                            if ui.add(egui::Button::new(Note::E.to_string())).clicked() {
-                                return Ok(Note::E);
-                            }
-
-                            if ui.add(egui::Button::new(Note::F.to_string())).clicked() {
-                                return Ok(Note::F);
-                            }
-
-                            if ui.add(egui::Button::new(Note::FS.to_string())).clicked() {
-                                return Ok(Note::FS);
-                            }
-
-                            if ui.add(egui::Button::new(Note::G.to_string())).clicked() {
-                                return Ok(Note::G);
-                            }
-
-                            if ui.add(egui::Button::new(Note::GS.to_string())).clicked() {
-                                return Ok(Note::GS);
-                            }
-
-                            if ui.add(egui::Button::new(Note::A.to_string())).clicked() {
-                                return Ok(Note::A);
-                            }
-
-                            if ui.add(egui::Button::new(Note::AS.to_string())).clicked() {
-                                return Ok(Note::AS);
-                            }
-
-                            if ui.add(egui::Button::new(Note::B.to_string())).clicked() {
-                                return Ok(Note::B);
-                            }
-                            return Err(());
-                        })
-                        .inner
-                        .unwrap_or(Err(()));
-                    match (note_res, octave_res) {
-                        (Ok(note_res), Err(_)) => {
-                            *note = NoteValue(note.0.clone(), note_res);
-                            *value = note.match_freq();
-                        }
-                        (Err(_), Ok(octave_res)) => {
-                            *note = NoteValue(octave_res, note.1.clone());
-                            *value = note.match_freq();
-                        }
-                        (Ok(note_res), Ok(octave_res)) => {
-                            *note = NoteValue(octave_res, note_res);
-                            *value = note.match_freq();
-                        }
-                        (Err(_), Err(_)) => {}
-                    }
-                });
-            }
+            } => float_selector::float_selector(value, min, max, note, ui, param_name),
             ValueType::Duration { value } => {
                 ui.horizontal(|ui| {
                     ui.label(param_name);
@@ -741,8 +562,8 @@ fn new_sound_node_graph(is_vst: VstType) -> SoundNodeGraph {
             },
         },
         _unserializeable_state: get_unserializeable_graph_state(is_vst.clone()),
-        settings_state: settings_state,
-        is_vst: is_vst,
+        settings_state,
+        is_vst,
     }
 }
 
