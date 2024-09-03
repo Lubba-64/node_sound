@@ -25,7 +25,10 @@ impl<I1: Source<Item = f32>, I2: Source<Item = f32>> Iterator for Lfo<I1, I2> {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        Some(self.input1.next().unwrap_or(0.0) * self.input2.next().unwrap_or(0.0))
+        return match (self.input1.next(), self.input2.next()) {
+            (Some(x), Some(y)) => Some(x * y),
+            _ => None,
+        };
     }
 }
 
