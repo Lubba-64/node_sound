@@ -34,7 +34,7 @@ impl<I: Source<Item = f32>> Iterator for Clamp<I> {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        Some(self.source.next().unwrap_or(0.0).clamp(self.min, self.max))
+        return self.source.next().map(|val| val.clamp(self.min, self.max));
     }
 }
 
