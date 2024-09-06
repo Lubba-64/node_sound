@@ -44,6 +44,7 @@ pub fn automated_wave_shaper_node() -> SoundNode {
         )]),
     }
 }
+
 pub fn automated_wave_shaper_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),

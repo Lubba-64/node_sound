@@ -16,7 +16,7 @@ pub struct DawAutomationChannel {
 impl DawAutomationChannel {
     #[inline]
     pub fn new(channel: u8) -> Self {
-        Self { channel: channel }
+        Self { channel }
     }
 }
 
