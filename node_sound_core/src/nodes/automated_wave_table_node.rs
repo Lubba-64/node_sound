@@ -12,7 +12,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn automated_wave_table_node() -> SoundNode {
     SoundNode {
-        name: "Automated Table Shaper".to_string(),
+        name: "Automated Wave Table".to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
