@@ -10,11 +10,11 @@ mod sine_node;
 mod triangle_node;
 use serde::{Deserialize, Serialize};
 use sine_node::{sine_logic, sine_node};
-use wave_table_node::{wave_table_logic, wave_table_node};
 use std::{collections::BTreeMap, time::Duration};
 use synthrs::midi::MidiSong;
 use triangle_node::{triangle_logic, triangle_node};
 use wave_shaper_node::{wave_shaper_logic, wave_shaper_node};
+use wave_table_node::{wave_table_logic, wave_table_node};
 mod square_node;
 use square_node::{square_logic, square_node};
 mod delay_node;
@@ -85,7 +85,10 @@ mod wave_shaper_node;
 use automated_wave_shaper_node::{automated_wave_shaper_logic, automated_wave_shaper_node};
 mod mod_raw_node;
 pub use mod_raw_node::{mod_raw_logic, mod_raw_node};
+mod automated_wave_table_node;
 mod wave_table_node;
+pub use automated_wave_table_node::{automated_wave_table_logic, automated_wave_table_node};
+
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -212,6 +215,10 @@ pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
         (
             automated_wave_shaper_node(),
             Box::new(automated_wave_shaper_logic),
+        ),
+        (
+            automated_wave_table_node(),
+            Box::new(automated_wave_table_logic),
         ),
         (code_node(), Box::new(code_logic)),
         (wave_table_node(), Box::new(wave_table_logic)),
