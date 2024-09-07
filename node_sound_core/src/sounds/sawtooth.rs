@@ -13,7 +13,7 @@ impl SawToothWave {
     #[inline]
     pub fn new(freq: f32) -> Self {
         Self {
-            freq: freq,
+            freq,
             num_sample: 0,
         }
     }

@@ -86,8 +86,11 @@ mod wave_shaper_node;
 use automated_wave_shaper_node::{automated_wave_shaper_logic, automated_wave_shaper_node};
 mod mod_raw_node;
 pub use mod_raw_node::{mod_raw_logic, mod_raw_node};
+mod automated_wave_table_node;
 mod reverse_node;
 mod wave_table_node;
+pub use automated_wave_table_node::{automated_wave_table_logic, automated_wave_table_node};
+
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
 }
@@ -214,6 +217,10 @@ pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
         (
             automated_wave_shaper_node(),
             Box::new(automated_wave_shaper_logic),
+        ),
+        (
+            automated_wave_table_node(),
+            Box::new(automated_wave_table_logic),
         ),
         (code_node(), Box::new(code_logic)),
         (wave_table_node(), Box::new(wave_table_logic)),

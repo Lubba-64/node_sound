@@ -11,9 +11,7 @@ pub struct ConstWave {
 impl ConstWave {
     #[inline]
     pub fn new(amplitude: f32) -> Self {
-        Self {
-            amplitude: amplitude,
-        }
+        Self { amplitude }
     }
 }
 

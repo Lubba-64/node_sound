@@ -16,7 +16,7 @@ impl<I: Source<Item = f32>> SplitChannels<I> {
         let channels = source.channels();
         Self {
             source: UniformSourceIterator::new(source, channels, DEFAULT_SAMPLE_RATE),
-            channel: channel,
+            channel,
         }
     }
 }
