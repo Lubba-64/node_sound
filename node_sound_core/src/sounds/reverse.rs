@@ -27,7 +27,7 @@ impl Iterator for ReverseSource {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        if self.idx > self.buffer.len() {
+        if self.idx >= self.buffer.len() {
             return None;
         }
         self.idx += 1;
