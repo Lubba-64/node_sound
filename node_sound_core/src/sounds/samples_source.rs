@@ -12,10 +12,7 @@ pub struct SamplesSource {
 impl SamplesSource {
     #[inline]
     pub fn new(source: Vec<f32>) -> Self {
-        Self {
-            source: source,
-            idx: 0,
-        }
+        Self { source, idx: 0 }
     }
 }
 
@@ -33,7 +30,7 @@ impl Iterator for SamplesSource {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        return (self.source.len(), Some(self.source.len()))
+        return (self.source.len(), Some(self.source.len()));
     }
 }
 

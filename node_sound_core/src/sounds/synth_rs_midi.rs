@@ -35,7 +35,7 @@ impl MidiRenderer {
         let samples = make_samples_from_midi(sampler, DEFAULT_SAMPLE_RATE as usize, false, song)
             .expect("midi play failed");
         Self {
-            samples: samples,
+            samples,
             num_sample: 0,
         }
     }
@@ -64,7 +64,7 @@ impl Source for MidiRenderer {
 
     #[inline]
     fn channels(&self) -> u16 {
-        1
+        2
     }
 
     #[inline]
