@@ -5,6 +5,7 @@ use mix_node::{mix_logic, mix_node};
 mod duration_node;
 mod sawtooth_node;
 use duration_node::{duration_logic, duration_node};
+use reverse_node::{reverse_logic, reverse_node};
 use sawtooth_node::{sawtooth_logic, sawtooth_node};
 mod sine_node;
 mod triangle_node;
@@ -86,6 +87,7 @@ use automated_wave_shaper_node::{automated_wave_shaper_logic, automated_wave_sha
 mod mod_raw_node;
 pub use mod_raw_node::{mod_raw_logic, mod_raw_node};
 mod automated_wave_table_node;
+mod reverse_node;
 mod wave_table_node;
 pub use automated_wave_table_node::{automated_wave_table_logic, automated_wave_table_node};
 
@@ -222,6 +224,7 @@ pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
         ),
         (code_node(), Box::new(code_logic)),
         (wave_table_node(), Box::new(wave_table_logic)),
+        (reverse_node(), Box::new(reverse_logic)),
     ];
     match is_vst {
         VstType::Effect => {
