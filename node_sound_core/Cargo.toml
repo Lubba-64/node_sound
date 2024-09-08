@@ -9,7 +9,7 @@ rust-version = "1.80"
 rodio = { version = "0.19", features = ["wasm-bindgen"] }
 eframe = { version = "0.27", features = ["ron", "serde"] }
 egui_node_graph_2 = { version = "0.4.1", git = "https://github.com/Lubba-64/egui_node_graph_2.git", features = [
-    "persistence",
+  "persistence",
 ] }
 dyn-clone = "1.0.17"
 serde = { version = "1.0.198", features = ["derive"] }
@@ -28,14 +28,14 @@ web-sys = "0.3.69"
 tokio = { version = "1.38.0", features = ["time"] }
 open = { version = "5.1.4", optional = true }
 synthrs = { version = "0.1.0", git = "https://github.com/Lubba-64/synthrs.git", features = [
-    "ser",
+  "ser",
 ] }
 weblog = "0.3.0"
 pitch_shift = "1.0.0"
 egui_extras_xt = { version = "*", git = "https://github.com/xTibor/egui_extras_xt.git", features = [
-    "knobs",
+  "knobs",
 ] }
-clippers = {version = "0.1.2", optional = true}
+clippers = { version = "0.1.2", optional = true }
 egui_plot = "0.27"
 js-sys = "0.3.69"
 egui_code_editor = "=0.2.6"
