@@ -25,7 +25,10 @@ impl<I: Source<Item = f32>> Iterator for RawMod<I> {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        Some(self.source.next().unwrap_or(0.0) % self.mod_by)
+        match self.source.next() {
+            Some(x) => Some(x % self.mod_by),
+            None => None,
+        }
     }
 }
 
