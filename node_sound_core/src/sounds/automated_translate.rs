@@ -51,26 +51,32 @@ impl<
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        let p = self.source.next().unwrap_or(0.0);
-        let mut start_min = self.start_min.next().unwrap_or(0.0);
-        let mut start_max = self.start_max.next().unwrap_or(0.0);
-        let mut end_min = self.end_min.next().unwrap_or(0.0);
-        let mut end_max = self.end_max.next().unwrap_or(0.0);
-        if start_min > start_max {
-            let other = start_min;
-            start_min = start_max;
-            start_max = other;
+        match (
+            self.source.next(),
+            self.start_min.next(),
+            self.start_max.next(),
+            self.end_min.next(),
+            self.end_max.next(),
+        ) {
+            (Some(p), 
+             Some(mut start_min), 
+             Some(mut start_max), 
+             Some(mut end_min), 
+             Some(mut end_max)) => {
+                if start_min > start_max {
+                    std::mem::swap(&mut start_min, &mut start_max);
+                }
+                if end_min > end_max {
+                    std::mem::swap(&mut end_min, &mut end_max);
+                }
+                Some(
+                    end_min
+                    + ((end_max - end_min) / (start_max - start_min))
+                        * (p.clamp(start_min, start_max) - start_min)
+                )
+            },
+            _ => None
         }
-        if end_min > end_max {
-            let other = end_min;
-            end_min = end_max;
-            end_max = other;
-        }
-        return Some(
-            end_min
-                + ((end_max - end_min) / (start_max - start_min))
-                    * (p.clamp(start_min, start_max) - start_min),
-        );
     }
 }
 
