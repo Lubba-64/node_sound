@@ -58,8 +58,7 @@ impl<
             self.end_min.next(),
             self.end_max.next(),
         ) {
-            (
-                Some(p),
+            (Some(p),
                 Some(mut start_min),
                 Some(mut start_max),
                 Some(mut end_min),
@@ -73,11 +72,11 @@ impl<
                 }
                 Some(
                     end_min
-                        + ((end_max - end_min) / (start_max - start_min))
-                            * (p.clamp(start_min, start_max) - start_min),
+                    + ((end_max - end_min) / (start_max - start_min))
+                        * (p.clamp(start_min, start_max) - start_min),
                 )
-            }
-            _ => None,
+            },
+            _ => None
         }
     }
 }

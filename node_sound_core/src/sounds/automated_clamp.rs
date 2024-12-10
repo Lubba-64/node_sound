@@ -37,8 +37,8 @@ impl<I: Source<Item = f32>, I2: Source<Item = f32>, I3: Source<Item = f32>> Iter
                     std::mem::swap(&mut min, &mut max);
                 }
                 Some(source.clamp(min, max))
-            }
-            _ => None,
+            },
+            _ => None
         }
     }
 }
