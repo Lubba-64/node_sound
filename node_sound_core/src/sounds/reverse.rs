@@ -24,14 +24,16 @@ impl ReverseSource {
 
 impl Iterator for ReverseSource {
     type Item = f32;
-
+ 
     #[inline]
     fn next(&mut self) -> Option<f32> {
         if self.idx >= self.buffer.len() {
-            return None;
+            None
+        } else {
+            let sample = self.buffer[self.buffer.len() - self.idx - 1];
+            self.idx += 1;
+            Some(sample)
         }
-        self.idx += 1;
-        Some(self.buffer[self.idx])
     }
 }
 

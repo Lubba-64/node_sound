@@ -22,11 +22,10 @@ impl<I: Source<Item = f32>> Mod<I> {
 
 impl<I: Source<Item = f32>> Iterator for Mod<I> {
     type Item = f32;
-
+ 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        let _next = self.source.next().unwrap_or(0.0);
-        Some(_next - (_next % self.mod_by))
+        self.source.next().map(|x| x - (x % self.mod_by))
     }
 }
 

@@ -18,21 +18,21 @@ impl SamplesSource {
 
 impl Iterator for SamplesSource {
     type Item = f32;
-
+ 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        self.idx += 1;
-        if self.idx < self.source.len() {
+        if self.idx + 1 < self.source.len() {
+            self.idx += 1;
             Some(self.source[self.idx])
         } else {
             None
         }
     }
-
+ 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        return (self.source.len(), Some(self.source.len()));
+        (self.source.len() - (self.idx + 1), Some(self.source.len() - (self.idx + 1)))
     }
-}
+ }
 
 impl Source for SamplesSource {
     #[inline]

@@ -24,15 +24,15 @@ impl<I: Source<Item = f32>, I2: Source<Item = f32>> MergeChannels<I, I2> {
 
 impl<I: Source<Item = f32>, I2: Source<Item = f32>> Iterator for MergeChannels<I, I2> {
     type Item = f32;
-
+ 
     #[inline]
     fn next(&mut self) -> Option<f32> {
         self.flop = !self.flop;
-
-        if self.flop {
-            Some(self.source1.next().unwrap_or(0.0))
-        } else {
-            Some(self.source2.next().unwrap_or(0.0))
+ 
+        match (self.flop, self.source1.next(), self.source2.next()) {
+            (true, Some(sample), _) => Some(sample),
+            (false, _, Some(sample)) => Some(sample),
+            _ => None
         }
     }
 }
