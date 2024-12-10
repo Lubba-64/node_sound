@@ -23,7 +23,7 @@ impl<I: Source<Item = f32>> Iterator for Signum<I> {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        Some(self.source.next().unwrap_or(0.0).signum())
+        Some(self.source.next().map(|val| val.signum()))
     }
 }
 

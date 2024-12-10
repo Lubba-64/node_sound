@@ -31,17 +31,15 @@ impl<I: Source<Item = f32>, I2: Source<Item = f32>, I3: Source<Item = f32>> Iter
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        let mut min = self.min.next().unwrap_or(f32::MIN);
-        let mut max = self.max.next().unwrap_or(f32::MAX);
-        if min > max {
-            let other = min;
-            min = max;
-            max = other;
+        match (self.source.next(), self.min.next(), self.max.next()) {
+            (Some(source), Some(mut min), Some(mut max)) => {
+                if min > max {
+                    std::mem::swap(&mut min, &mut max);
+                }
+                Some(source.clamp(min, max))
+            }
+            _ => None,
         }
-        Some(self.source.next().unwrap_or(0.0).clamp(
-            min,
-            max,
-        ))
     }
 }
 

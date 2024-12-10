@@ -47,12 +47,14 @@ impl<I: Source<Item = f32>> Iterator for TranslateWave<I> {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        let p = self.source.next().unwrap_or(0.0);
-        return Some(
-            self.end_min
-                + ((self.end_max - self.end_min) / (self.start_max - self.start_min))
-                    * (p.clamp(self.start_min, self.start_max) - self.start_min),
-        );
+        return match self.source.next() {
+            Some(p) => Some(
+                self.end_min
+                    + ((self.end_max - self.end_min) / (self.start_max - self.start_min))
+                        * (p.clamp(self.start_min, self.start_max) - self.start_min),
+            ),
+            _ => None,
+        };
     }
 }
 
