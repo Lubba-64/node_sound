@@ -58,12 +58,11 @@ impl<
             self.end_min.next(),
             self.end_max.next(),
         ) {
-            (Some(p),
-                Some(mut start_min),
-                Some(mut start_max),
-                Some(mut end_min),
-                Some(mut end_max),
-            ) => {
+            (Some(p), 
+             Some(mut start_min), 
+             Some(mut start_max), 
+             Some(mut end_min), 
+             Some(mut end_max)) => {
                 if start_min > start_max {
                     std::mem::swap(&mut start_min, &mut start_max);
                 }
