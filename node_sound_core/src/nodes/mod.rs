@@ -29,6 +29,8 @@ mod amplify_node;
 use amplify_node::{amplify_logic, amplify_node};
 mod repeat_infinite;
 use repeat_infinite::{repeat_infinite_logic, repeat_infinite_node};
+mod repeat_n_node;
+use repeat_n_node::{repeat_n_logic, repeat_n_node};
 mod speed_node;
 use speed_node::{speed_logic, speed_node};
 mod lfo_node;
@@ -178,6 +180,7 @@ pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
         (delay_node(), Box::new(delay_logic)),
         (amplify_node(), Box::new(amplify_logic)),
         (repeat_infinite_node(), Box::new(repeat_infinite_logic)),
+        (repeat_n_node(), Box::new(repeat_n_logic)),
         (sine_node(), Box::new(sine_logic)),
         (sawtooth_node(), Box::new(sawtooth_logic)),
         (triangle_node(), Box::new(triangle_logic)),
