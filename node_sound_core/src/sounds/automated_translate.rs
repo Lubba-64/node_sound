@@ -72,7 +72,7 @@ impl<
                 Some(
                     end_min
                     + ((end_max - end_min) / (start_max - start_min))
-                        * (p.clamp(start_min, start_max) - start_min),
+                        * (p.clamp(start_min, start_max) - start_min)
                 )
             },
             _ => None
