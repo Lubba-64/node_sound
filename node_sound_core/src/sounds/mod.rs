@@ -10,6 +10,8 @@ mod clamp;
 pub use clamp::Clamp;
 mod abs;
 pub use abs::Abs;
+mod repeat_n;
+pub use repeat_n::RepeatRefSource;
 mod noise;
 pub use noise::Noise;
 mod merge_channels;
