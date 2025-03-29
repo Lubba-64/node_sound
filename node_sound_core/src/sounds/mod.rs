@@ -64,3 +64,5 @@ mod helpers;
 pub use helpers::samples_from_source;
 mod reverse;
 pub use reverse::ReverseSource;
+mod bit_crush;
+pub use bit_crush::BitCrusher;

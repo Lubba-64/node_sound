@@ -92,6 +92,8 @@ mod automated_wave_table_node;
 mod reverse_node;
 mod wave_table_node;
 pub use automated_wave_table_node::{automated_wave_table_logic, automated_wave_table_node};
+mod bit_crush_node;
+pub use bit_crush_node::{bit_crusher_logic, bit_crusher_node};
 
 pub struct SoundNodeProps {
     pub inputs: HashMap<String, ValueType>,
@@ -228,6 +230,7 @@ pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
         (code_node(), Box::new(code_logic)),
         (wave_table_node(), Box::new(wave_table_logic)),
         (reverse_node(), Box::new(reverse_logic)),
+        (bit_crusher_node(), Box::new(bit_crusher_logic)),
     ];
     match is_vst {
         VstType::Effect => {
