@@ -20,7 +20,11 @@ fn main() -> () {
     eframe::run_native(
         "Sound node graph",
         native_options,
-        Box::new(|cc| Box::new(sound_graph::graph::SoundNodeGraph::new_app(Some(cc)))),
+        Box::new(|cc| {
+            Ok(Box::new(sound_graph::graph::SoundNodeGraph::new_app(Some(
+                cc,
+            ))))
+        }),
     )
     .expect("eframe failed to run");
 }

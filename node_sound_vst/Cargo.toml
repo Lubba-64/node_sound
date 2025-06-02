@@ -1,14 +1,14 @@
 [package]
 name = "node_sound_vst"
 version = "1.10.2"
-edition = "2021"
+edition = "2024"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-nih_plug = { git = "https://github.com/ardura/nih-plug.git", rev = "cd1c66b054a8ff7d44084369b7022a0272ac690e"}
-nih_plug_egui = { git = "https://github.com/ardura/nih-plug.git", rev = "cd1c66b054a8ff7d44084369b7022a0272ac690e" }
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug", rev = "d64b2ab"}
+nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug", rev = "d64b2ab" }
 node_sound_core = { version = "*", path = "../node_sound_core", features = ["non-wasm"]}
 crossbeam = "0.8.4"
 lock_api = "0.4.12"

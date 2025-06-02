@@ -10,8 +10,8 @@ pub struct BitCrusher<I: Source<Item = f32>> {
 impl<I: Source<Item = f32>> BitCrusher<I> {
     #[inline]
     pub fn new(source: I, bits: u32) -> Self {
-        let bits = bits.clamp(1, 16); // Practical bit depth range
-        let step_size = 2.0 / ((1u32 << bits) - 1) as f32; // Properly using bits
+        let bits = bits.clamp(1, 16);
+        let step_size = 1.0 / bits as f32;
         Self { source, step_size }
     }
 }
@@ -21,10 +21,9 @@ impl<I: Source<Item = f32>> Iterator for BitCrusher<I> {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        self.source.next().map(|sample| {
-            // Proper quantization using the bit depth
-            ((sample / self.step_size).round() * self.step_size).clamp(-1.0, 1.0)
-        })
+        self.source
+            .next()
+            .map(|sample| ((sample / self.step_size).rem_euclid(self.step_size)).clamp(-1.0, 1.0))
     }
 }
 
