@@ -1,6 +1,4 @@
-mod code_node;
 mod mix_node;
-use code_node::{code_logic, code_node};
 use mix_node::{mix_logic, mix_node};
 mod duration_node;
 mod sawtooth_node;
@@ -227,7 +225,6 @@ pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
             automated_wave_table_node(),
             Box::new(automated_wave_table_logic),
         ),
-        (code_node(), Box::new(code_logic)),
         (wave_table_node(), Box::new(wave_table_logic)),
         (reverse_node(), Box::new(reverse_logic)),
         (bit_crusher_node(), Box::new(bit_crusher_logic)),
