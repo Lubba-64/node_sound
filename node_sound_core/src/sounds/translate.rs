@@ -1,7 +1,6 @@
-use rodio::Source;
-
-use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use rodio::source::UniformSourceIterator;
+use rodio::Source;
 use std::time::Duration;
 
 #[derive(Clone)]
@@ -48,9 +47,11 @@ impl<I: Source<Item = f32>> Iterator for TranslateWave<I> {
     #[inline]
     fn next(&mut self) -> Option<f32> {
         return match self.source.next() {
-            Some(p) => Some(self.end_min
-                + ((self.end_max - self.end_min) / (self.start_max - self.start_min))
-                    * (p.clamp(self.start_min, self.start_max) - self.start_min)),
+            Some(p) => Some(
+                self.end_min
+                    + ((self.end_max - self.end_min) / (self.start_max - self.start_min))
+                        * (p.clamp(self.start_min, self.start_max) - self.start_min),
+            ),
             _ => None,
         };
     }

@@ -1,3 +1,4 @@
+use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
@@ -23,7 +24,7 @@ pub fn reverb_node() -> SoundNode {
                     value: InputValueConfig::Float {
                         value: 1.0,
                         min: 0.0,
-                        max: 4000.0,
+                        max: MAX_FREQ,
                     },
                 },
             ),
@@ -36,7 +37,7 @@ pub fn reverb_node() -> SoundNode {
                     value: InputValueConfig::Float {
                         value: 1.0,
                         min: 0.0,
-                        max: 4000.0,
+                        max: MAX_FREQ,
                     },
                 },
             ),

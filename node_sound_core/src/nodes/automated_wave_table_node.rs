@@ -1,8 +1,8 @@
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_graph::{DEFAULT_SAMPLE_RATE, WAVE_TABLE_SIZE};
 use crate::sound_map;
 use crate::sounds::{samples_from_source, AutomatedWavetableOscillator};
 use egui_node_graph_2::InputParamKind;
@@ -24,14 +24,12 @@ pub fn automated_wave_table_node() -> SoundNode {
                 },
             ),
             (
-                "graph".to_string(),
+                "duration".to_string(),
                 InputParameter {
-                    data_type: DataType::Graph,
-                    kind: InputParamKind::ConstantOnly,
-                    name: "graph".to_string(),
-                    value: InputValueConfig::Graph {
-                        value: vec![0.01; WAVE_TABLE_SIZE],
-                    },
+                    data_type: DataType::AudioSource,
+                    kind: InputParamKind::ConnectionOnly,
+                    name: "duration".to_string(),
+                    value: InputValueConfig::Duration { value: 1.0 },
                 },
             ),
             (
@@ -57,7 +55,7 @@ pub fn automated_wave_table_node() -> SoundNode {
 pub fn automated_wave_table_logic(props: SoundNodeProps) -> SoundNodeResult {
     let samples = samples_from_source(
         sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
-        props.get_float("duration")? as usize,
+        props.get_duration("duration")?.as_millis() as usize,
     );
 
     Ok(BTreeMap::from([(

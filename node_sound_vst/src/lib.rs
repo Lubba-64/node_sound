@@ -1,17 +1,17 @@
 use nih_plug::{params::persist::PersistentField, prelude::*};
-use nih_plug_egui::{create_egui_editor, EguiState};
+use nih_plug_egui::{EguiState, create_egui_editor};
 use node_sound_core::{
+    constants::{DEFAULT_SAMPLE_RATE, MIDDLE_C_FREQ},
     sound_graph::{
         self,
-        graph::{evaluate_node, ActiveNodeState, SoundNodeGraph},
-        DEFAULT_SAMPLE_RATE, MIDDLE_C_FREQ,
+        graph::{ActiveNodeState, SoundNodeGraph, evaluate_node},
     },
     sound_map::{self, GenericSource},
     sounds::DAW_BUFF,
 };
 use rodio::{
-    source::{Speed, UniformSourceIterator, Zero},
     Source,
+    source::{Speed, UniformSourceIterator, Zero},
 };
 use std::{
     collections::HashMap,

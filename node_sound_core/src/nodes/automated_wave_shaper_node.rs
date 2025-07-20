@@ -1,8 +1,8 @@
+use crate::constants::{DEFAULT_SAMPLE_RATE, WAVE_TABLE_SIZE};
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_graph::{DEFAULT_SAMPLE_RATE, WAVE_TABLE_SIZE};
 use crate::sound_map;
 use crate::sounds::AutomatedWavetableOscillator;
 use egui_node_graph_2::InputParamKind;
@@ -21,7 +21,7 @@ pub fn automated_wave_shaper_node() -> SoundNode {
                     kind: InputParamKind::ConstantOnly,
                     name: "graph".to_string(),
                     value: InputValueConfig::Graph {
-                        value: vec![0.01; WAVE_TABLE_SIZE],
+                        value: vec![0.0; WAVE_TABLE_SIZE],
                     },
                 },
             ),

@@ -1,6 +1,6 @@
 use rodio::Source;
 
-use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use rodio::source::UniformSourceIterator;
 use std::time::Duration;
 
@@ -24,15 +24,15 @@ impl<I: Source<Item = f32>, I2: Source<Item = f32>> MergeChannels<I, I2> {
 
 impl<I: Source<Item = f32>, I2: Source<Item = f32>> Iterator for MergeChannels<I, I2> {
     type Item = f32;
- 
+
     #[inline]
     fn next(&mut self) -> Option<f32> {
         self.flop = !self.flop;
- 
+
         match (self.flop, self.source1.next(), self.source2.next()) {
             (true, Some(sample), _) => Some(sample),
             (false, _, Some(sample)) => Some(sample),
-            _ => None
+            _ => None,
         }
     }
 }

@@ -1,8 +1,8 @@
+use crate::constants::{DEFAULT_SAMPLE_RATE, MAX_FREQ, WAVE_TABLE_SIZE};
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_graph::{DEFAULT_SAMPLE_RATE, WAVE_TABLE_SIZE};
 use crate::sound_map;
 use crate::sounds::WavetableOscillator;
 use egui_node_graph_2::InputParamKind;
@@ -34,7 +34,7 @@ pub fn wave_shaper_node() -> SoundNode {
                     value: InputValueConfig::Float {
                         value: 0.0,
                         min: 0.0,
-                        max: 4000.0,
+                        max: MAX_FREQ,
                     },
                 },
             ),

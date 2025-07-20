@@ -1,6 +1,7 @@
 use super::copy_paste_del_helpers::{
     copy_to_clipboard, delete_selected_nodes, paste_from_clipboard,
 };
+use super::float_selector;
 use super::graph_types::InputValueConfig;
 use super::save_management::write_output_sound;
 use super::save_management::{
@@ -10,7 +11,7 @@ use super::save_management::{
 };
 use super::save_management::{open_project_file, save_project_file_as};
 use super::wave_table_graph::wave_table_graph;
-use super::{float_selector, DEFAULT_SAMPLE_RATE};
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::save_management::get_project_file;

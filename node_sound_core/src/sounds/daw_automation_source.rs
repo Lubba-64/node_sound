@@ -5,7 +5,7 @@ pub static mut DAW_BUFF: [Option<f32>; 18] = [
 
 use rodio::Source;
 
-use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use std::time::Duration;
 
 #[derive(Clone)]

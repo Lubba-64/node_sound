@@ -1,6 +1,6 @@
 use rodio::Source;
 
-use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use rodio::source::UniformSourceIterator;
 use std::time::Duration;
 
@@ -24,7 +24,7 @@ impl ReverseSource {
 
 impl Iterator for ReverseSource {
     type Item = f32;
- 
+
     #[inline]
     fn next(&mut self) -> Option<f32> {
         if self.idx >= self.buffer.len() {

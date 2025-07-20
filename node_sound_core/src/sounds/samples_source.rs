@@ -1,6 +1,6 @@
 use rodio::Source;
 
-use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use std::time::Duration;
 
 #[derive(Clone)]
@@ -18,7 +18,7 @@ impl SamplesSource {
 
 impl Iterator for SamplesSource {
     type Item = f32;
- 
+
     #[inline]
     fn next(&mut self) -> Option<f32> {
         if self.idx + 1 < self.source.len() {
@@ -28,11 +28,14 @@ impl Iterator for SamplesSource {
             None
         }
     }
- 
+
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.source.len() - (self.idx + 1), Some(self.source.len() - (self.idx + 1)))
+        (
+            self.source.len() - (self.idx + 1),
+            Some(self.source.len() - (self.idx + 1)),
+        )
     }
- }
+}
 
 impl Source for SamplesSource {
     #[inline]

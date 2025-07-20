@@ -1,3 +1,4 @@
+use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
@@ -21,8 +22,8 @@ pub fn translate_node() -> SoundNode {
                     name: "start_min".to_string(),
                     value: InputValueConfig::Float {
                         value: 1.0,
-                        max: 4000.0,
-                        min: -4000.0,
+                        max: MAX_FREQ,
+                        min: -MAX_FREQ,
                     },
                 },
             ),
@@ -34,8 +35,8 @@ pub fn translate_node() -> SoundNode {
                     name: "start_max".to_string(),
                     value: InputValueConfig::Float {
                         value: -1.0,
-                        max: 4000.0,
-                        min: -4000.0,
+                        max: MAX_FREQ,
+                        min: -MAX_FREQ,
                     },
                 },
             ),
@@ -47,8 +48,8 @@ pub fn translate_node() -> SoundNode {
                     name: "end_min".to_string(),
                     value: InputValueConfig::Float {
                         value: 1.0,
-                        max: 4000.0,
-                        min: -4000.0,
+                        max: MAX_FREQ,
+                        min: -MAX_FREQ,
                     },
                 },
             ),
@@ -60,8 +61,8 @@ pub fn translate_node() -> SoundNode {
                     name: "end_max".to_string(),
                     value: InputValueConfig::Float {
                         value: -1.0,
-                        max: 4000.0,
-                        min: -4000.0,
+                        max: MAX_FREQ,
+                        min: -MAX_FREQ,
                     },
                 },
             ),
