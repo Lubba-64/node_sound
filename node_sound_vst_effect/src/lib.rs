@@ -285,7 +285,7 @@ impl Plugin for NodeSound {
 
         for mut channel_samples in buffer.iter_samples() {
             for sample in channel_samples.iter_mut() {
-                unsafe { DAW_INPUT = Some((sample_rate as u32, *sample)) }
+                unsafe { DAW_INPUT = Some((sample_rate as u32, *sample, *sample)) }
                 mkparamgetter!(a1, 0, self);
                 mkparamgetter!(a2, 1, self);
                 mkparamgetter!(a3, 2, self);

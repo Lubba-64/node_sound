@@ -17,10 +17,7 @@ use wave_table_node::{wave_table_logic, wave_table_node};
 mod square_node;
 use square_node::{square_logic, square_node};
 mod delay_node;
-use crate::sound_graph::{
-    graph::VstType,
-    graph_types::{InputParameter, Output, ValueType},
-};
+use crate::sound_graph::graph_types::{InputParameter, Output, ValueType};
 use delay_node::{delay_logic, delay_node};
 use std::collections::HashMap;
 mod amplify_node;
@@ -152,14 +149,6 @@ impl SoundNodeProps {
             .clone()
             .try_to_graph()?)
     }
-    fn get_code(&self, name: &str) -> Result<String, Box<dyn std::error::Error>> {
-        Ok(self
-            .inputs
-            .get(name)
-            .unwrap_or_default()
-            .clone()
-            .try_to_code()?)
-    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -173,7 +162,7 @@ type SoundNodeOp =
 type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::Error>>;
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
-pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
+pub fn get_nodes() -> NodeDefinitions {
     let mut nodes: Vec<(SoundNode, Box<SoundNodeOp>)> = vec![
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
@@ -229,21 +218,9 @@ pub fn get_nodes(is_vst: VstType) -> NodeDefinitions {
         (reverse_node(), Box::new(reverse_logic)),
         (bit_crusher_node(), Box::new(bit_crusher_logic)),
     ];
-    match is_vst {
-        VstType::Effect => {
-            nodes.push((daw_input_node(), Box::new(daw_input_logic)));
-            nodes.push((output_node(), Box::new(output_logic)));
-            nodes.push((daw_automations_node(), Box::new(daw_automations_logic)))
-        }
-        VstType::None => {
-            nodes.push((midi_node(), Box::new(midi_logic)));
-            nodes.push((file_node(), Box::new(file_logic)));
-        }
-        VstType::Synth => {
-            nodes.push((output_node(), Box::new(output_logic)));
-            nodes.push((daw_automations_node(), Box::new(daw_automations_logic)))
-        }
-    }
+    nodes.push((daw_input_node(), Box::new(daw_input_logic)));
+    nodes.push((output_node(), Box::new(output_logic)));
+    nodes.push((daw_automations_node(), Box::new(daw_automations_logic)));
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
     ))

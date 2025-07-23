@@ -7,7 +7,7 @@ use node_sound_core::{
         graph::{ActiveNodeState, SoundNodeGraph, evaluate_node},
     },
     sound_map::{self, GenericSource},
-    sounds::DAW_BUFF,
+    sounds::{DAW_BUFF, DAW_INPUT},
 };
 use rodio::{
     Source,
@@ -671,9 +671,6 @@ impl Plugin for NodeSound {
                 }
             }
 
-            output[0][block_start..block_end].fill(0.0);
-            output[1][block_start..block_end].fill(0.0);
-
             let sound_buffers = self
                 .params
                 .source_sound_buffers
@@ -689,6 +686,13 @@ impl Plugin for NodeSound {
             }
 
             for sample_idx in block_start..block_end {
+                unsafe {
+                    DAW_INPUT = Some((
+                        sample_rate as u32,
+                        output[0][sample_idx],
+                        output[1][sample_idx],
+                    ))
+                }
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                     let buffer = &mut voice_sound_buffers[voice.note as usize];
                     let amp = voice.amp_envelope.next();

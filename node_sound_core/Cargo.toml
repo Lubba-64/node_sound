@@ -23,7 +23,7 @@ itertools = "0.13.0"
 futures = "0.3.30"
 getrandom = { version = "0.2.15", features = ["js"] }
 tokio = { version = "1.38.0", features = ["time"] }
-open = { version = "5.1.4", optional = true }
+open = { version = "5.1.4"}
 synthrs = { version = "0.1.0", git = "https://github.com/Lubba-64/synthrs.git", features = [
   "ser",
 ] }

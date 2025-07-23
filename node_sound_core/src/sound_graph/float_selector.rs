@@ -19,7 +19,7 @@ pub fn float_selector(
                 .drag_length(50.0)
                 .diameter(20.0),
         );
-        ui.add(DragValue::new(value).speed(0.01).clamp_range(*min..=*max));
+        ui.add(DragValue::new(value).speed(0.01).range(*min..=*max));
 
         let octave_res = ComboBox::new(format!("octave_{}", param_name), "")
             .selected_text(note.0.to_string())

@@ -3,15 +3,17 @@ use rodio::Source;
 use crate::constants::DEFAULT_SAMPLE_RATE;
 use std::time::Duration;
 
-pub static mut DAW_INPUT: Option<(u32, f32)> = None;
+pub static mut DAW_INPUT: Option<(u32, f32, f32)> = None;
 
 #[derive(Clone)]
-pub struct DawInputChannel {}
+pub struct DawInputChannel {
+    switch: bool,
+}
 
 impl DawInputChannel {
     #[inline]
     pub fn new() -> Self {
-        Self {}
+        Self { switch: false }
     }
 }
 
@@ -20,10 +22,17 @@ impl Iterator for DawInputChannel {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
+        self.switch = !self.switch;
         unsafe {
             match DAW_INPUT.as_ref() {
                 None => None,
-                Some(x) => Some(x.1),
+                Some(x) => {
+                    if self.switch {
+                        Some(x.1)
+                    } else {
+                        Some(x.2)
+                    }
+                }
             }
         }
     }
@@ -37,7 +46,7 @@ impl Source for DawInputChannel {
 
     #[inline]
     fn channels(&self) -> u16 {
-        1
+        2
     }
 
     #[inline]
