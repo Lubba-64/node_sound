@@ -7,7 +7,7 @@ use node_sound_core::{
         graph::{ActiveNodeState, SoundNodeGraph, evaluate_node},
     },
     sound_map::{self, GenericSource},
-    sounds::{DAW_BUFF, DAW_INPUT},
+    sounds::DAW_BUFF,
 };
 use rodio::{
     Source,
@@ -447,14 +447,16 @@ impl Plugin for NodeSound {
                     match state.state.user_state.vst_output_node_id {
                         Some(x) => {
                             match evaluate_node(
-                                &state.state.editor_state.graph,
+                                &state.state.editor_state.graph.clone(),
                                 x,
                                 &mut HashMap::new(),
                                 &state
                                     ._unserializeable_state
+                                    .clone()
                                     .node_definitions
                                     .as_ref()
                                     .unwrap(),
+                                &mut state.state.user_state,
                             ) {
                                 Ok(val) => {
                                     let source_id = val.try_to_source();
@@ -465,7 +467,14 @@ impl Plugin for NodeSound {
                                         ))),
                                         Ok(source_id) => {
                                             **sound_result_id = Some(source_id);
-                                            match sound_map::clone_sound(source_id.clone()) {
+                                            match state
+                                                .state
+                                                .user_state
+                                                .queue
+                                                .as_mut()
+                                                .unwrap()
+                                                .clone_sound(source_id.clone())
+                                            {
                                                 Err(_err) => GenericSource::new(Box::new(
                                                     Zero::new(1, DEFAULT_SAMPLE_RATE),
                                                 )),
@@ -513,7 +522,7 @@ impl Plugin for NodeSound {
                 }
                 if clear {
                     *sound_buffers = [0; MIDI_NOTES_LEN as usize].map(|_| None);
-                    sound_map::clear();
+                    state.state.user_state.queue.as_mut().unwrap().clear();
                     **sound_result_id = None
                 }
             },
@@ -671,6 +680,9 @@ impl Plugin for NodeSound {
                 }
             }
 
+            output[0][block_start..block_end].fill(0.0);
+            output[1][block_start..block_end].fill(0.0);
+
             let sound_buffers = self
                 .params
                 .source_sound_buffers
@@ -686,38 +698,33 @@ impl Plugin for NodeSound {
             }
 
             for sample_idx in block_start..block_end {
-                unsafe {
-                    DAW_INPUT = Some((
-                        sample_rate as u32,
-                        output[0][sample_idx],
-                        output[1][sample_idx],
-                    ))
-                }
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                     let buffer = &mut voice_sound_buffers[voice.note as usize];
                     let amp = voice.amp_envelope.next();
-                    mkparamgetter!(a1, 0, self);
-                    mkparamgetter!(a2, 1, self);
-                    mkparamgetter!(a3, 2, self);
-                    mkparamgetter!(a4, 3, self);
-                    mkparamgetter!(a5, 4, self);
-                    mkparamgetter!(a6, 5, self);
-                    mkparamgetter!(a7, 6, self);
-                    mkparamgetter!(a8, 7, self);
-                    mkparamgetter!(a9, 8, self);
-                    mkparamgetter!(a10, 9, self);
-                    mkparamgetter!(a11, 10, self);
-                    mkparamgetter!(a12, 11, self);
-                    mkparamgetter!(a13, 12, self);
-                    mkparamgetter!(a14, 13, self);
-                    mkparamgetter!(a15, 14, self);
-                    mkparamgetter!(a16, 15, self);
-                    mkparamgetter!(a17, 16, self);
-                    mkparamgetter!(a18, 17, self);
+                    // mkparamgetter!(a1, 0, self);
+                    // mkparamgetter!(a2, 1, self);
+                    // mkparamgetter!(a3, 2, self);
+                    // mkparamgetter!(a4, 3, self);
+                    // mkparamgetter!(a5, 4, self);
+                    // mkparamgetter!(a6, 5, self);
+                    // mkparamgetter!(a7, 6, self);
+                    // mkparamgetter!(a8, 7, self);
+                    // mkparamgetter!(a9, 8, self);
+                    // mkparamgetter!(a10, 9, self);
+                    // mkparamgetter!(a11, 10, self);
+                    // mkparamgetter!(a12, 11, self);
+                    // mkparamgetter!(a13, 12, self);
+                    // mkparamgetter!(a14, 13, self);
+                    // mkparamgetter!(a15, 14, self);
+                    // mkparamgetter!(a16, 15, self);
+                    // mkparamgetter!(a17, 16, self);
+                    // mkparamgetter!(a18, 17, self);
                     match buffer {
                         Some(x) => {
-                            output[0][sample_idx] += x.next().unwrap_or(0.0).clamp(-1.0, 1.0) * amp;
-                            output[1][sample_idx] += x.next().unwrap_or(0.0).clamp(-1.0, 1.0) * amp;
+                            output[0][sample_idx] +=
+                                x.next().map(|x| x * amp).unwrap_or(0.0).clamp(-1.0, 1.0);
+                            output[1][sample_idx] +=
+                                x.next().map(|x| x * amp).unwrap_or(0.0).clamp(-1.0, 1.0);
                         }
                         None => {}
                     }

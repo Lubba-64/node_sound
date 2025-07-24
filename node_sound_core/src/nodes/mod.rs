@@ -9,7 +9,7 @@ mod sine_node;
 mod triangle_node;
 use serde::{Deserialize, Serialize};
 use sine_node::{sine_logic, sine_node};
-use std::{collections::BTreeMap, time::Duration};
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
 use synthrs::midi::MidiSong;
 use triangle_node::{triangle_logic, triangle_node};
 use wave_shaper_node::{wave_shaper_logic, wave_shaper_node};
@@ -17,7 +17,13 @@ use wave_table_node::{wave_table_logic, wave_table_node};
 mod square_node;
 use square_node::{square_logic, square_node};
 mod delay_node;
-use crate::sound_graph::graph_types::{InputParameter, Output, ValueType};
+use crate::{
+    sound_graph::{
+        graph::SoundGraphUserState,
+        graph_types::{InputParameter, Output, ValueType},
+    },
+    sound_map::{RefSource, RefSourceIterDynClone},
+};
 use delay_node::{delay_logic, delay_node};
 use std::collections::HashMap;
 mod amplify_node;
@@ -90,11 +96,20 @@ pub use automated_wave_table_node::{automated_wave_table_logic, automated_wave_t
 mod bit_crush_node;
 pub use bit_crush_node::{bit_crusher_logic, bit_crusher_node};
 
-pub struct SoundNodeProps {
+pub struct SoundNodeProps<'a> {
     pub inputs: HashMap<String, ValueType>,
+    pub user_state: &'a mut SoundGraphUserState,
 }
 
-impl SoundNodeProps {
+impl<'a> SoundNodeProps<'a> {
+    fn push_sound(&mut self, sound: Box<dyn RefSourceIterDynClone<f32>>) -> usize {
+        self.user_state.queue.as_mut().unwrap().push_sound(sound)
+    }
+
+    fn clone_sound_ref(&mut self, idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> {
+        self.user_state.queue.as_mut().unwrap().clone_sound_ref(idx)
+    }
+
     fn get_float(&self, name: &str) -> Result<f32, Box<dyn std::error::Error>> {
         Ok(self
             .inputs
@@ -160,6 +175,8 @@ pub struct SoundNode {
 type SoundNodeOp =
     fn(SoundNodeProps) -> Result<BTreeMap<String, ValueType>, Box<dyn std::error::Error>>;
 type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::Error>>;
+
+#[derive(Clone)]
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
 
 pub fn get_nodes() -> NodeDefinitions {
@@ -218,7 +235,7 @@ pub fn get_nodes() -> NodeDefinitions {
         (reverse_node(), Box::new(reverse_logic)),
         (bit_crusher_node(), Box::new(bit_crusher_logic)),
     ];
-    nodes.push((daw_input_node(), Box::new(daw_input_logic)));
+    // nodes.push((daw_input_node(), Box::new(daw_input_logic)));
     nodes.push((output_node(), Box::new(output_logic)));
     nodes.push((daw_automations_node(), Box::new(daw_automations_logic)));
     NodeDefinitions(BTreeMap::from_iter(

@@ -1,6 +1,7 @@
 use dyn_clone::DynClone;
 use rodio::source::Source;
 use rodio::{Decoder, Sample};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::io::ErrorKind;
 use std::rc::Rc;
@@ -165,54 +166,58 @@ impl Source for RefSource {
     }
 }
 
-static mut SOUND_QUEUE: Vec<Rc<RefCell<RepeatSource<GenericSource<f32>>>>> = vec![];
+#[derive(Clone)]
+pub struct SoundQueue {
+    queue: Vec<Rc<RefCell<RepeatSource<GenericSource<f32>>>>>,
+}
 
-pub fn push_sound(sound: Box<dyn RefSourceIterDynClone<f32>>) -> usize {
-    unsafe {
-        SOUND_QUEUE.push(Rc::new(RefCell::new(RepeatSource::new(
+impl SoundQueue {
+    pub fn new() -> Self {
+        SoundQueue { queue: vec![] }
+    }
+
+    pub fn clone_sound(
+        &mut self,
+        idx: usize,
+    ) -> Result<GenericSource<f32>, Box<dyn std::error::Error>> {
+        if idx >= self.queue.len() {
+            return Err(Box::new(std::io::Error::new(
+                ErrorKind::Other,
+                "Sound queue accessed an out of bounds element",
+            )));
+        }
+        self.queue[idx].borrow_mut().repeats += 1;
+        return Ok(self.queue[idx].borrow().source.clone());
+    }
+
+    pub fn push_sound(&mut self, sound: Box<dyn RefSourceIterDynClone<f32>>) -> usize {
+        self.queue.push(Rc::new(RefCell::new(RepeatSource::new(
             GenericSource::new(sound),
             0,
         ))));
-        return SOUND_QUEUE.len() - 1;
+        return self.queue.len() - 1;
     }
-}
 
-pub fn clone_sound_ref(idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> {
-    if idx >= unsafe { SOUND_QUEUE.len() } {
-        return Err(Box::new(std::io::Error::new(
-            ErrorKind::Other,
-            "Sound queue accessed an out of bounds element",
-        )));
+    pub fn clone_sound_ref(&mut self, idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> {
+        if idx >= self.queue.len() {
+            return Err(Box::new(std::io::Error::new(
+                ErrorKind::Other,
+                "Sound queue accessed an out of bounds element",
+            )));
+        }
+        self.queue[idx].borrow_mut().repeats += 1;
+        return Ok(RefSource::new(self.queue[idx].clone()));
     }
-    unsafe {
-        SOUND_QUEUE[idx].borrow_mut().repeats += 1;
-    }
-    return unsafe { Ok(RefSource::new(SOUND_QUEUE[idx].clone())) };
-}
 
-pub fn sound_queue_len() -> usize {
-    unsafe { SOUND_QUEUE.len() }
-}
-
-pub fn clear() {
-    unsafe { SOUND_QUEUE.clear() }
-}
-
-pub fn set_repeats(idx: usize, repeats: usize) {
-    unsafe {
-        SOUND_QUEUE[idx].borrow_mut().repeats = repeats;
+    pub fn sound_queue_len(&mut self) -> usize {
+        self.queue.len()
     }
-}
 
-pub fn clone_sound(idx: usize) -> Result<GenericSource<f32>, Box<dyn std::error::Error>> {
-    if idx >= unsafe { SOUND_QUEUE.len() } {
-        return Err(Box::new(std::io::Error::new(
-            ErrorKind::Other,
-            "Sound queue accessed an out of bounds element",
-        )));
+    pub fn clear(&mut self) {
+        self.queue.clear()
     }
-    unsafe {
-        SOUND_QUEUE[idx].borrow_mut().repeats += 1;
+
+    pub fn set_repeats(&mut self, idx: usize, repeats: usize) {
+        self.queue[idx].borrow_mut().repeats = repeats;
     }
-    return unsafe { Ok(SOUND_QUEUE[idx].borrow().source.clone()) };
 }

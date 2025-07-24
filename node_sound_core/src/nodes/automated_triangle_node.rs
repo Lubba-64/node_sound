@@ -30,13 +30,12 @@ pub fn automated_triangle_node() -> SoundNode {
         )]),
     }
 }
-pub fn automated_triangle_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn automated_triangle_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned = props.clone_sound_ref(props.get_source("freq")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(AutomatedTriangleWave::new(
-                sound_map::clone_sound_ref(props.get_source("freq")?)?,
-            ))),
+            value: props.push_sound(Box::new(AutomatedTriangleWave::new(cloned))),
         },
     )]))
 }

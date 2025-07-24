@@ -20,11 +20,11 @@ pub fn daw_input_node() -> SoundNode {
     }
 }
 
-pub fn daw_input_logic(_props: SoundNodeProps) -> SoundNodeResult {
+pub fn daw_input_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(DawInputChannel::new())),
+            value: props.push_sound(Box::new(DawInputChannel::new())),
         },
     )]))
 }

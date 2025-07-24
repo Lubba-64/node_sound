@@ -34,11 +34,12 @@ pub fn sine_node() -> SoundNode {
         )]),
     }
 }
-pub fn sine_logic(props: SoundNodeProps) -> SoundNodeResult {
+
+pub fn sine_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(SineWave::new(props.get_float("frequency")?))),
+            value: props.push_sound(Box::new(SineWave::new(props.get_float("frequency")?))),
         },
     )]))
 }

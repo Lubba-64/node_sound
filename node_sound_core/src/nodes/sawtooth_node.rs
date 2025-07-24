@@ -35,13 +35,11 @@ pub fn sawtooth_node() -> SoundNode {
         )]),
     }
 }
-pub fn sawtooth_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn sawtooth_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(SawToothWave::new(
-                props.get_float("frequency")?,
-            ))),
+            value: props.push_sound(Box::new(SawToothWave::new(props.get_float("frequency")?))),
         },
     )]))
 }

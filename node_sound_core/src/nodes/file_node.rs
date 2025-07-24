@@ -31,7 +31,7 @@ pub fn file_node() -> SoundNode {
     }
 }
 
-pub fn file_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn file_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let file = match props.get_file("file")? {
         None => {
             return Ok(BTreeMap::from([(
@@ -45,7 +45,7 @@ pub fn file_logic(props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(CloneableDecoder::new(file.1.clone()))),
+            value: props.push_sound(Box::new(CloneableDecoder::new(file.1.clone()))),
         },
     )]))
 }

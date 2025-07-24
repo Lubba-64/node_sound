@@ -34,11 +34,11 @@ pub fn daw_automations_node() -> SoundNode {
     }
 }
 
-pub fn daw_automations_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn daw_automations_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(DawAutomationChannel::new(
+            value: props.push_sound(Box::new(DawAutomationChannel::new(
                 props.get_float("channel")?.round() as u8,
             ))),
         },

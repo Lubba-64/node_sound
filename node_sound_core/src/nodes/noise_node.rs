@@ -49,11 +49,11 @@ pub fn noise_node() -> SoundNode {
         )]),
     }
 }
-pub fn noise_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn noise_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(Noise::new(
+            value: props.push_sound(Box::new(Noise::new(
                 props.get_float("min")?,
                 props.get_float("max")?,
             ))),

@@ -50,15 +50,14 @@ pub fn automated_clamp_node() -> SoundNode {
         )]),
     }
 }
-pub fn automated_clamp_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn automated_clamp_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned1 = props.clone_sound_ref(props.get_source("min")?)?;
+    let cloned2 = props.clone_sound_ref(props.get_source("max")?)?;
+    let cloned3 = props.clone_sound_ref(props.get_source("audio 1")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(AutomatedClamp::new(
-                sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
-                sound_map::clone_sound_ref(props.get_source("min")?)?,
-                sound_map::clone_sound_ref(props.get_source("max")?)?,
-            ))),
+            value: props.push_sound(Box::new(AutomatedClamp::new(cloned1, cloned2, cloned3))),
         },
     )]))
 }

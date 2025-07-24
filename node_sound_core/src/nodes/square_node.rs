@@ -35,11 +35,11 @@ pub fn square_node() -> SoundNode {
     }
 }
 
-pub fn square_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn square_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(SquareWave::new(props.get_float("frequency")?))),
+            value: props.push_sound(Box::new(SquareWave::new(props.get_float("frequency")?))),
         },
     )]))
 }

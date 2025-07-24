@@ -2609,6 +2609,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "node_sound_app"
+version = "1.10.2"
+dependencies = [
+ "eframe",
+ "node_sound_core",
+]
+
+[[package]]
 name = "node_sound_core"
 version = "1.10.2"
 dependencies = [

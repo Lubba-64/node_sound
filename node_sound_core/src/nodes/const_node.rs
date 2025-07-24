@@ -35,11 +35,11 @@ pub fn const_node() -> SoundNode {
         )]),
     }
 }
-pub fn const_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn const_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(ConstWave::new(props.get_float("amplitude")?))),
+            value: props.push_sound(Box::new(ConstWave::new(props.get_float("amplitude")?))),
         },
     )]))
 }

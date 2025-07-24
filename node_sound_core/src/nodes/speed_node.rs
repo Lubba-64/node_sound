@@ -46,14 +46,14 @@ pub fn speed_node() -> SoundNode {
         )]),
     }
 }
-pub fn speed_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn speed_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned = props
+        .clone_sound_ref(props.get_source("audio 1")?)?
+        .speed(props.get_float("speed")?);
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(
-                sound_map::clone_sound(props.get_source("audio 1")?)?
-                    .speed(props.get_float("speed")?),
-            )),
+            value: props.push_sound(Box::new(cloned)),
         },
     )]))
 }

@@ -7,14 +7,13 @@ use super::wave_table_graph::wave_table_graph;
 use crate::constants::DEFAULT_SAMPLE_RATE;
 use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
-use crate::sound_map;
+use crate::sound_map::SoundQueue;
 use eframe::egui::Pos2;
 use eframe::egui::{self, DragValue, Vec2};
 use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
 pub use egui_node_graph_2::*;
 use futures::executor;
 pub use rodio::source::Zero;
-use rodio::{OutputStream, OutputStreamHandle, Sink};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ffi::OsStr;
@@ -52,7 +51,9 @@ pub struct SoundGraphUserState {
     pub vst_output_node_id: Option<NodeId>,
     #[serde(skip)]
     pub is_done_showing_recording_dialogue: bool,
-    pub wave_shaper_graph_id: Option<usize>,
+    #[serde(skip)]
+    pub queue: Option<SoundQueue>,
+    pub wave_shaper_graph_id: usize,
 }
 
 impl Clone for SoundGraphUserState {
@@ -66,6 +67,7 @@ impl Clone for SoundGraphUserState {
             vst_output_node_id: None,
             is_done_showing_recording_dialogue: self.is_done_showing_recording_dialogue,
             wave_shaper_graph_id: self.wave_shaper_graph_id,
+            queue: Some(SoundQueue::new()),
         }
     }
 }
@@ -151,11 +153,10 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                     InputValueConfig::AudioFile {} => ValueType::AudioFile { value: None },
                     InputValueConfig::MidiFile {} => ValueType::MidiFile { value: None },
                     InputValueConfig::Graph { value } => {
-                        user_state.wave_shaper_graph_id =
-                            Some(user_state.wave_shaper_graph_id.unwrap_or(0) + 1);
+                        user_state.wave_shaper_graph_id += 1;
                         ValueType::Graph {
                             value: Some(value.clone()),
-                            id: user_state.wave_shaper_graph_id.unwrap(),
+                            id: user_state.wave_shaper_graph_id,
                         }
                     }
                 },
@@ -334,18 +335,14 @@ pub struct SoundNodeGraphState {
     pub editor_state: SoundGraphEditorState,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct UnserializeableGraphState {
     pub node_definitions: Option<NodeDefinitions>,
-    pub _stream: Option<(OutputStream, OutputStreamHandle)>,
-    pub sink: Option<Sink>,
 }
 
 pub fn get_unserializeable_graph_state() -> UnserializeableGraphState {
     return UnserializeableGraphState {
         node_definitions: Some(get_nodes()),
-        sink: None,
-        _stream: None,
     };
 }
 
@@ -377,6 +374,15 @@ impl SoundNodeGraph {
     }
 
     pub fn new_vst_effect() -> Self {
+        new_sound_node_graph()
+    }
+
+    pub fn new_app(cc: Option<&eframe::CreationContext<'_>>) -> Self {
+        if cc.is_some() {
+            if let Some(storage) = cc.unwrap().storage {
+                return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+            }
+        }
         new_sound_node_graph()
     }
 
@@ -449,13 +455,6 @@ impl SoundNodeGraph {
     }
 }
 
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
-pub fn open_url(url: &str) {
-    let window = web_sys::window().expect("failed to retrieve window");
-    let _ = window.open_with_url(url);
-}
-
 impl eframe::App for SoundNodeGraph {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.update_root(ctx)
@@ -464,12 +463,12 @@ impl eframe::App for SoundNodeGraph {
 
 type OutputsCache<'a> = HashMap<OutputId, ValueType>;
 
-/// Recursively evaluates all dependencies of this node, then evaluates the node itself.
 pub fn evaluate_node<'a>(
     graph: &MyGraph,
     node_id: NodeId,
     outputs_cache: &mut OutputsCache,
     all_nodes: &NodeDefinitions,
+    user_state: &'a mut SoundGraphUserState,
 ) -> Result<ValueType, Box<dyn std::error::Error>> {
     let node = match all_nodes.0.get(&graph[node_id].user_data.name) {
         Some(x) => x,
@@ -479,7 +478,14 @@ pub fn evaluate_node<'a>(
     let mut closure = |name: String| {
         (
             name.clone(),
-            evaluate_input(graph, node_id, name.as_str(), outputs_cache, all_nodes),
+            evaluate_input(
+                graph,
+                node_id,
+                name.as_str(),
+                outputs_cache,
+                all_nodes,
+                user_state,
+            ),
         )
     };
     let input_to_name = HashMap::from_iter(
@@ -491,6 +497,7 @@ pub fn evaluate_node<'a>(
 
     let res = (node.1)(SoundNodeProps {
         inputs: input_to_name,
+        user_state: user_state,
     })?;
 
     for (name, value) in &res {
@@ -527,6 +534,7 @@ fn evaluate_input<'a>(
     param_name: &'a str,
     outputs_cache: &'a mut OutputsCache,
     all_nodes: &'a NodeDefinitions,
+    user_state: &'a mut SoundGraphUserState,
 ) -> ValueType {
     let input_id = match graph[node_id].get_input(param_name) {
         Ok(x) => x,
@@ -537,16 +545,30 @@ fn evaluate_input<'a>(
         if let Some(other_value) = outputs_cache.get(&other_output_id) {
             other_value.clone()
         } else {
-            match evaluate_node(graph, graph[other_output_id].node, outputs_cache, all_nodes) {
+            match evaluate_node(
+                graph,
+                graph[other_output_id].node,
+                outputs_cache,
+                all_nodes,
+                user_state,
+            ) {
                 Ok(x) => x,
                 Err(_x) => ValueType::AudioSource {
-                    value: sound_map::push_sound(Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE))),
+                    value: user_state
+                        .queue
+                        .as_mut()
+                        .unwrap()
+                        .push_sound(Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE))),
                 },
             };
             outputs_cache
                 .get(&other_output_id)
                 .unwrap_or(&ValueType::AudioSource {
-                    value: sound_map::push_sound(Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE))),
+                    value: user_state
+                        .queue
+                        .as_mut()
+                        .unwrap()
+                        .push_sound(Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE))),
                 })
                 .clone()
         }

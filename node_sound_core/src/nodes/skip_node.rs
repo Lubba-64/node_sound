@@ -41,14 +41,14 @@ pub fn skip_node() -> SoundNode {
         )]),
     }
 }
-pub fn skip_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn skip_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned = props
+        .clone_sound_ref(props.get_source("audio 1")?)?
+        .skip_duration(props.get_duration("duration")?);
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(
-                sound_map::clone_sound_ref(props.get_source("audio 1")?)?
-                    .skip_duration(props.get_duration("duration")?),
-            )),
+            value: props.push_sound(Box::new(cloned)),
         },
     )]))
 }

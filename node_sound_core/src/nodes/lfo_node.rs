@@ -42,14 +42,13 @@ pub fn lfo_node() -> SoundNode {
     }
 }
 
-pub fn lfo_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn lfo_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned1 = props.clone_sound_ref(props.get_source("audio 1")?)?;
+    let cloned2 = props.clone_sound_ref(props.get_source("audio 2")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(Lfo::new(
-                sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
-                sound_map::clone_sound_ref(props.get_source("audio 2")?)?,
-            ))),
+            value: props.push_sound(Box::new(Lfo::new(cloned1, cloned2))),
         },
     )]))
 }
