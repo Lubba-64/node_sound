@@ -435,9 +435,9 @@ impl Plugin for NodeSound {
             ),
             |_, _| {},
             move |egui_ctx, _setter, state| {
-                let sound_result_id = match &mut state.3.lock() {
+                let sound_result_id = &mut match state.3.lock() {
                     Ok(x) => x,
-                    Err(x) => {
+                    Err(_x) => {
                         return;
                     }
                 };
@@ -445,21 +445,13 @@ impl Plugin for NodeSound {
                 let sound_buffers = &mut *state.1.lock().expect("expected lock");
                 let state = &mut match state.0.lock() {
                     Ok(x) => x,
-                    Err(x) => {
+                    Err(_x) => {
                         return;
                     }
                 };
-
                 let mut clear = false;
-                nih_log!(
-                    "{}",
-                    state._unserializeable_state.node_definitions.is_some()
-                );
                 state.update_root(egui_ctx);
-                /*
-                if sound_result_id.is_none()
-                    || state.state.user_state.active_node.is_playing() && false
-                {
+                if sound_result_id.is_none() || state.state.user_state.active_node.is_playing() {
                     state.state.user_state.active_node = ActiveNodeState::NoNode;
                     match state.state.user_state.vst_output_node_id {
                         Some(x) => {
@@ -542,7 +534,6 @@ impl Plugin for NodeSound {
                     state.state.user_state.queue.as_mut().unwrap().clear();
                     **sound_result_id = None
                 }
-                */
             },
         )
     }
@@ -719,24 +710,24 @@ impl Plugin for NodeSound {
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                     let buffer = &mut voice_sound_buffers[voice.note as usize];
                     let amp = voice.amp_envelope.next();
-                    // mkparamgetter!(a1, 0, self);
-                    // mkparamgetter!(a2, 1, self);
-                    // mkparamgetter!(a3, 2, self);
-                    // mkparamgetter!(a4, 3, self);
-                    // mkparamgetter!(a5, 4, self);
-                    // mkparamgetter!(a6, 5, self);
-                    // mkparamgetter!(a7, 6, self);
-                    // mkparamgetter!(a8, 7, self);
-                    // mkparamgetter!(a9, 8, self);
-                    // mkparamgetter!(a10, 9, self);
-                    // mkparamgetter!(a11, 10, self);
-                    // mkparamgetter!(a12, 11, self);
-                    // mkparamgetter!(a13, 12, self);
-                    // mkparamgetter!(a14, 13, self);
-                    // mkparamgetter!(a15, 14, self);
-                    // mkparamgetter!(a16, 15, self);
-                    // mkparamgetter!(a17, 16, self);
-                    // mkparamgetter!(a18, 17, self);
+                    mkparamgetter!(a1, 0, self);
+                    mkparamgetter!(a2, 1, self);
+                    mkparamgetter!(a3, 2, self);
+                    mkparamgetter!(a4, 3, self);
+                    mkparamgetter!(a5, 4, self);
+                    mkparamgetter!(a6, 5, self);
+                    mkparamgetter!(a7, 6, self);
+                    mkparamgetter!(a8, 7, self);
+                    mkparamgetter!(a9, 8, self);
+                    mkparamgetter!(a10, 9, self);
+                    mkparamgetter!(a11, 10, self);
+                    mkparamgetter!(a12, 11, self);
+                    mkparamgetter!(a13, 12, self);
+                    mkparamgetter!(a14, 13, self);
+                    mkparamgetter!(a15, 14, self);
+                    mkparamgetter!(a16, 15, self);
+                    mkparamgetter!(a17, 16, self);
+                    mkparamgetter!(a18, 17, self);
                     match buffer {
                         Some(x) => {
                             output[0][sample_idx] +=
