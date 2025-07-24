@@ -435,14 +435,31 @@ impl Plugin for NodeSound {
             ),
             |_, _| {},
             move |egui_ctx, _setter, state| {
-                let sound_result_id = &mut state.3.lock().expect("expected lock");
+                let sound_result_id = match &mut state.3.lock() {
+                    Ok(x) => x,
+                    Err(x) => {
+                        return;
+                    }
+                };
                 let sample_rate = &state.2.lock().expect("expect lock");
                 let sound_buffers = &mut *state.1.lock().expect("expected lock");
-                let state = &mut state.0.lock().expect("expected lock");
+                let state = &mut match state.0.lock() {
+                    Ok(x) => x,
+                    Err(x) => {
+                        return;
+                    }
+                };
 
                 let mut clear = false;
+                nih_log!(
+                    "{}",
+                    state._unserializeable_state.node_definitions.is_some()
+                );
                 state.update_root(egui_ctx);
-                if sound_result_id.is_none() || state.state.user_state.active_node.is_playing() {
+                /*
+                if sound_result_id.is_none()
+                    || state.state.user_state.active_node.is_playing() && false
+                {
                     state.state.user_state.active_node = ActiveNodeState::NoNode;
                     match state.state.user_state.vst_output_node_id {
                         Some(x) => {
@@ -525,6 +542,7 @@ impl Plugin for NodeSound {
                     state.state.user_state.queue.as_mut().unwrap().clear();
                     **sound_result_id = None
                 }
+                */
             },
         )
     }

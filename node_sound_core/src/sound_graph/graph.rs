@@ -19,7 +19,7 @@ use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 pub struct NodeData {
     pub name: String,
 }
@@ -361,6 +361,7 @@ fn new_sound_node_graph() -> SoundNodeGraph {
         state: SoundNodeGraphState {
             editor_state: SoundGraphEditorState::default(),
             user_state: SoundGraphUserState {
+                queue: Some(SoundQueue::new()),
                 ..Default::default()
             },
         },
@@ -389,8 +390,10 @@ impl SoundNodeGraph {
     fn update_output_node(&mut self) {
         let mut found = false;
         for node in self.state.editor_state.graph.iter_nodes() {
-            let found_match =
-                self.state.editor_state.graph.nodes.get(node).unwrap().label == "Output";
+            let found_match = match self.state.editor_state.graph.nodes.get(node) {
+                None => false,
+                Some(x) => x.label == "Output",
+            };
             if found_match {
                 found = true;
                 self.state.user_state.vst_output_node_id = Some(node)
@@ -402,6 +405,12 @@ impl SoundNodeGraph {
     }
 
     pub fn update_root(&mut self, ctx: &egui::Context) {
+        if self.state.user_state.queue.is_none() {
+            self.state.user_state.queue = Some(SoundQueue::new());
+        }
+        if self._unserializeable_state.node_definitions.is_none() {
+            self._unserializeable_state = get_unserializeable_graph_state();
+        }
         self.update_output_node();
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
