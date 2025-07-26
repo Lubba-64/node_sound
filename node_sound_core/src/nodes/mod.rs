@@ -82,8 +82,6 @@ mod output_node;
 use output_node::{output_logic, output_node};
 mod daw_automation_source_node;
 use daw_automation_source_node::{daw_automations_logic, daw_automations_node};
-mod daw_input_node;
-use daw_input_node::{daw_input_logic, daw_input_node};
 mod automated_wave_shaper_node;
 mod wave_shaper_node;
 use automated_wave_shaper_node::{automated_wave_shaper_logic, automated_wave_shaper_node};
@@ -241,7 +239,6 @@ pub fn get_nodes() -> NodeDefinitions {
         (reverse_node(), Box::new(reverse_logic)),
         (bit_crusher_node(), Box::new(bit_crusher_logic)),
     ];
-    // nodes.push((daw_input_node(), Box::new(daw_input_logic)));
     nodes.push((output_node(), Box::new(output_logic)));
     nodes.push((daw_automations_node(), Box::new(daw_automations_logic)));
     NodeDefinitions(BTreeMap::from_iter(

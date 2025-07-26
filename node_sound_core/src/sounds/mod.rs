@@ -50,8 +50,6 @@ mod cloneable_decoder;
 pub use cloneable_decoder::CloneableDecoder;
 mod daw_automation_source;
 pub use daw_automation_source::DawAutomationChannel;
-mod daw_input;
-pub use daw_input::{DawInputChannel, DAW_INPUT};
 mod wave_table;
 pub use wave_table::WavetableOscillator;
 mod automated_wave_table;
