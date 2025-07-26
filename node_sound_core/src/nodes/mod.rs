@@ -9,7 +9,7 @@ mod sine_node;
 mod triangle_node;
 use serde::{Deserialize, Serialize};
 use sine_node::{sine_logic, sine_node};
-use std::{collections::BTreeMap, sync::Arc, time::Duration};
+use std::{collections::BTreeMap, time::Duration};
 use synthrs::midi::MidiSong;
 use triangle_node::{triangle_logic, triangle_node};
 use wave_shaper_node::{wave_shaper_logic, wave_shaper_node};
@@ -19,7 +19,7 @@ use square_node::{square_logic, square_node};
 mod delay_node;
 use crate::{
     sound_graph::{
-        graph::{SoundGraphUserState, UnserializeableGraphState},
+        graph::UnserializeableGraphState,
         graph_types::{InputParameter, Output, ValueType},
     },
     sound_map::{RefSource, RefSourceIterDynClone},
