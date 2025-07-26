@@ -2662,22 +2662,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "node_sound_vst_effect"
-version = "1.10.2"
-dependencies = [
- "crossbeam",
- "egui 0.27.2",
- "ezing",
- "lock_api",
- "nih_plug",
- "nih_plug_egui",
- "node_sound_core",
- "pitch_shift",
- "rodio",
- "ron",
-]
-
-[[package]]
 name = "nohash-hasher"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
