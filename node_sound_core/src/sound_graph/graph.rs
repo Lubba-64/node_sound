@@ -4,10 +4,10 @@ use super::copy_paste_del_helpers::{
 use super::float_selector;
 use super::graph_types::InputValueConfig;
 use super::wave_table_graph::wave_table_graph;
-use crate::constants::DEFAULT_SAMPLE_RATE;
-use crate::nodes::{get_nodes, NodeDefinitions, SoundNode, SoundNodeProps};
+use crate::nodes::{NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_map::SoundQueue;
+use eframe::egui::mutex::Mutex;
 use eframe::egui::Pos2;
 use eframe::egui::{self, DragValue, Vec2};
 use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
@@ -17,6 +17,7 @@ pub use rodio::source::Zero;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ffi::OsStr;
+use std::sync::Arc;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 
 #[derive(Clone, Serialize, Deserialize, Debug, Default)]
@@ -41,7 +42,7 @@ impl ActiveNodeState {
     }
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize, Clone)]
 pub struct SoundGraphUserState {
     pub active_node: ActiveNodeState,
     pub active_modified: bool,
@@ -49,27 +50,7 @@ pub struct SoundGraphUserState {
     pub recording_length: usize,
     pub is_saved: bool,
     pub vst_output_node_id: Option<NodeId>,
-    #[serde(skip)]
-    pub is_done_showing_recording_dialogue: bool,
-    #[serde(skip)]
-    pub queue: Option<SoundQueue>,
     pub wave_shaper_graph_id: usize,
-}
-
-impl Clone for SoundGraphUserState {
-    fn clone(&self) -> Self {
-        Self {
-            active_node: self.active_node,
-            active_modified: self.active_modified,
-            sound_result_evaluated: self.sound_result_evaluated,
-            recording_length: self.recording_length,
-            is_saved: self.is_saved,
-            vst_output_node_id: None,
-            is_done_showing_recording_dialogue: self.is_done_showing_recording_dialogue,
-            wave_shaper_graph_id: self.wave_shaper_graph_id,
-            queue: Some(SoundQueue::new()),
-        }
-    }
 }
 
 impl DataTypeTrait<SoundGraphUserState> for DataType {
@@ -333,49 +314,36 @@ pub type SoundGraphEditorState =
 pub struct SoundNodeGraphState {
     pub user_state: SoundGraphUserState,
     pub editor_state: SoundGraphEditorState,
+    #[serde(skip)]
+    pub _unserializeable_state: UnserializeableGraphState,
 }
 
 #[derive(Default, Clone)]
 pub struct UnserializeableGraphState {
-    pub node_definitions: Option<NodeDefinitions>,
+    pub node_definitions: NodeDefinitions,
+    pub is_done_showing_recording_dialogue: bool,
+    pub queue: SoundQueue,
+    pub automations: DAWAutomations,
 }
 
-pub fn get_unserializeable_graph_state() -> UnserializeableGraphState {
-    return UnserializeableGraphState {
-        node_definitions: Some(get_nodes()),
-    };
-}
+#[derive(Default, Clone)]
+pub struct DAWAutomations(pub [Arc<Mutex<f32>>; 18]);
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct SoundNodeGraph {
     pub state: SoundNodeGraphState,
-    #[serde(skip)]
-    pub _unserializeable_state: UnserializeableGraphState,
 }
 
 unsafe impl Send for SoundNodeGraph {}
 unsafe impl Sync for SoundNodeGraph {}
 
-fn new_sound_node_graph() -> SoundNodeGraph {
-    SoundNodeGraph {
-        state: SoundNodeGraphState {
-            editor_state: SoundGraphEditorState::default(),
-            user_state: SoundGraphUserState {
-                queue: Some(SoundQueue::new()),
-                ..Default::default()
-            },
-        },
-        _unserializeable_state: get_unserializeable_graph_state(),
-    }
-}
-
 impl SoundNodeGraph {
     pub fn new_vst_synth() -> Self {
-        new_sound_node_graph()
+        SoundNodeGraph::default()
     }
 
     pub fn new_vst_effect() -> Self {
-        new_sound_node_graph()
+        SoundNodeGraph::default()
     }
 
     pub fn new_app(cc: Option<&eframe::CreationContext<'_>>) -> Self {
@@ -384,7 +352,7 @@ impl SoundNodeGraph {
                 return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
             }
         }
-        new_sound_node_graph()
+        SoundNodeGraph::default()
     }
 
     fn update_output_node(&mut self) {
@@ -405,12 +373,6 @@ impl SoundNodeGraph {
     }
 
     pub fn update_root(&mut self, ctx: &egui::Context) {
-        if self.state.user_state.queue.is_none() {
-            self.state.user_state.queue = Some(SoundQueue::new());
-        }
-        if self._unserializeable_state.node_definitions.is_none() {
-            self._unserializeable_state = get_unserializeable_graph_state();
-        }
         self.update_output_node();
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -443,11 +405,7 @@ impl SoundNodeGraph {
                 self.state.editor_state.draw_graph_editor(
                     ui,
                     NodeDefinitionsUi(
-                        &self
-                            ._unserializeable_state
-                            .node_definitions
-                            .as_ref()
-                            .unwrap(),
+                        &self.state._unserializeable_state.node_definitions,
                         &self.state.clone(),
                     ),
                     &mut self.state.user_state,
@@ -477,11 +435,28 @@ pub fn evaluate_node<'a>(
     node_id: NodeId,
     outputs_cache: &mut OutputsCache,
     all_nodes: &NodeDefinitions,
-    user_state: &'a mut SoundGraphUserState,
+    state: &'a mut SoundNodeGraphState,
 ) -> Result<ValueType, Box<dyn std::error::Error>> {
-    let node = match all_nodes.0.get(&graph[node_id].user_data.name) {
+    let node = match all_nodes.0.get(
+        &match graph.nodes.get(node_id) {
+            Some(x) => x,
+            None => {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Node Deref Failed",
+                )));
+            }
+        }
+        .user_data
+        .name,
+    ) {
         Some(x) => x,
-        None => panic!("Node deref failed"),
+        None => {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Node Deref Failed",
+            )));
+        }
     };
 
     let mut closure = |name: String| {
@@ -493,7 +468,7 @@ pub fn evaluate_node<'a>(
                 name.as_str(),
                 outputs_cache,
                 all_nodes,
-                user_state,
+                state,
             ),
         )
     };
@@ -506,7 +481,7 @@ pub fn evaluate_node<'a>(
 
     let res = (node.1)(SoundNodeProps {
         inputs: input_to_name,
-        user_state: user_state,
+        state: &mut state._unserializeable_state,
     })?;
 
     for (name, value) in &res {
@@ -529,9 +504,14 @@ fn populate_output<'a>(
     param_name: &'a str,
     value: ValueType,
 ) -> ValueType {
-    let output_id = match graph[node_id].get_output(param_name) {
+    let output_id = match match graph.nodes.get(node_id) {
+        Some(x) => x,
+        None => return ValueType::AudioSource { value: 0 },
+    }
+    .get_output(param_name)
+    {
         Ok(x) => x,
-        Err(_x) => panic!("EGUI node graph error"),
+        Err(_x) => return ValueType::AudioSource { value: 0 },
     };
     outputs_cache.insert(output_id, value.clone());
     value
@@ -543,13 +523,21 @@ fn evaluate_input<'a>(
     param_name: &'a str,
     outputs_cache: &'a mut OutputsCache,
     all_nodes: &'a NodeDefinitions,
-    user_state: &'a mut SoundGraphUserState,
+    state: &'a mut SoundNodeGraphState,
 ) -> ValueType {
-    let input_id = match graph[node_id].get_input(param_name) {
+    let input_id = match match graph.nodes.get(node_id) {
+        Some(x) => x,
+        None => {
+            return ValueType::AudioSource { value: 0 };
+        }
+    }
+    .get_input(param_name)
+    {
         Ok(x) => x,
-        Err(_x) => panic!("EGUI node graph error"),
+        Err(_x) => {
+            return ValueType::AudioSource { value: 0 };
+        }
     };
-
     if let Some(other_output_id) = graph.connection(input_id) {
         if let Some(other_value) = outputs_cache.get(&other_output_id) {
             other_value.clone()
@@ -559,29 +547,22 @@ fn evaluate_input<'a>(
                 graph[other_output_id].node,
                 outputs_cache,
                 all_nodes,
-                user_state,
+                state,
             ) {
                 Ok(x) => x,
-                Err(_x) => ValueType::AudioSource {
-                    value: user_state
-                        .queue
-                        .as_mut()
-                        .unwrap()
-                        .push_sound(Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE))),
-                },
+                Err(_x) => ValueType::AudioSource { value: 0 },
             };
             outputs_cache
                 .get(&other_output_id)
-                .unwrap_or(&ValueType::AudioSource {
-                    value: user_state
-                        .queue
-                        .as_mut()
-                        .unwrap()
-                        .push_sound(Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE))),
-                })
+                .unwrap_or(&ValueType::AudioSource { value: 0 })
                 .clone()
         }
     } else {
-        graph[input_id].value.clone()
+        match graph.inputs.get(input_id) {
+            None => return ValueType::AudioSource { value: 0 },
+            Some(x) => x,
+        }
+        .value
+        .clone()
     }
 }

@@ -19,7 +19,7 @@ use square_node::{square_logic, square_node};
 mod delay_node;
 use crate::{
     sound_graph::{
-        graph::SoundGraphUserState,
+        graph::{SoundGraphUserState, UnserializeableGraphState},
         graph_types::{InputParameter, Output, ValueType},
     },
     sound_map::{RefSource, RefSourceIterDynClone},
@@ -98,16 +98,16 @@ pub use bit_crush_node::{bit_crusher_logic, bit_crusher_node};
 
 pub struct SoundNodeProps<'a> {
     pub inputs: HashMap<String, ValueType>,
-    pub user_state: &'a mut SoundGraphUserState,
+    pub state: &'a mut UnserializeableGraphState,
 }
 
 impl<'a> SoundNodeProps<'a> {
     fn push_sound(&mut self, sound: Box<dyn RefSourceIterDynClone<f32>>) -> usize {
-        self.user_state.queue.as_mut().unwrap().push_sound(sound)
+        self.state.queue.push_sound(sound)
     }
 
     fn clone_sound_ref(&mut self, idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> {
-        self.user_state.queue.as_mut().unwrap().clone_sound_ref(idx)
+        self.state.queue.clone_sound_ref(idx)
     }
 
     fn get_float(&self, name: &str) -> Result<f32, Box<dyn std::error::Error>> {
@@ -178,6 +178,12 @@ type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::E
 
 #[derive(Clone)]
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
+
+impl Default for NodeDefinitions {
+    fn default() -> Self {
+        get_nodes()
+    }
+}
 
 pub fn get_nodes() -> NodeDefinitions {
     let mut nodes: Vec<(SoundNode, Box<SoundNodeOp>)> = vec![

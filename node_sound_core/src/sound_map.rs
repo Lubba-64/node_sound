@@ -1,10 +1,12 @@
 use dyn_clone::DynClone;
-use rodio::source::Source;
+use rodio::source::{Source, Zero};
 use rodio::{Decoder, Sample};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::io::ErrorKind;
 use std::rc::Rc;
+
+use crate::constants::DEFAULT_SAMPLE_RATE;
 
 pub trait RefSourceIter<Item: Sample>:
     Source<Item = Item> + Iterator<Item = Item> + 'static
@@ -171,9 +173,17 @@ pub struct SoundQueue {
     queue: Vec<Rc<RefCell<RepeatSource<GenericSource<f32>>>>>,
 }
 
+impl Default for SoundQueue {
+    fn default() -> Self {
+        SoundQueue::new()
+    }
+}
+
 impl SoundQueue {
     pub fn new() -> Self {
-        SoundQueue { queue: vec![] }
+        let mut queue = SoundQueue { queue: vec![] };
+        queue.push_sound(Box::new(Zero::new(1, DEFAULT_SAMPLE_RATE)));
+        return queue;
     }
 
     pub fn clone_sound(

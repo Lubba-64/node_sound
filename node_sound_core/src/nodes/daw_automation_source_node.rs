@@ -2,7 +2,6 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_map;
 use crate::sounds::DawAutomationChannel;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
@@ -39,7 +38,9 @@ pub fn daw_automations_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         "out".to_string(),
         ValueType::AudioSource {
             value: props.push_sound(Box::new(DawAutomationChannel::new(
-                props.get_float("channel")?.round() as u8,
+                props.state.automations.0
+                    [(props.get_float("channel")?.round() as usize).clamp(0, 17)]
+                .clone(),
             ))),
         },
     )]))

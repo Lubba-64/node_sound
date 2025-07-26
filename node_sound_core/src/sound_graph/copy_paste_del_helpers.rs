@@ -62,13 +62,23 @@ pub fn copy_to_clipboard(state: &mut SoundGraphEditorState) {
         for input_id in node.inputs.iter().map(|(_, id)| id) {
             clipboard_data.input_params.insert(
                 *input_id,
-                state.graph.inputs.get(*input_id).expect("bruh").clone(),
+                state
+                    .graph
+                    .inputs
+                    .get(*input_id)
+                    .expect("clipboard data failure")
+                    .clone(),
             );
         }
         for output_id in node.outputs.iter().map(|(_, id)| id) {
             clipboard_data.output_params.insert(
                 *output_id,
-                state.graph.outputs.get(*output_id).expect("bruh").clone(),
+                state
+                    .graph
+                    .outputs
+                    .get(*output_id)
+                    .expect("clipboard data failure")
+                    .clone(),
             );
         }
     }

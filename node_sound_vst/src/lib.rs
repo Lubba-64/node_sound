@@ -2,12 +2,13 @@ use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
 use node_sound_core::{
     constants::{DEFAULT_SAMPLE_RATE, MIDDLE_C_FREQ},
+    nodes::get_nodes,
     sound_graph::{
         self,
         graph::{ActiveNodeState, SoundNodeGraph, evaluate_node},
+        graph_types::ValueType,
     },
-    sound_map::{self, GenericSource},
-    sounds::DAW_BUFF,
+    sound_map::GenericSource,
 };
 use rodio::{
     Source,
@@ -133,7 +134,11 @@ pub struct NodeSoundParams {
 
 impl<'a> PersistentField<'a, String> for PluginPresetState {
     fn set(&self, new_value: String) {
-        *self.graph.lock().expect("expected to lock") = ron::de::from_str(&new_value).expect("");
+        *self
+            .graph
+            .lock()
+            .expect("expected to lock graph state on deserialize") =
+            ron::de::from_str(&new_value).expect("Graph state is ok");
     }
 
     fn map<F, R>(&self, f: F) -> R
@@ -392,11 +397,9 @@ impl NodeSound {
 }
 
 macro_rules! mkparamgetter {
-    ($field: ident, $idx: literal, $self: ident) => {
+    ($field: ident, $idx: literal, $self: ident, $buff: ident) => {
         let $field = $self.params.$field.value();
-        unsafe {
-            DAW_BUFF[$idx] = Some($field);
-        }
+        *$buff[$idx].lock() = $field
     };
 }
 
@@ -441,55 +444,56 @@ impl Plugin for NodeSound {
                         return;
                     }
                 };
-                let sample_rate = &state.2.lock().expect("expect lock");
-                let sound_buffers = &mut *state.1.lock().expect("expected lock");
+                let sample_rate = &mut match state.2.lock() {
+                    Ok(x) => x,
+                    Err(_x) => {
+                        return;
+                    }
+                };
+                let sound_buffers = &mut match state.1.lock() {
+                    Ok(x) => x,
+                    Err(_x) => {
+                        return;
+                    }
+                };
                 let state = &mut match state.0.lock() {
                     Ok(x) => x,
                     Err(_x) => {
                         return;
                     }
                 };
-                let mut clear = false;
                 state.update_root(egui_ctx);
-                if sound_result_id.is_none() || state.state.user_state.active_node.is_playing() {
+                if state.state.user_state.active_node.is_playing() {
+                    let mut clear = false;
                     state.state.user_state.active_node = ActiveNodeState::NoNode;
                     match state.state.user_state.vst_output_node_id {
-                        Some(x) => {
+                        Some(outputid) => {
                             match evaluate_node(
                                 &state.state.editor_state.graph.clone(),
-                                x,
+                                outputid,
                                 &mut HashMap::new(),
-                                &state
-                                    ._unserializeable_state
-                                    .clone()
-                                    .node_definitions
-                                    .as_ref()
-                                    .unwrap(),
-                                &mut state.state.user_state,
+                                &get_nodes(),
+                                &mut state.state,
                             ) {
                                 Ok(val) => {
-                                    let source_id = val.try_to_source();
-                                    let sound = match source_id {
+                                    let source_id = match val {
+                                        ValueType::AudioSource { value } => value,
+                                        _ => {
+                                            return;
+                                        }
+                                    };
+                                    **sound_result_id = Some(source_id);
+                                    let sound = match state
+                                        .state
+                                        ._unserializeable_state
+                                        .queue
+                                        .clone_sound(source_id.clone())
+                                    {
                                         Err(_err) => GenericSource::new(Box::new(Zero::new(
                                             1,
                                             DEFAULT_SAMPLE_RATE,
                                         ))),
-                                        Ok(source_id) => {
-                                            **sound_result_id = Some(source_id);
-                                            match state
-                                                .state
-                                                .user_state
-                                                .queue
-                                                .as_mut()
-                                                .unwrap()
-                                                .clone_sound(source_id.clone())
-                                            {
-                                                Err(_err) => GenericSource::new(Box::new(
-                                                    Zero::new(1, DEFAULT_SAMPLE_RATE),
-                                                )),
-                                                Ok(x) => x,
-                                            }
-                                        }
+                                        Ok(x) => x,
                                     };
 
                                     fn to_semitones(f1: f32, f2: f32) -> f32 {
@@ -528,11 +532,11 @@ impl Plugin for NodeSound {
                             clear = true;
                         }
                     }
-                }
-                if clear {
-                    *sound_buffers = [0; MIDI_NOTES_LEN as usize].map(|_| None);
-                    state.state.user_state.queue.as_mut().unwrap().clear();
-                    **sound_result_id = None
+                    if clear {
+                        **sound_buffers = [0; MIDI_NOTES_LEN as usize].map(|_| None);
+                        state.state._unserializeable_state.queue.clear();
+                        **sound_result_id = None
+                    }
                 }
             },
         )
@@ -554,8 +558,27 @@ impl Plugin for NodeSound {
         context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
         let num_samples = buffer.samples();
-        *self.sample_rate.lock().expect("expect lock") = context.transport().sample_rate;
-        let sample_rate = context.transport().sample_rate;
+        let automations = match self.params.plugin_state.graph.lock() {
+            Ok(x) => x,
+            Err(_x) => {
+                return ProcessStatus::KeepAlive;
+            }
+        }
+        .state
+        ._unserializeable_state
+        .automations
+        .0
+        .clone();
+
+        let sample_rate = match self.sample_rate.lock() {
+            Ok(mut x) => {
+                *x = context.transport().sample_rate;
+                *x
+            }
+            Err(_x) => {
+                return ProcessStatus::KeepAlive;
+            }
+        };
         let output = buffer.as_slice();
 
         let mut next_event = context.next_event();
@@ -692,16 +715,18 @@ impl Plugin for NodeSound {
             output[0][block_start..block_end].fill(0.0);
             output[1][block_start..block_end].fill(0.0);
 
-            let sound_buffers = self
-                .params
-                .source_sound_buffers
-                .lock()
-                .expect("expected lock");
-            let mut voice_sound_buffers = self
-                .params
-                .voice_sound_buffers
-                .lock()
-                .expect("expected lock");
+            let sound_buffers = match self.params.source_sound_buffers.lock() {
+                Ok(x) => x,
+                Err(_x) => {
+                    return ProcessStatus::KeepAlive;
+                }
+            };
+            let mut voice_sound_buffers = match self.params.voice_sound_buffers.lock() {
+                Ok(x) => x,
+                Err(_x) => {
+                    return ProcessStatus::KeepAlive;
+                }
+            };
             for note in notes_to_reset {
                 voice_sound_buffers[note] = sound_buffers[note].clone();
             }
@@ -710,24 +735,24 @@ impl Plugin for NodeSound {
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                     let buffer = &mut voice_sound_buffers[voice.note as usize];
                     let amp = voice.amp_envelope.next();
-                    mkparamgetter!(a1, 0, self);
-                    mkparamgetter!(a2, 1, self);
-                    mkparamgetter!(a3, 2, self);
-                    mkparamgetter!(a4, 3, self);
-                    mkparamgetter!(a5, 4, self);
-                    mkparamgetter!(a6, 5, self);
-                    mkparamgetter!(a7, 6, self);
-                    mkparamgetter!(a8, 7, self);
-                    mkparamgetter!(a9, 8, self);
-                    mkparamgetter!(a10, 9, self);
-                    mkparamgetter!(a11, 10, self);
-                    mkparamgetter!(a12, 11, self);
-                    mkparamgetter!(a13, 12, self);
-                    mkparamgetter!(a14, 13, self);
-                    mkparamgetter!(a15, 14, self);
-                    mkparamgetter!(a16, 15, self);
-                    mkparamgetter!(a17, 16, self);
-                    mkparamgetter!(a18, 17, self);
+                    mkparamgetter!(a1, 0, self, automations);
+                    mkparamgetter!(a2, 1, self, automations);
+                    mkparamgetter!(a3, 2, self, automations);
+                    mkparamgetter!(a4, 3, self, automations);
+                    mkparamgetter!(a5, 4, self, automations);
+                    mkparamgetter!(a6, 5, self, automations);
+                    mkparamgetter!(a7, 6, self, automations);
+                    mkparamgetter!(a8, 7, self, automations);
+                    mkparamgetter!(a9, 8, self, automations);
+                    mkparamgetter!(a10, 9, self, automations);
+                    mkparamgetter!(a11, 10, self, automations);
+                    mkparamgetter!(a12, 11, self, automations);
+                    mkparamgetter!(a13, 12, self, automations);
+                    mkparamgetter!(a14, 13, self, automations);
+                    mkparamgetter!(a15, 14, self, automations);
+                    mkparamgetter!(a16, 15, self, automations);
+                    mkparamgetter!(a17, 16, self, automations);
+                    mkparamgetter!(a18, 17, self, automations);
                     match buffer {
                         Some(x) => {
                             output[0][sample_idx] +=

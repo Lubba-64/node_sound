@@ -49,7 +49,7 @@ pub use samples_source::SamplesSource;
 mod cloneable_decoder;
 pub use cloneable_decoder::CloneableDecoder;
 mod daw_automation_source;
-pub use daw_automation_source::{DawAutomationChannel, DAW_BUFF};
+pub use daw_automation_source::DawAutomationChannel;
 mod daw_input;
 pub use daw_input::{DawInputChannel, DAW_INPUT};
 mod wave_table;
