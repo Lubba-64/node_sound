@@ -1,7 +1,7 @@
 use eframe::egui::vec2;
 use egui_plot::PlotBounds;
 
-use crate::sound_graph::WAVE_TABLE_SIZE;
+use crate::constants::WAVE_TABLE_SIZE;
 
 pub fn wave_table_graph(value: &mut Option<Vec<f32>>, ui: &mut eframe::egui::Ui, id: usize) {
     use egui_plot::{Line, Plot, PlotPoints};
@@ -37,7 +37,7 @@ pub fn wave_table_graph(value: &mut Option<Vec<f32>>, ui: &mut eframe::egui::Ui,
         .width(500.0)
         .allow_double_click_reset(false)
         .center_y_axis(true)
-        .y_axis_width(1)
+        .y_axis_min_width(1.0)
         .show(ui, |plot_ui| {
             plot_ui.set_plot_bounds(PlotBounds::from_min_max([0.0, -1.0], [10.0, 1.0]));
             match plot_ui.ctx().pointer_interact_pos() {

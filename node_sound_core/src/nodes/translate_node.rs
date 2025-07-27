@@ -1,8 +1,8 @@
+use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_map;
 use crate::sounds::TranslateWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
@@ -21,8 +21,8 @@ pub fn translate_node() -> SoundNode {
                     name: "start_min".to_string(),
                     value: InputValueConfig::Float {
                         value: 1.0,
-                        max: 4000.0,
-                        min: -4000.0,
+                        max: MAX_FREQ,
+                        min: -MAX_FREQ,
                     },
                 },
             ),
@@ -34,8 +34,8 @@ pub fn translate_node() -> SoundNode {
                     name: "start_max".to_string(),
                     value: InputValueConfig::Float {
                         value: -1.0,
-                        max: 4000.0,
-                        min: -4000.0,
+                        max: MAX_FREQ,
+                        min: -MAX_FREQ,
                     },
                 },
             ),
@@ -47,8 +47,8 @@ pub fn translate_node() -> SoundNode {
                     name: "end_min".to_string(),
                     value: InputValueConfig::Float {
                         value: 1.0,
-                        max: 4000.0,
-                        min: -4000.0,
+                        max: MAX_FREQ,
+                        min: -MAX_FREQ,
                     },
                 },
             ),
@@ -60,8 +60,8 @@ pub fn translate_node() -> SoundNode {
                     name: "end_max".to_string(),
                     value: InputValueConfig::Float {
                         value: -1.0,
-                        max: 4000.0,
-                        min: -4000.0,
+                        max: MAX_FREQ,
+                        min: -MAX_FREQ,
                     },
                 },
             ),
@@ -84,12 +84,14 @@ pub fn translate_node() -> SoundNode {
         )]),
     }
 }
-pub fn translate_logic(props: SoundNodeProps) -> SoundNodeResult {
+
+pub fn translate_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned = props.clone_sound_ref(props.get_source("audio 1")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(TranslateWave::new(
-                sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
+            value: props.push_sound(Box::new(TranslateWave::new(
+                cloned,
                 props.get_float("start_min")?,
                 props.get_float("start_max")?,
                 props.get_float("end_min")?,

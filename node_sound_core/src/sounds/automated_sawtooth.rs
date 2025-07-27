@@ -1,6 +1,6 @@
 use rodio::{source::UniformSourceIterator, Source};
 
-use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use std::time::Duration;
 
 #[derive(Clone)]
@@ -21,7 +21,7 @@ impl<T: rodio::Source<Item = f32>> AutomatedSawToothWave<T> {
 
 impl<T: rodio::Source<Item = f32>> Iterator for AutomatedSawToothWave<T> {
     type Item = f32;
- 
+
     #[inline]
     fn next(&mut self) -> Option<f32> {
         self.num_sample = self.num_sample.wrapping_add(1);

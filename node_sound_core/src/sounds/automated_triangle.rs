@@ -4,7 +4,7 @@ use std::time::Duration;
 use rodio::source::UniformSourceIterator;
 use rodio::Source;
 
-use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use crate::constants::DEFAULT_SAMPLE_RATE;
 
 #[derive(Clone)]
 pub struct AutomatedTriangleWave<T: rodio::Source<Item = f32>> {

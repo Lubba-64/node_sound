@@ -1,8 +1,8 @@
+use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_map;
 use crate::sounds::SawToothWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
@@ -21,7 +21,7 @@ pub fn sawtooth_node() -> SoundNode {
                 value: InputValueConfig::Float {
                     value: 0.0,
                     min: 0.0,
-                    max: 4000.0,
+                    max: MAX_FREQ,
                 },
             },
         )]),
@@ -34,13 +34,11 @@ pub fn sawtooth_node() -> SoundNode {
         )]),
     }
 }
-pub fn sawtooth_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn sawtooth_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(SawToothWave::new(
-                props.get_float("frequency")?,
-            ))),
+            value: props.push_sound(Box::new(SawToothWave::new(props.get_float("frequency")?))),
         },
     )]))
 }

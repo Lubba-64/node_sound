@@ -21,12 +21,9 @@ hound = "3.5.1"
 realfft = "3.3.0"
 itertools = "0.13.0"
 futures = "0.3.30"
-wasm-bindgen-futures = "0.4.42"
 getrandom = { version = "0.2.15", features = ["js"] }
-wasm-bindgen = "0.2.92"
-web-sys = "0.3.69"
 tokio = { version = "1.38.0", features = ["time"] }
-open = { version = "5.1.4", optional = true }
+open = { version = "5.1.4"}
 synthrs = { version = "0.1.0", git = "https://github.com/Lubba-64/synthrs.git", features = [
   "ser",
 ] }
@@ -35,11 +32,6 @@ pitch_shift = "1.0.0"
 egui_extras_xt = { version = "*", git = "https://github.com/xTibor/egui_extras_xt.git", features = [
   "knobs",
 ] }
-clippers = { version = "0.1.2", optional = true }
+arboard = "3.6.0"
 egui_plot = "0.31"
-js-sys = "0.3.69"
 egui_code_editor = "^0.2.13"
-rune = "0.13.4"
-
-[features]
-non-wasm = ["open", "clippers"]

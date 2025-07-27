@@ -2,7 +2,6 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_map;
 use crate::sounds::MidiRenderer;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
@@ -42,7 +41,7 @@ pub fn midi_node() -> SoundNode {
     }
 }
 
-pub fn midi_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn midi_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let file = props.get_midi("file")?;
     if file.is_none() {
         return Ok(BTreeMap::from([(
@@ -50,14 +49,11 @@ pub fn midi_logic(props: SoundNodeProps) -> SoundNodeResult {
             ValueType::AudioSource { value: 0 },
         )]));
     }
-
+    let cloned = props.clone_sound_ref(props.get_source("audio 1")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(MidiRenderer::new(
-                sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
-                file.unwrap().1,
-            ))),
+            value: props.push_sound(Box::new(MidiRenderer::new(cloned, file.unwrap().1))),
         },
     )]))
 }

@@ -1,13 +1,12 @@
+use super::{SoundNodeProps, SoundNodeResult};
+use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_map;
 use crate::sounds::ConstWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn const_node() -> SoundNode {
     SoundNode {
@@ -20,8 +19,8 @@ pub fn const_node() -> SoundNode {
                 name: "amplitude".to_string(),
                 value: InputValueConfig::Float {
                     value: 1.0,
-                    min: -4000.0,
-                    max: 4000.0,
+                    min: -MAX_FREQ,
+                    max: MAX_FREQ,
                 },
             },
         )]),
@@ -34,11 +33,11 @@ pub fn const_node() -> SoundNode {
         )]),
     }
 }
-pub fn const_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn const_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(ConstWave::new(props.get_float("amplitude")?))),
+            value: props.push_sound(Box::new(ConstWave::new(props.get_float("amplitude")?))),
         },
     )]))
 }

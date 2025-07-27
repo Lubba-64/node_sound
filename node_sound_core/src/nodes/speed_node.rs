@@ -1,8 +1,8 @@
+use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_map;
 use egui_node_graph_2::InputParamKind;
 use rodio::Source;
 use std::collections::BTreeMap;
@@ -22,7 +22,7 @@ pub fn speed_node() -> SoundNode {
                     value: InputValueConfig::Float {
                         value: 1.0,
                         min: 0.0,
-                        max: 4000.0,
+                        max: MAX_FREQ,
                     },
                 },
             ),
@@ -45,14 +45,14 @@ pub fn speed_node() -> SoundNode {
         )]),
     }
 }
-pub fn speed_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn speed_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned = props
+        .clone_sound_ref(props.get_source("audio 1")?)?
+        .speed(props.get_float("speed")?);
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(
-                sound_map::clone_sound(props.get_source("audio 1")?)?
-                    .speed(props.get_float("speed")?),
-            )),
+            value: props.push_sound(Box::new(cloned)),
         },
     )]))
 }

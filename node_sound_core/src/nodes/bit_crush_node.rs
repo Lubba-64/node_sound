@@ -1,13 +1,11 @@
+use super::{SoundNodeProps, SoundNodeResult};
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_map;
 use crate::sounds::BitCrusher;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn bit_crusher_node() -> SoundNode {
     SoundNode {
@@ -46,12 +44,13 @@ pub fn bit_crusher_node() -> SoundNode {
     }
 }
 
-pub fn bit_crusher_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn bit_crusher_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned = props.clone_sound_ref(props.get_source("audio")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(BitCrusher::new(
-                sound_map::clone_sound_ref(props.get_source("audio")?)?,
+            value: props.push_sound(Box::new(BitCrusher::new(
+                cloned,
                 props.get_float("reduction")? as u32,
             ))),
         },

@@ -217,12 +217,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 
 [[package]]
-name = "anymap"
-version = "1.0.0-beta.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f1f8f5a6f3d50d89e3797d7593a50f96bb2aaa20ca0cc7be1fb673232c91d72"
-
-[[package]]
 name = "anymap3"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -230,12 +224,12 @@ checksum = "170433209e817da6aae2c51aa0dd443009a613425dd041ebfb2492d1c4c11a25"
 
 [[package]]
 name = "arboard"
-version = "3.5.0"
+version = "3.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1df21f715862ede32a0c525ce2ca4d52626bb0007f8c18b87a384503ac33e70"
+checksum = "55f533f8e0af236ffe5eb979b99381df3258853f00ba2e44b6e1955292c75227"
 dependencies = [
  "clipboard-win",
- "image 0.25.6",
+ "image",
  "log",
  "objc2 0.6.1",
  "objc2-app-kit 0.3.1",
@@ -558,23 +552,6 @@ checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 [[package]]
 name = "baseview"
 version = "0.1.0"
-source = "git+https://github.com/RustAudio/baseview.git?rev=45465c5f46abed6c6ce370fffde5edc8e4cd5aa3#45465c5f46abed6c6ce370fffde5edc8e4cd5aa3"
-dependencies = [
- "cocoa",
- "core-foundation 0.9.4",
- "keyboard-types",
- "nix 0.22.3",
- "objc",
- "raw-window-handle 0.5.2",
- "uuid",
- "winapi",
- "x11",
- "x11rb",
-]
-
-[[package]]
-name = "baseview"
-version = "0.1.0"
 source = "git+https://github.com/RustAudio/baseview.git?rev=9a0b42c09d712777b2edb4c5e0cb6baf21e988f0#9a0b42c09d712777b2edb4c5e0cb6baf21e988f0"
 dependencies = [
  "cocoa",
@@ -672,37 +649,6 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "piper",
-]
-
-[[package]]
-name = "build_cfg"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f95329d496e3914b5e70366e72f9f2fd96b6a8c03745ca861377643cbbfc512f"
-dependencies = [
- "build_cfg_macros",
- "build_cfg_shared",
-]
-
-[[package]]
-name = "build_cfg_macros"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "270ae0088c61152c648c49d7b294280f33d0c916ba7815d44ca9bc3a34c91476"
-dependencies = [
- "build_cfg_shared",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "build_cfg_shared"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9f6da7ae2d9f5d54c8373c6c42e919889f20aea45c5ae0cc7ae1b5f4dfb4d78"
-dependencies = [
- "derive_more",
 ]
 
 [[package]]
@@ -867,11 +813,6 @@ dependencies = [
 
 [[package]]
 name = "clap-sys"
-version = "0.3.0"
-source = "git+https://github.com/robbert-vdh/clap-sys.git?branch=feature/cstr-macro#523a5f8a8dd021ec99e7d6e0c0ebe7741a3da9d4"
-
-[[package]]
-name = "clap-sys"
 version = "0.5.0"
 source = "git+https://github.com/micahrj/clap-sys.git?rev=25d7f53fdb6363ad63fbd80049cb7a42a97ac156#25d7f53fdb6363ad63fbd80049cb7a42a97ac156"
 
@@ -888,29 +829,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "15efe7a882b08f34e38556b14f2fb3daa98769d06c7f0c1b076dfd0d983bc892"
 dependencies = [
  "error-code",
-]
-
-[[package]]
-name = "clippers"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69f209dfce62b2ae47f7b0459ddbce3c324c02031b32fc17cdd3384833d49e83"
-dependencies = [
- "build_cfg",
- "cc",
- "cmake",
- "image 0.24.9",
- "parking_lot",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "cmake"
-version = "0.1.54"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7caa3f9de89ddbe2c607f4101924c5abec803763ae9534e4f4d7d8f84aa81f0"
-dependencies = [
- "cc",
 ]
 
 [[package]]
@@ -954,12 +872,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "color_quant"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d7b894f5411737b7867f4827955924d7c254fc9f4d91a6aad6b097804b1018b"
-
-[[package]]
 name = "combine"
 version = "4.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -977,12 +889,6 @@ checksum = "4ca0197aee26d1ae37445ee532fefce43251d24cc7c166799f4d46817f1d3973"
 dependencies = [
  "crossbeam-utils",
 ]
-
-[[package]]
-name = "convert_case"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 
 [[package]]
 name = "copypasta"
@@ -1122,12 +1028,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "critical-section"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "790eea4361631c5e7d22598ecd5723ff611904e3344ce8720784c93e3d83d40b"
-
-[[package]]
 name = "crossbeam"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1215,19 +1115,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derive_more"
-version = "0.99.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6edb4b64a43d977b8e99788fe3a04d483834fba1215a7e02caa415b626497f7f"
-dependencies = [
- "convert_case",
- "proc-macro2",
- "quote",
- "rustc_version",
- "syn 2.0.101",
-]
-
-[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1305,9 +1192,6 @@ name = "ecolor"
 version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20930a432bbd57a6d55e07976089708d4893f3d556cf42a0d79e9e321fa73b10"
-dependencies = [
- "bytemuck",
-]
 
 [[package]]
 name = "ecolor"
@@ -1332,11 +1216,11 @@ dependencies = [
  "egui 0.31.1",
  "egui-wgpu",
  "egui-winit",
- "egui_glow 0.31.1",
- "glow 0.16.0",
+ "egui_glow",
+ "glow",
  "glutin",
  "glutin-winit",
- "image 0.25.6",
+ "image",
  "js-sys",
  "log",
  "objc2 0.5.2",
@@ -1389,27 +1273,13 @@ dependencies = [
 
 [[package]]
 name = "egui-baseview"
-version = "0.2.0"
-source = "git+https://github.com/ardura/egui-baseview.git?rev=1cc39464e5356f8b101ac698c9481a983d3cefb0#1cc39464e5356f8b101ac698c9481a983d3cefb0"
-dependencies = [
- "baseview 0.1.0 (git+https://github.com/RustAudio/baseview.git?rev=45465c5f46abed6c6ce370fffde5edc8e4cd5aa3)",
- "copypasta",
- "egui 0.27.2",
- "egui_glow 0.27.2",
- "keyboard-types",
- "log",
- "raw-window-handle 0.5.2",
-]
-
-[[package]]
-name = "egui-baseview"
 version = "0.5.0"
 source = "git+https://github.com/BillyDM/egui-baseview.git?rev=ec70c3fe6b2f070dcacbc22924431edbe24bd1c0#ec70c3fe6b2f070dcacbc22924431edbe24bd1c0"
 dependencies = [
- "baseview 0.1.0 (git+https://github.com/RustAudio/baseview.git?rev=9a0b42c09d712777b2edb4c5e0cb6baf21e988f0)",
+ "baseview",
  "copypasta",
  "egui 0.31.1",
- "egui_glow 0.31.1",
+ "egui_glow",
  "keyboard-types",
  "log",
  "open",
@@ -1481,21 +1351,6 @@ dependencies = [
 
 [[package]]
 name = "egui_glow"
-version = "0.27.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0e5d975f3c86edc3d35b1db88bb27c15dde7c55d3b5af164968ab5ede3f44ca"
-dependencies = [
- "bytemuck",
- "egui 0.27.2",
- "glow 0.13.1",
- "log",
- "memoffset 0.9.1",
- "wasm-bindgen",
- "web-sys",
-]
-
-[[package]]
-name = "egui_glow"
 version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "910906e3f042ea6d2378ec12a6fd07698e14ddae68aed2d819ffe944a73aab9e"
@@ -1503,7 +1358,7 @@ dependencies = [
  "ahash",
  "bytemuck",
  "egui 0.31.1",
- "glow 0.16.0",
+ "glow",
  "log",
  "memoffset 0.9.1",
  "profiling",
@@ -1546,9 +1401,6 @@ name = "emath"
 version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4c3a552cfca14630702449d35f41c84a0d15963273771c6059175a803620f3f"
-dependencies = [
- "bytemuck",
-]
 
 [[package]]
 name = "emath"
@@ -1615,7 +1467,6 @@ checksum = "b381f8b149657a4acf837095351839f32cd5c4aec1817fc4df84e18d76334176"
 dependencies = [
  "ab_glyph",
  "ahash",
- "bytemuck",
  "ecolor 0.27.2",
  "emath 0.27.2",
  "nohash-hasher",
@@ -1964,18 +1815,6 @@ checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
 
 [[package]]
 name = "glow"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd348e04c43b32574f2de31c8bb397d96c9fcfa1371bd4ca6d8bdc464ab121b1"
-dependencies = [
- "js-sys",
- "slotmap",
- "wasm-bindgen",
- "web-sys",
-]
-
-[[package]]
-name = "glow"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c5e5ea60d70410161c8bf5da3fdfeaa1c72ed2c15f8bbb9d19fe3a4fad085f08"
@@ -2264,18 +2103,6 @@ checksum = "3acae9609540aa318d1bc588455225fb2085b9ed0c4f6bd0d9d5bcd86f1a0344"
 dependencies = [
  "icu_normalizer",
  "icu_properties",
-]
-
-[[package]]
-name = "image"
-version = "0.24.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5690139d2f55868e080017335e4b94cb7414274c74f1669c84fb5feba2c9f69d"
-dependencies = [
- "bytemuck",
- "byteorder",
- "color_quant",
- "num-traits",
 ]
 
 [[package]]
@@ -2600,45 +2427,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "musli"
-version = "0.0.42"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c21124dd24833900879114414b877f2136f4b7b7a3b49756ecc5c36eca332bb"
-dependencies = [
- "musli-macros",
-]
-
-[[package]]
-name = "musli-common"
-version = "0.0.42"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "178446623aa62978aa0f894b2081bc11ea77c2119ccfe35be428ab9ddb495dfc"
-dependencies = [
- "musli",
-]
-
-[[package]]
-name = "musli-macros"
-version = "0.0.42"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f1ab0e4ac2721bc4fa3528a6a2640c1c30c36c820f8c85159252fbf6c2fac24"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.101",
-]
-
-[[package]]
-name = "musli-storage"
-version = "0.0.42"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2fc1f80b166f611c462e1344220e9b3a9ad37c885e43039d5d2e6887445937c"
-dependencies = [
- "musli",
- "musli-common",
-]
-
-[[package]]
 name = "naga"
 version = "24.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2730,37 +2518,6 @@ dependencies = [
 [[package]]
 name = "nih_plug"
 version = "0.0.0"
-source = "git+https://github.com/ardura/nih-plug.git?rev=cd1c66b054a8ff7d44084369b7022a0272ac690e#cd1c66b054a8ff7d44084369b7022a0272ac690e"
-dependencies = [
- "anyhow",
- "anymap",
- "atomic_float",
- "atomic_refcell",
- "backtrace",
- "bitflags 1.3.2",
- "cfg-if",
- "clap-sys 0.3.0",
- "core-foundation 0.9.4",
- "crossbeam",
- "lazy_static",
- "libc",
- "log",
- "midi-consts",
- "nih_log",
- "nih_plug_derive 0.1.0 (git+https://github.com/ardura/nih-plug.git?rev=cd1c66b054a8ff7d44084369b7022a0272ac690e)",
- "objc",
- "parking_lot",
- "raw-window-handle 0.5.2",
- "serde",
- "serde_json",
- "vst3-sys",
- "widestring",
- "windows 0.44.0",
-]
-
-[[package]]
-name = "nih_plug"
-version = "0.0.0"
 source = "git+https://github.com/robbert-vdh/nih-plug?rev=d64b2ab#d64b2ab9cfb94773c5ee4d0e72aef5921ee95d2d"
 dependencies = [
  "anyhow",
@@ -2770,14 +2527,14 @@ dependencies = [
  "backtrace",
  "bitflags 1.3.2",
  "cfg-if",
- "clap-sys 0.5.0",
+ "clap-sys",
  "core-foundation 0.9.4",
  "crossbeam",
  "libc",
  "log",
  "midi-consts",
  "nih_log",
- "nih_plug_derive 0.1.0 (git+https://github.com/robbert-vdh/nih-plug?rev=d64b2ab)",
+ "nih_plug_derive",
  "objc",
  "parking_lot",
  "raw-window-handle 0.5.2",
@@ -2791,16 +2548,6 @@ dependencies = [
 [[package]]
 name = "nih_plug_derive"
 version = "0.1.0"
-source = "git+https://github.com/ardura/nih-plug.git?rev=cd1c66b054a8ff7d44084369b7022a0272ac690e#cd1c66b054a8ff7d44084369b7022a0272ac690e"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "nih_plug_derive"
-version = "0.1.0"
 source = "git+https://github.com/robbert-vdh/nih-plug?rev=d64b2ab#d64b2ab9cfb94773c5ee4d0e72aef5921ee95d2d"
 dependencies = [
  "proc-macro2",
@@ -2811,27 +2558,12 @@ dependencies = [
 [[package]]
 name = "nih_plug_egui"
 version = "0.0.0"
-source = "git+https://github.com/ardura/nih-plug.git?rev=cd1c66b054a8ff7d44084369b7022a0272ac690e#cd1c66b054a8ff7d44084369b7022a0272ac690e"
-dependencies = [
- "baseview 0.1.0 (git+https://github.com/RustAudio/baseview.git?rev=45465c5f46abed6c6ce370fffde5edc8e4cd5aa3)",
- "crossbeam",
- "egui-baseview 0.2.0",
- "lazy_static",
- "nih_plug 0.0.0 (git+https://github.com/ardura/nih-plug.git?rev=cd1c66b054a8ff7d44084369b7022a0272ac690e)",
- "parking_lot",
- "raw-window-handle 0.5.2",
- "serde",
-]
-
-[[package]]
-name = "nih_plug_egui"
-version = "0.0.0"
 source = "git+https://github.com/robbert-vdh/nih-plug?rev=d64b2ab#d64b2ab9cfb94773c5ee4d0e72aef5921ee95d2d"
 dependencies = [
- "baseview 0.1.0 (git+https://github.com/RustAudio/baseview.git?rev=9a0b42c09d712777b2edb4c5e0cb6baf21e988f0)",
+ "baseview",
  "crossbeam",
- "egui-baseview 0.5.0",
- "nih_plug 0.0.0 (git+https://github.com/robbert-vdh/nih-plug?rev=d64b2ab)",
+ "egui-baseview",
+ "nih_plug",
  "parking_lot",
  "raw-window-handle 0.5.2",
  "serde",
@@ -2882,15 +2614,13 @@ version = "1.10.2"
 dependencies = [
  "eframe",
  "node_sound_core",
- "wasm-bindgen-futures",
- "web-sys",
 ]
 
 [[package]]
 name = "node_sound_core"
 version = "1.10.2"
 dependencies = [
- "clippers",
+ "arboard",
  "dyn-clone",
  "eframe",
  "egui_code_editor",
@@ -2901,7 +2631,6 @@ dependencies = [
  "getrandom 0.2.16",
  "hound",
  "itertools 0.13.0",
- "js-sys",
  "open",
  "pitch_shift",
  "rand 0.8.5",
@@ -2909,14 +2638,10 @@ dependencies = [
  "rfd",
  "rodio",
  "ron",
- "rune",
  "seeded-random",
  "serde",
  "synthrs",
  "tokio",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
  "weblog",
 ]
 
@@ -2928,24 +2653,8 @@ dependencies = [
  "egui 0.27.2",
  "ezing",
  "lock_api",
- "nih_plug 0.0.0 (git+https://github.com/robbert-vdh/nih-plug?rev=d64b2ab)",
- "nih_plug_egui 0.0.0 (git+https://github.com/robbert-vdh/nih-plug?rev=d64b2ab)",
- "node_sound_core",
- "pitch_shift",
- "rodio",
- "ron",
-]
-
-[[package]]
-name = "node_sound_vst_effect"
-version = "1.10.2"
-dependencies = [
- "crossbeam",
- "egui 0.27.2",
- "ezing",
- "lock_api",
- "nih_plug 0.0.0 (git+https://github.com/ardura/nih-plug.git?rev=cd1c66b054a8ff7d44084369b7022a0272ac690e)",
- "nih_plug_egui 0.0.0 (git+https://github.com/ardura/nih-plug.git?rev=cd1c66b054a8ff7d44084369b7022a0272ac690e)",
+ "nih_plug",
+ "nih_plug_egui",
  "node_sound_core",
  "pitch_shift",
  "rodio",
@@ -3434,10 +3143,6 @@ name = "once_cell"
 version = "1.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
-dependencies = [
- "critical-section",
- "portable-atomic",
-]
 
 [[package]]
 name = "open"
@@ -3632,12 +3337,6 @@ name = "pollster"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22686f4785f02a4fcc856d3b3bb19bf6c8160d103f7a99cc258bddd0251dc7f2"
-
-[[package]]
-name = "portable-atomic"
-version = "1.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "350e9b48cbc6b0e028b0473b114454c6316e57336ee184ceab6e53f72c178b3e"
 
 [[package]]
 name = "potential_utf"
@@ -3934,78 +3633,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rune"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d21925ac4f8974395d0d9e43f96a34c778e71ed86fe96d0313b2211102537234"
-dependencies = [
- "anyhow",
- "codespan-reporting",
- "futures-core",
- "futures-util",
- "itoa",
- "musli",
- "musli-storage",
- "num",
- "once_cell",
- "pin-project",
- "rune-alloc",
- "rune-core",
- "rune-macros",
- "ryu",
- "serde",
- "tracing",
-]
-
-[[package]]
-name = "rune-alloc"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e85c26e19f7efb91c6e19afc68b008f04685fdb2852e96ce8fbd3cf4a0b4e76c"
-dependencies = [
- "ahash",
- "pin-project",
- "rune-alloc-macros",
- "serde",
-]
-
-[[package]]
-name = "rune-alloc-macros"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "810588952a8710959d35ad17c933804d60f96c3792f216277cda68c1a9887120"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.101",
-]
-
-[[package]]
-name = "rune-core"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d30fa78b6cb15d1560bb4cb18f4b99a9097b08ade3a5fc23e5ae7311f97c537b"
-dependencies = [
- "byteorder",
- "musli",
- "rune-alloc",
- "serde",
- "twox-hash",
-]
-
-[[package]]
-name = "rune-macros"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1b91e53bae3804e4d72e2b04fa5d5108bd93e880ca597c0cae0fb0a662fe198"
-dependencies = [
- "proc-macro2",
- "quote",
- "rune-core",
- "syn 2.0.101",
-]
-
-[[package]]
 name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4022,15 +3649,6 @@ name = "rustc-hash"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "357703d41365b4b27c590e3ed91eabb1b663f07c4c084095e60cbed4362dff0d"
-
-[[package]]
-name = "rustc_version"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
-dependencies = [
- "semver",
-]
 
 [[package]]
 name = "rustfft"
@@ -4745,16 +4363,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2df906b07856748fa3f6e0ad0cbaa047052d4a7dd609e231c4f72cee8c36f31"
 
 [[package]]
-name = "twox-hash"
-version = "1.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
-dependencies = [
- "cfg-if",
- "static_assertions",
-]
-
-[[package]]
 name = "type-map"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5219,7 +4827,7 @@ dependencies = [
  "bytemuck",
  "cfg_aliases",
  "core-graphics-types",
- "glow 0.16.0",
+ "glow",
  "glutin_wgl_sys",
  "gpu-alloc",
  "gpu-descriptor",

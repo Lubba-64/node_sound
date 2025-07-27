@@ -1,4 +1,4 @@
-use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use rodio::Source;
 use std::f32::consts::PI;
 use std::time::Duration;

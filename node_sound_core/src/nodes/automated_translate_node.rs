@@ -2,7 +2,6 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_map;
 use crate::sounds::AutomatedTranslateWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
@@ -68,16 +67,19 @@ pub fn automated_translate_node() -> SoundNode {
         )]),
     }
 }
-pub fn automated_translate_logic(props: SoundNodeProps) -> SoundNodeResult {
+
+pub fn automated_translate_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned1 = props.clone_sound_ref(props.get_source("start_min")?)?;
+    let cloned2 = props.clone_sound_ref(props.get_source("start_max")?)?;
+    let cloned3 = props.clone_sound_ref(props.get_source("end_min")?)?;
+    let cloned4 = props.clone_sound_ref(props.get_source("end_max")?)?;
+    let cloned5 = props.clone_sound_ref(props.get_source("audio 1")?)?;
+
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(AutomatedTranslateWave::new(
-                sound_map::clone_sound_ref(props.get_source("audio 1")?)?,
-                sound_map::clone_sound_ref(props.get_source("start_min")?)?,
-                sound_map::clone_sound_ref(props.get_source("start_max")?)?,
-                sound_map::clone_sound_ref(props.get_source("end_min")?)?,
-                sound_map::clone_sound_ref(props.get_source("end_max")?)?,
+            value: props.push_sound(Box::new(AutomatedTranslateWave::new(
+                cloned1, cloned2, cloned3, cloned4, cloned5,
             ))),
         },
     )]))

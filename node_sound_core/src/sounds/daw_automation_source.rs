@@ -1,21 +1,16 @@
-pub static mut DAW_BUFF: [Option<f32>; 18] = [
-    None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
-    None, None,
-];
-
+use crate::constants::DEFAULT_SAMPLE_RATE;
+use eframe::egui::mutex::Mutex;
 use rodio::Source;
-
-use crate::sound_graph::DEFAULT_SAMPLE_RATE;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 #[derive(Clone)]
 pub struct DawAutomationChannel {
-    channel: u8,
+    channel: Arc<Mutex<f32>>,
 }
 
 impl DawAutomationChannel {
     #[inline]
-    pub fn new(channel: u8) -> Self {
+    pub fn new(channel: Arc<Mutex<f32>>) -> Self {
         Self { channel }
     }
 }
@@ -25,10 +20,7 @@ impl Iterator for DawAutomationChannel {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        match unsafe { &DAW_BUFF[self.channel.clamp(0, 17) as usize] } {
-            None => None,
-            Some(x) => Some(x.clone()),
-        }
+        Some(*self.channel.lock())
     }
 }
 

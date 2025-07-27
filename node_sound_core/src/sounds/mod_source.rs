@@ -1,6 +1,6 @@
 use rodio::Source;
 
-use crate::sound_graph::DEFAULT_SAMPLE_RATE;
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use rodio::source::UniformSourceIterator;
 use std::time::Duration;
 
@@ -22,7 +22,7 @@ impl<I: Source<Item = f32>> Mod<I> {
 
 impl<I: Source<Item = f32>> Iterator for Mod<I> {
     type Item = f32;
- 
+
     #[inline]
     fn next(&mut self) -> Option<f32> {
         self.source.next().map(|x| x - (x % self.mod_by))

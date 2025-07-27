@@ -1,9 +1,8 @@
+use crate::constants::{DEFAULT_SAMPLE_RATE, WAVE_TABLE_SIZE};
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_graph::{DEFAULT_SAMPLE_RATE, WAVE_TABLE_SIZE};
-use crate::sound_map;
 use crate::sounds::AutomatedWavetableOscillator;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
@@ -21,7 +20,7 @@ pub fn automated_wave_shaper_node() -> SoundNode {
                     kind: InputParamKind::ConstantOnly,
                     name: "graph".to_string(),
                     value: InputValueConfig::Graph {
-                        value: vec![0.01; WAVE_TABLE_SIZE],
+                        value: vec![0.0; WAVE_TABLE_SIZE],
                     },
                 },
             ),
@@ -45,16 +44,17 @@ pub fn automated_wave_shaper_node() -> SoundNode {
     }
 }
 
-pub fn automated_wave_shaper_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn automated_wave_shaper_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned = props.clone_sound_ref(props.get_source("frequency")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(AutomatedWavetableOscillator::new(
+            value: props.push_sound(Box::new(AutomatedWavetableOscillator::new(
                 DEFAULT_SAMPLE_RATE,
                 props
                     .get_graph("graph")?
                     .unwrap_or(vec![0.01; WAVE_TABLE_SIZE]),
-                sound_map::clone_sound_ref(props.get_source("frequency")?)?,
+                cloned,
             ))),
         },
     )]))

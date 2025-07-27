@@ -62,13 +62,23 @@ pub fn copy_to_clipboard(state: &mut SoundGraphEditorState) {
         for input_id in node.inputs.iter().map(|(_, id)| id) {
             clipboard_data.input_params.insert(
                 *input_id,
-                state.graph.inputs.get(*input_id).expect("bruh").clone(),
+                state
+                    .graph
+                    .inputs
+                    .get(*input_id)
+                    .expect("clipboard data failure")
+                    .clone(),
             );
         }
         for output_id in node.outputs.iter().map(|(_, id)| id) {
             clipboard_data.output_params.insert(
                 *output_id,
-                state.graph.outputs.get(*output_id).expect("bruh").clone(),
+                state
+                    .graph
+                    .outputs
+                    .get(*output_id)
+                    .expect("clipboard data failure")
+                    .clone(),
             );
         }
     }
@@ -79,48 +89,20 @@ pub fn copy_to_clipboard(state: &mut SoundGraphEditorState) {
         .unique()
         .cloned()
         .collect();
-    #[cfg(feature = "non-wasm")]
-    {
-        let mut clipboard = clippers::Clipboard::get();
-        clipboard
-            .write_text(ron::ser::to_string(&clipboard_data).expect("expect serialize to work..."))
-            .unwrap();
-    }
+
+    let mut clipboard = arboard::Clipboard::new().expect("clipboard creation failed");
+    clipboard
+        .set()
+        .text(ron::ser::to_string(&clipboard_data).expect("expect serialize to work..."))
+        .expect("clipboard write failed");
 }
 
 pub async fn paste_from_clipboard(state: &mut SoundGraphEditorState, cursor_pos: Vec2) {
-    #[allow(unused_mut)]
-    let mut data: Option<ClipboardData> = None;
-
-    #[cfg(feature = "non-wasm")]
-    {
-        let mut clipboard = clippers::Clipboard::get();
-
-        match clipboard.read() {
-            Some(clippers::ClipperData::Text(text)) => match ron::de::from_str(text.as_str()) {
-                Ok(x) => {
-                    data = Some(x);
-                }
-                Err(_) => {}
-            },
-
-            Some(clippers::ClipperData::Image(_)) => {}
-
-            Some(_) => {}
-
-            None => {}
-        }
-    }
-
+    let mut clipboard = arboard::Clipboard::new().expect("clipboard creation failed");
     let mut ids = vec![];
-
-    let data = match data {
-        Some(x) => x,
-        None => {
-            return;
-        }
-    };
-
+    let data: ClipboardData =
+        ron::de::from_str(&clipboard.get().text().expect("clipboard read failed"))
+            .expect("expect deserialize to work...");
     for (node, node_pos) in data.nodes.clone() {
         let mut _id = Default::default();
         state.graph.add_node(

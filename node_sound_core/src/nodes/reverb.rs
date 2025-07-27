@@ -1,14 +1,12 @@
+use super::{SoundNodeProps, SoundNodeResult};
+use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_map;
 use egui_node_graph_2::InputParamKind;
 use rodio::Source;
 use std::collections::BTreeMap;
-use std::time::Duration;
-
-use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn reverb_node() -> SoundNode {
     SoundNode {
@@ -20,11 +18,7 @@ pub fn reverb_node() -> SoundNode {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "duration".to_string(),
-                    value: InputValueConfig::Float {
-                        value: 1.0,
-                        min: 0.0,
-                        max: 4000.0,
-                    },
+                    value: InputValueConfig::Duration { value: 1.0 },
                 },
             ),
             (
@@ -36,7 +30,7 @@ pub fn reverb_node() -> SoundNode {
                     value: InputValueConfig::Float {
                         value: 1.0,
                         min: 0.0,
-                        max: 4000.0,
+                        max: MAX_FREQ,
                     },
                 },
             ),
@@ -59,15 +53,16 @@ pub fn reverb_node() -> SoundNode {
         )]),
     }
 }
-pub fn reverb_logic(props: SoundNodeProps) -> SoundNodeResult {
-    let duration = Duration::from_millis(props.get_float("duration")?.round() as u64);
+
+pub fn reverb_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned = props.clone_sound_ref(props.get_source("audio 1")?)?.reverb(
+        props.get_duration("duration")?,
+        props.get_float("amplification")?,
+    );
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(
-                sound_map::clone_sound_ref(props.get_source("audio 1")?)?
-                    .reverb(duration.clone(), props.get_float("amplification")?),
-            )),
+            value: props.push_sound(Box::new(cloned)),
         },
     )]))
 }

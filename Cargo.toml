@@ -1,4 +1,4 @@
 [workspace]
-members = ["node_sound_app", "node_sound_core", "node_sound_vst", "xtask", "node_sound_vst_effect"]
+members = ["node_sound_core", "node_sound_vst", "xtask", "node_sound_app"]
 
 resolver = "1"

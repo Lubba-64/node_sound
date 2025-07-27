@@ -1,8 +1,7 @@
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use rodio::{source::UniformSourceIterator, Source};
-use synthrs::{midi::MidiSong, synthesizer::make_samples_from_midi, wave};
-
-use crate::sound_graph::DEFAULT_SAMPLE_RATE;
 use std::time::Duration;
+use synthrs::{midi::MidiSong, synthesizer::make_samples_from_midi, wave};
 
 #[derive(Clone)]
 pub struct MidiRenderer {

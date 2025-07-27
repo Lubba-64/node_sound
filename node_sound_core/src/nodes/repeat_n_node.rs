@@ -2,7 +2,6 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sound_map;
 use crate::sounds::RepeatRefSource;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
@@ -46,16 +45,16 @@ pub fn repeat_n_node() -> SoundNode {
     }
 }
 
-pub fn repeat_n_logic(props: SoundNodeProps) -> SoundNodeResult {
+pub fn repeat_n_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let repeat_count = props.get_float("n")?.floor() as usize;
-    let source = sound_map::clone_sound_ref(props.get_source("audio 1")?)?;
+    let source = props.clone_sound_ref(props.get_source("audio 1")?)?;
 
     let repeated_source = RepeatRefSource::new(source, repeat_count as u32);
 
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: sound_map::push_sound(Box::new(repeated_source)),
+            value: props.push_sound(Box::new(repeated_source)),
         },
     )]))
 }
