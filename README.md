@@ -1,8 +1,5 @@
 # node_sound
 
-DAW automation nodes must be reconnected to the grid before pressing play (will fix this soon)
-Pressing play is required each time the plugin starts up to prevent crashes
-
 A node based sound construction program written in rust.
 
 I reserve the right to quit this project whenever, that said I am still finding fun new things to add every now and then...
