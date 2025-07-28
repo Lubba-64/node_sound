@@ -1,4 +1,4 @@
-use super::copy_paste_del_helpers::{copy, delete_selected_nodes, paste};
+use super::copy_paste_del_helpers::{copy, delete_nodes, paste};
 use super::float_selector;
 use super::graph_types::InputValueConfig;
 use super::wave_table_graph::wave_table_graph;
@@ -402,7 +402,7 @@ impl SoundNodeGraph {
                     executor::block_on(paste(&mut self.state.editor_state, Some(input_vec2), data));
                 }
                 if ui.add(egui::Button::new("delete selected")).clicked() {
-                    delete_selected_nodes(&mut self.state.editor_state)
+                    delete_nodes(&mut self.state.editor_state, false);
                 }
             });
         });

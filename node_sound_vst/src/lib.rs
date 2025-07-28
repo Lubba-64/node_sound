@@ -6,7 +6,7 @@ use node_sound_core::{
     nodes::get_nodes,
     sound_graph::{
         self,
-        copy_paste_del_helpers::{copy, paste},
+        copy_paste_del_helpers::{copy, delete_nodes, paste},
         graph::{ActiveNodeState, SoundNodeGraph, evaluate_node},
         graph_types::ValueType,
     },
@@ -471,6 +471,7 @@ impl Plugin for NodeSound {
                 if !state.4 {
                     state.4 = true;
                     let copy_state = copy(&mut graph.state.editor_state, true);
+                    delete_nodes(&mut graph.state.editor_state, true);
                     executor::block_on(paste(&mut graph.state.editor_state, None, copy_state));
                 }
                 if graph.state.user_state.active_node.is_playing() {

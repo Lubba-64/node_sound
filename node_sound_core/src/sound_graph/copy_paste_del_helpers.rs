@@ -18,8 +18,14 @@ pub struct ClipboardData {
     output_params: HashMap<OutputId, OutputParam<DataType>>,
 }
 
-pub fn delete_selected_nodes(state: &mut SoundGraphEditorState) {
-    for node_id in state.selected_nodes.iter() {
+pub fn delete_nodes(state: &mut SoundGraphEditorState, all: bool) {
+    let nodes;
+    if all {
+        nodes = state.graph.nodes.keys().into_iter().collect::<Vec<_>>();
+    } else {
+        nodes = state.selected_nodes.clone();
+    }
+    for node_id in nodes.iter() {
         state.graph.remove_node(*node_id);
         match state.node_order.iter().position(|a| a == node_id) {
             Some(x) => {
@@ -28,8 +34,6 @@ pub fn delete_selected_nodes(state: &mut SoundGraphEditorState) {
             None => {}
         }
     }
-
-    state.selected_nodes = vec![];
 }
 
 pub fn copy(state: &mut SoundGraphEditorState, all: bool) -> ClipboardData {
@@ -41,9 +45,9 @@ pub fn copy(state: &mut SoundGraphEditorState, all: bool) -> ClipboardData {
     };
     let nodes;
     if all {
-        nodes = state.selected_nodes.clone();
-    } else {
         nodes = state.graph.nodes.keys().into_iter().collect::<Vec<_>>();
+    } else {
+        nodes = state.selected_nodes.clone();
     }
 
     for node_id in nodes {
