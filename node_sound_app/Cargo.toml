@@ -1,8 +1,0 @@
-[package]
-name = "node_sound_app"
-version =  "1.10.2"
-edition = "2021"
-
-[dependencies]
-eframe = "^0.31"
-node_sound_core = { version = "*", path = "../node_sound_core", default-features = false }
