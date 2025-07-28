@@ -12,10 +12,8 @@ pub trait RefSourceIter<Item: Sample>:
 {
 }
 pub trait RefSourceIterDynClone<Item: Sample>: DynClone + RefSourceIter<Item> {}
-
 impl<I> RefSourceIter<f32> for I where I: Iterator<Item = f32> + Source + 'static {}
 impl<T: std::io::Read + std::io::Seek + 'static> RefSourceIter<i16> for Decoder<T> {}
-
 impl<I> RefSourceIterDynClone<f32> for I where I: RefSourceIter<f32> + Clone {}
 
 pub struct GenericSource<T>
