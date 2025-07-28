@@ -1,10 +1,9 @@
-use super::copy_paste_del_helpers::{
-    copy_to_clipboard, delete_selected_nodes, paste_from_clipboard,
-};
+use super::copy_paste_del_helpers::{copy, delete_selected_nodes, paste};
 use super::float_selector;
 use super::graph_types::InputValueConfig;
 use super::wave_table_graph::wave_table_graph;
 use crate::nodes::{NodeDefinitions, SoundNode, SoundNodeProps};
+use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_map::SoundQueue;
 use eframe::egui::mutex::Mutex;
@@ -380,7 +379,13 @@ impl SoundNodeGraph {
                 ui.add(egui::Label::new(env!("CARGO_PKG_VERSION")));
                 ui.add(egui::Label::new("|"));
                 if ui.add(egui::Button::new("copy")).clicked() {
-                    copy_to_clipboard(&mut self.state.editor_state);
+                    let data = copy(&mut self.state.editor_state, false);
+                    let mut clipboard =
+                        arboard::Clipboard::new().expect("clipboard creation failed");
+                    clipboard
+                        .set()
+                        .text(ron::ser::to_string(&data).expect("expect serialize to work..."))
+                        .expect("clipboard write failed");
                 }
                 if ui.add(egui::Button::new("paste")).clicked() {
                     let input =
@@ -388,11 +393,13 @@ impl SoundNodeGraph {
                     let input_vec2 = Vec2 {
                         x: input.x,
                         y: input.y,
-                    };
-                    executor::block_on(paste_from_clipboard(
-                        &mut self.state.editor_state,
-                        input_vec2,
-                    ));
+                    } + Vec2 { x: 0.0, y: 1000.0 };
+                    let mut clipboard =
+                        arboard::Clipboard::new().expect("clipboard creation failed");
+                    let data: ClipboardData =
+                        ron::de::from_str(&clipboard.get().text().expect("clipboard read failed"))
+                            .expect("expect deserialize to work...");
+                    executor::block_on(paste(&mut self.state.editor_state, Some(input_vec2), data));
                 }
                 if ui.add(egui::Button::new("delete selected")).clicked() {
                     delete_selected_nodes(&mut self.state.editor_state)

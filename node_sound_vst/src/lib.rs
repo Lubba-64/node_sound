@@ -1,3 +1,4 @@
+use futures::executor;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
 use node_sound_core::{
@@ -5,6 +6,7 @@ use node_sound_core::{
     nodes::get_nodes,
     sound_graph::{
         self,
+        copy_paste_del_helpers::{copy, paste},
         graph::{ActiveNodeState, SoundNodeGraph, evaluate_node},
         graph_types::ValueType,
     },
@@ -435,6 +437,7 @@ impl Plugin for NodeSound {
                 self.params.source_sound_buffers.clone(),
                 self.sample_rate.clone(),
                 self.params.root_sound_id.clone(),
+                false,
             ),
             |_, _| {},
             move |egui_ctx, _setter, state| {
@@ -456,24 +459,31 @@ impl Plugin for NodeSound {
                         return;
                     }
                 };
-                let state = &mut match state.0.lock() {
+                let graph = &mut match state.0.lock() {
                     Ok(x) => x,
                     Err(_x) => {
                         return;
                     }
                 };
-                state.update_root(egui_ctx);
-                if state.state.user_state.active_node.is_playing() {
+
+                graph.update_root(egui_ctx);
+                // refreshes the graph state to fix bugs with DAW automations that if not refreshed will be null secretly...
+                if !state.4 {
+                    state.4 = true;
+                    let copy_state = copy(&mut graph.state.editor_state, true);
+                    executor::block_on(paste(&mut graph.state.editor_state, None, copy_state));
+                }
+                if graph.state.user_state.active_node.is_playing() {
                     let mut clear = false;
-                    state.state.user_state.active_node = ActiveNodeState::NoNode;
-                    match state.state.user_state.vst_output_node_id {
+                    graph.state.user_state.active_node = ActiveNodeState::NoNode;
+                    match graph.state.user_state.vst_output_node_id {
                         Some(outputid) => {
                             match evaluate_node(
-                                &state.state.editor_state.graph.clone(),
+                                &graph.state.editor_state.graph.clone(),
                                 outputid,
                                 &mut HashMap::new(),
                                 &get_nodes(),
-                                &mut state.state,
+                                &mut graph.state,
                             ) {
                                 Ok(val) => {
                                     let source_id = match val {
@@ -483,7 +493,7 @@ impl Plugin for NodeSound {
                                         }
                                     };
                                     **sound_result_id = Some(source_id);
-                                    let sound = match state
+                                    let sound = match graph
                                         .state
                                         ._unserializeable_state
                                         .queue
@@ -534,7 +544,7 @@ impl Plugin for NodeSound {
                     }
                     if clear {
                         **sound_buffers = [0; MIDI_NOTES_LEN as usize].map(|_| None);
-                        state.state._unserializeable_state.queue.clear();
+                        graph.state._unserializeable_state.queue.clear();
                         **sound_result_id = None
                     }
                 }

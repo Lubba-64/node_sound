@@ -11,7 +11,7 @@ use super::{
 use itertools::Itertools;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-struct ClipboardData {
+pub struct ClipboardData {
     nodes: Vec<(Node<NodeData>, Pos2)>,
     connections: Vec<(InputId, OutputId)>,
     input_params: HashMap<InputId, InputParam<DataType, ValueType>>,
@@ -32,14 +32,21 @@ pub fn delete_selected_nodes(state: &mut SoundGraphEditorState) {
     state.selected_nodes = vec![];
 }
 
-pub fn copy_to_clipboard(state: &mut SoundGraphEditorState) {
+pub fn copy(state: &mut SoundGraphEditorState, all: bool) -> ClipboardData {
     let mut clipboard_data = ClipboardData {
         connections: vec![],
         nodes: vec![],
         input_params: HashMap::new(),
         output_params: HashMap::new(),
     };
-    for node_id in state.selected_nodes.clone() {
+    let nodes;
+    if all {
+        nodes = state.selected_nodes.clone();
+    } else {
+        nodes = state.graph.nodes.keys().into_iter().collect::<Vec<_>>();
+    }
+
+    for node_id in nodes {
         let node_data = state.graph.nodes.get(node_id);
         let node = match node_data {
             Some(x) => x.clone(),
@@ -90,19 +97,15 @@ pub fn copy_to_clipboard(state: &mut SoundGraphEditorState) {
         .cloned()
         .collect();
 
-    let mut clipboard = arboard::Clipboard::new().expect("clipboard creation failed");
-    clipboard
-        .set()
-        .text(ron::ser::to_string(&clipboard_data).expect("expect serialize to work..."))
-        .expect("clipboard write failed");
+    return clipboard_data;
 }
 
-pub async fn paste_from_clipboard(state: &mut SoundGraphEditorState, cursor_pos: Vec2) {
-    let mut clipboard = arboard::Clipboard::new().expect("clipboard creation failed");
+pub async fn paste(
+    state: &mut SoundGraphEditorState,
+    cursor_pos: Option<Vec2>,
+    data: ClipboardData,
+) {
     let mut ids = vec![];
-    let data: ClipboardData =
-        ron::de::from_str(&clipboard.get().text().expect("clipboard read failed"))
-            .expect("expect deserialize to work...");
     for (node, node_pos) in data.nodes.clone() {
         let mut _id = Default::default();
         state.graph.add_node(
@@ -110,10 +113,9 @@ pub async fn paste_from_clipboard(state: &mut SoundGraphEditorState, cursor_pos:
             node.user_data.clone(),
             |_graph, id| {
                 state.node_order.push(id);
-                state.node_positions.insert(
-                    id,
-                    node_pos.clone() + cursor_pos + Vec2 { x: 0.0, y: 1000.0 },
-                );
+                state
+                    .node_positions
+                    .insert(id, node_pos.clone() + cursor_pos.unwrap_or(Vec2::default()));
                 _id = id
             },
         );
