@@ -6,7 +6,6 @@ use crate::nodes::{NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_map::SoundQueue;
-use eframe::egui::mutex::Mutex;
 use eframe::egui::Pos2;
 use eframe::egui::{self, DragValue, Vec2};
 use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
@@ -16,8 +15,10 @@ pub use rodio::source::Zero;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ffi::OsStr;
-use std::sync::Arc;
+use std::fs;
+use std::sync::{Arc, Mutex};
 use std::{borrow::Cow, collections::HashMap, time::Duration};
+use synthrs::midi;
 
 #[derive(Clone, Serialize, Deserialize, Debug, Default)]
 pub struct NodeData {
@@ -50,6 +51,8 @@ pub struct SoundGraphUserState {
     pub is_saved: bool,
     pub vst_output_node_id: Option<NodeId>,
     pub wave_shaper_graph_id: usize,
+    #[serde(skip)]
+    pub files: Arc<Mutex<FileManager>>,
 }
 
 impl DataTypeTrait<SoundGraphUserState> for DataType {
@@ -165,7 +168,7 @@ impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
             );
         }
         self.0
-             .0
+            .0
             .values()
             .cloned()
             .map(|x| x.0)
@@ -191,9 +194,9 @@ impl WidgetValueTrait for ValueType {
     fn value_widget(
         &mut self,
         param_name: &str,
-        _node_id: NodeId,
+        node_id: NodeId,
         ui: &mut egui::Ui,
-        _user_state: &mut Self::UserState,
+        user_state: &mut Self::UserState,
         _node_data: &Self::NodeData,
     ) -> Vec<ActiveNodeState> {
         match self {
@@ -238,8 +241,25 @@ impl WidgetValueTrait for ValueType {
                         .unwrap_or(""),
                     None => "",
                 };
-                if ui.button(format!("{}...", file_name)).clicked() {
-                    // TODO: FILE GET.
+                ui.label(file_name);
+                match user_state.files.lock() {
+                    Ok(mut files) => {
+                        if ui.button(format!("{}...", file_name)).clicked() {
+                            files.wav_active = Some(node_id);
+                        }
+                        match &files.wav_file_path {
+                            Some(x) => {
+                                if node_id == x.1 {
+                                    match fs::read(x.0.clone()) {
+                                        Err(_x) => {}
+                                        Ok(x2) => *value = Some((x.0.clone(), x2)),
+                                    };
+                                }
+                            }
+                            None => {}
+                        };
+                    }
+                    Err(_) => {}
                 }
             }
             ValueType::MidiFile { value } => {
@@ -252,8 +272,24 @@ impl WidgetValueTrait for ValueType {
                         .unwrap_or(""),
                     None => "",
                 };
-                if ui.button(format!("{}...", file_name)).clicked() {
-                    // TODO: FILE GET.
+                match user_state.files.lock() {
+                    Ok(mut files) => {
+                        if ui.button(format!("{}...", file_name)).clicked() {
+                            files.midi_active = Some(node_id);
+                        }
+                        match &files.midi_file_path {
+                            Some(x) => {
+                                if node_id == x.1 {
+                                    match midi::read_midi_file(x.0.clone()) {
+                                        Err(_x) => {}
+                                        Ok(x2) => *value = Some((x.0.clone(), x2)),
+                                    };
+                                }
+                            }
+                            None => {}
+                        };
+                    }
+                    Err(_) => {}
                 }
             }
         }
@@ -315,6 +351,14 @@ pub struct SoundNodeGraphState {
     pub editor_state: SoundGraphEditorState,
     #[serde(skip)]
     pub _unserializeable_state: UnserializeableGraphState,
+}
+
+#[derive(Default, Clone)]
+pub struct FileManager {
+    pub midi_active: Option<NodeId>,
+    pub wav_active: Option<NodeId>,
+    pub midi_file_path: Option<(String, NodeId)>,
+    pub wav_file_path: Option<(String, NodeId)>,
 }
 
 #[derive(Default, Clone)]

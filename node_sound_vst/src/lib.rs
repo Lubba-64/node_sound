@@ -7,7 +7,7 @@ use node_sound_core::{
     sound_graph::{
         self,
         copy_paste_del_helpers::{copy, delete_nodes, paste},
-        graph::{ActiveNodeState, SoundNodeGraph, evaluate_node},
+        graph::{ActiveNodeState, FileManager, SoundNodeGraph, evaluate_node},
         graph_types::ValueType,
     },
     sound_map::GenericSource,
@@ -401,8 +401,18 @@ impl NodeSound {
 macro_rules! mkparamgetter {
     ($field: ident, $idx: literal, $self: ident, $buff: ident) => {
         let $field = $self.params.$field.value();
-        *$buff[$idx].lock() = $field
+        match $buff[$idx].lock() {
+            Ok(mut x) => {
+                *x = $field;
+            }
+            Err(_x) => {}
+        }
     };
+}
+
+pub enum BackgroundTasks {
+    MidiFileOpen(Arc<Mutex<FileManager>>),
+    WavFileOpen(Arc<Mutex<FileManager>>),
 }
 
 impl Plugin for NodeSound {
@@ -423,10 +433,61 @@ impl Plugin for NodeSound {
     const SAMPLE_ACCURATE_AUTOMATION: bool = true;
 
     type SysExMessage = ();
-    type BackgroundTask = ();
+    type BackgroundTask = BackgroundTasks;
 
     fn params(&self) -> Arc<dyn Params> {
         self.params.clone()
+    }
+
+    fn task_executor(&mut self) -> TaskExecutor<Self> {
+        Box::new(|cx| match cx {
+            BackgroundTasks::MidiFileOpen(files) => {
+                match files.lock() {
+                    Err(_x) => {}
+                    Ok(mut x) => {
+                        match x.midi_active {
+                            None => {}
+                            Some(node_id) => {
+                                x.midi_file_path = Some((
+                                    rfd::FileDialog::new()
+                                        .add_filter("audio", &["mid", "midi"])
+                                        .pick_file()
+                                        .unwrap_or_default()
+                                        .to_str()
+                                        .unwrap_or_default()
+                                        .to_string(),
+                                    node_id,
+                                ));
+                                x.midi_active = None;
+                            }
+                        };
+                    }
+                };
+            }
+            BackgroundTasks::WavFileOpen(files) => {
+                match files.lock() {
+                    Err(_x) => {}
+                    Ok(mut x) => {
+                        match x.wav_active {
+                            None => {}
+                            Some(node_id) => {
+                                x.wav_file_path = Some((
+                                    rfd::FileDialog::new()
+                                        .add_filter("audio", &["wav"])
+                                        .pick_file()
+                                        .unwrap_or_default()
+                                        .to_str()
+                                        .unwrap_or_default()
+                                        .to_string(),
+                                    node_id,
+                                ));
+                                x.wav_active = None;
+                            }
+                        };
+                    }
+                };
+            }
+        })
     }
 
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
@@ -569,17 +630,33 @@ impl Plugin for NodeSound {
         context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
         let num_samples = buffer.samples();
-        let automations = match self.params.plugin_state.graph.lock() {
+        let state = match self.params.plugin_state.graph.lock() {
             Ok(x) => x,
             Err(_x) => {
                 return ProcessStatus::KeepAlive;
             }
         }
         .state
-        ._unserializeable_state
-        .automations
-        .0
         .clone();
+        let automations = state._unserializeable_state.automations.0.clone();
+
+        match state.user_state.files.lock() {
+            Ok(x) => {
+                if x.midi_active.is_some() {
+                    context.execute_background(BackgroundTasks::MidiFileOpen(
+                        state.user_state.files.clone(),
+                    ));
+                }
+                if x.wav_active.is_some() {
+                    context.execute_background(BackgroundTasks::WavFileOpen(
+                        state.user_state.files.clone(),
+                    ));
+                }
+            }
+            Err(_x) => {
+                return ProcessStatus::KeepAlive;
+            }
+        }
 
         let sample_rate = match self.sample_rate.lock() {
             Ok(mut x) => {

@@ -2,6 +2,7 @@
 name = "node_sound_vst"
 version = "2.0.1"
 edition = "2024"
+authors = ["Lubba64"]
 
 [lib]
 crate-type = ["cdylib"]
@@ -17,3 +18,4 @@ pitch_shift = "1.0.0"
 rodio = "0.19.0"
 ezing = "0.2.1"
 futures = "0.3.30"
+rfd = { version = "0.14.1", features = ["file-handle-inner"] }

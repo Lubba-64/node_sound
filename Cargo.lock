@@ -2612,6 +2612,7 @@ dependencies = [
  "nih_plug_egui",
  "node_sound_core",
  "pitch_shift",
+ "rfd",
  "rodio",
  "ron",
 ]
