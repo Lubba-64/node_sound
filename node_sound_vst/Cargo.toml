@@ -2,6 +2,7 @@
 name = "node_sound_vst"
 version = "2.0.1"
 edition = "2024"
+authors = ["Lubba64"]
 
 [lib]
 crate-type = ["cdylib"]

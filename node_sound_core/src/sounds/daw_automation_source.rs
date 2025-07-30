@@ -1,6 +1,6 @@
 use crate::constants::DEFAULT_SAMPLE_RATE;
-use eframe::egui::mutex::Mutex;
 use rodio::Source;
+use std::sync::Mutex;
 use std::{sync::Arc, time::Duration};
 
 #[derive(Clone)]
@@ -20,7 +20,10 @@ impl Iterator for DawAutomationChannel {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        Some(*self.channel.lock())
+        match self.channel.lock() {
+            Err(_x) => None,
+            Ok(x) => Some(*x),
+        }
     }
 }
 

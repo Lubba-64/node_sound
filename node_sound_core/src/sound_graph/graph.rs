@@ -6,7 +6,6 @@ use crate::nodes::{NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_map::SoundQueue;
-use eframe::egui::mutex::Mutex;
 use eframe::egui::Pos2;
 use eframe::egui::{self, DragValue, Vec2};
 use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
@@ -17,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::fs;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::{borrow::Cow, collections::HashMap, time::Duration};
 use synthrs::midi;
 
@@ -53,7 +52,7 @@ pub struct SoundGraphUserState {
     pub vst_output_node_id: Option<NodeId>,
     pub wave_shaper_graph_id: usize,
     #[serde(skip)]
-    pub files: FileManager,
+    pub files: Arc<Mutex<FileManager>>,
 }
 
 impl DataTypeTrait<SoundGraphUserState> for DataType {
@@ -169,7 +168,7 @@ impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
             );
         }
         self.0
-             .0
+            .0
             .values()
             .cloned()
             .map(|x| x.0)
@@ -243,20 +242,25 @@ impl WidgetValueTrait for ValueType {
                     None => "",
                 };
                 ui.label(file_name);
-                if ui.button(format!("{}...", file_name)).clicked() {
-                    user_state.files.wav_active = Some(node_id);
-                }
-                match &user_state.files.wav_file_path {
-                    Some(x) => {
-                        if node_id == x.1 {
-                            match fs::read(x.0.clone()) {
-                                Err(_x) => {}
-                                Ok(x2) => *value = Some((x.0.clone(), x2)),
-                            };
+                match user_state.files.lock() {
+                    Ok(mut files) => {
+                        if ui.button(format!("{}...", file_name)).clicked() {
+                            files.wav_active = Some(node_id);
                         }
+                        match &files.wav_file_path {
+                            Some(x) => {
+                                if node_id == x.1 {
+                                    match fs::read(x.0.clone()) {
+                                        Err(_x) => {}
+                                        Ok(x2) => *value = Some((x.0.clone(), x2)),
+                                    };
+                                }
+                            }
+                            None => {}
+                        };
                     }
-                    None => {}
-                };
+                    Err(_) => {}
+                }
             }
             ValueType::MidiFile { value } => {
                 let y = &value.clone();
@@ -268,20 +272,25 @@ impl WidgetValueTrait for ValueType {
                         .unwrap_or(""),
                     None => "",
                 };
-                if ui.button(format!("{}...", file_name)).clicked() {
-                    user_state.files.midi_active = Some(node_id);
-                }
-                match &user_state.files.midi_file_path {
-                    Some(x) => {
-                        if node_id == x.1 {
-                            match midi::read_midi_file(x.0.clone()) {
-                                Err(_x) => {}
-                                Ok(x2) => *value = Some((x.0.clone(), x2)),
-                            };
+                match user_state.files.lock() {
+                    Ok(mut files) => {
+                        if ui.button(format!("{}...", file_name)).clicked() {
+                            files.midi_active = Some(node_id);
                         }
+                        match &files.midi_file_path {
+                            Some(x) => {
+                                if node_id == x.1 {
+                                    match midi::read_midi_file(x.0.clone()) {
+                                        Err(_x) => {}
+                                        Ok(x2) => *value = Some((x.0.clone(), x2)),
+                                    };
+                                }
+                            }
+                            None => {}
+                        };
                     }
-                    None => {}
-                };
+                    Err(_) => {}
+                }
             }
         }
         Vec::new()
