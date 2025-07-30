@@ -7,7 +7,7 @@ use node_sound_core::{
     sound_graph::{
         self,
         copy_paste_del_helpers::{copy, delete_nodes, paste},
-        graph::{ActiveNodeState, SoundNodeGraph, evaluate_node},
+        graph::{ActiveNodeState, FileManager, SoundNodeGraph, evaluate_node},
         graph_types::ValueType,
     },
     sound_map::GenericSource,
@@ -405,6 +405,11 @@ macro_rules! mkparamgetter {
     };
 }
 
+pub enum Tasks {
+    MidiFile(),
+    WavFile(),
+}
+
 impl Plugin for NodeSound {
     const NAME: &'static str = "Node Sound";
     const VENDOR: &'static str = "Lubba64";
@@ -423,7 +428,58 @@ impl Plugin for NodeSound {
     const SAMPLE_ACCURATE_AUTOMATION: bool = true;
 
     type SysExMessage = ();
-    type BackgroundTask = ();
+    type BackgroundTask = Tasks;
+
+    fn task_executor(&mut self) -> TaskExecutor<Self> {
+        Box::new(|cx| match cx {
+            Tasks::MidiFile(files) => {
+                match files.lock() {
+                    Err(_x) => {}
+                    Ok(mut x) => {
+                        match x.midi_active {
+                            None => {}
+                            Some(node_id) => {
+                                x.midi_file_path = Some((
+                                    rfd::FileDialog::new()
+                                        .add_filter("audio", &["mid", "midi"])
+                                        .pick_file()
+                                        .unwrap_or_default()
+                                        .to_str()
+                                        .unwrap_or_default()
+                                        .to_string(),
+                                    node_id,
+                                ));
+                                x.midi_active = None;
+                            }
+                        };
+                    }
+                };
+            }
+            Tasks::WavFile(files) => {
+                match files.lock() {
+                    Err(_x) => {}
+                    Ok(mut x) => {
+                        match x.wav_active {
+                            None => {}
+                            Some(node_id) => {
+                                x.wav_file_path = Some((
+                                    rfd::FileDialog::new()
+                                        .add_filter("audio", &["wav"])
+                                        .pick_file()
+                                        .unwrap_or_default()
+                                        .to_str()
+                                        .unwrap_or_default()
+                                        .to_string(),
+                                    node_id,
+                                ));
+                                x.wav_active = None;
+                            }
+                        };
+                    }
+                };
+            }
+        })
+    }
 
     fn params(&self) -> Arc<dyn Params> {
         self.params.clone()

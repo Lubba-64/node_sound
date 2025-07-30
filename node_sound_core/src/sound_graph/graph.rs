@@ -16,8 +16,10 @@ pub use rodio::source::Zero;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ffi::OsStr;
+use std::fs;
 use std::sync::Arc;
 use std::{borrow::Cow, collections::HashMap, time::Duration};
+use synthrs::midi;
 
 #[derive(Clone, Serialize, Deserialize, Debug, Default)]
 pub struct NodeData {
@@ -50,6 +52,8 @@ pub struct SoundGraphUserState {
     pub is_saved: bool,
     pub vst_output_node_id: Option<NodeId>,
     pub wave_shaper_graph_id: usize,
+    #[serde(skip)]
+    pub files: FileManager,
 }
 
 impl DataTypeTrait<SoundGraphUserState> for DataType {
@@ -191,9 +195,9 @@ impl WidgetValueTrait for ValueType {
     fn value_widget(
         &mut self,
         param_name: &str,
-        _node_id: NodeId,
+        node_id: NodeId,
         ui: &mut egui::Ui,
-        _user_state: &mut Self::UserState,
+        user_state: &mut Self::UserState,
         _node_data: &Self::NodeData,
     ) -> Vec<ActiveNodeState> {
         match self {
@@ -238,9 +242,21 @@ impl WidgetValueTrait for ValueType {
                         .unwrap_or(""),
                     None => "",
                 };
+                ui.label(file_name);
                 if ui.button(format!("{}...", file_name)).clicked() {
-                    // TODO: FILE GET.
+                    user_state.files.wav_active = Some(node_id);
                 }
+                match &user_state.files.wav_file_path {
+                    Some(x) => {
+                        if node_id == x.1 {
+                            match fs::read(x.0.clone()) {
+                                Err(_x) => {}
+                                Ok(x2) => *value = Some((x.0.clone(), x2)),
+                            };
+                        }
+                    }
+                    None => {}
+                };
             }
             ValueType::MidiFile { value } => {
                 let y = &value.clone();
@@ -253,8 +269,19 @@ impl WidgetValueTrait for ValueType {
                     None => "",
                 };
                 if ui.button(format!("{}...", file_name)).clicked() {
-                    // TODO: FILE GET.
+                    user_state.files.midi_active = Some(node_id);
                 }
+                match &user_state.files.midi_file_path {
+                    Some(x) => {
+                        if node_id == x.1 {
+                            match midi::read_midi_file(x.0.clone()) {
+                                Err(_x) => {}
+                                Ok(x2) => *value = Some((x.0.clone(), x2)),
+                            };
+                        }
+                    }
+                    None => {}
+                };
             }
         }
         Vec::new()
@@ -315,6 +342,14 @@ pub struct SoundNodeGraphState {
     pub editor_state: SoundGraphEditorState,
     #[serde(skip)]
     pub _unserializeable_state: UnserializeableGraphState,
+}
+
+#[derive(Default, Clone)]
+pub struct FileManager {
+    pub midi_active: Option<NodeId>,
+    pub wav_active: Option<NodeId>,
+    pub midi_file_path: Option<(String, NodeId)>,
+    pub wav_file_path: Option<(String, NodeId)>,
 }
 
 #[derive(Default, Clone)]
