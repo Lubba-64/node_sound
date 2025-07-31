@@ -62,3 +62,5 @@ mod reverse;
 pub use reverse::ReverseSource;
 mod bit_crush;
 pub use bit_crush::BitCrusher;
+mod pitch_shift;
+pub use pitch_shift::FftPitchShifter;

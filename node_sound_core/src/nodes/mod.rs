@@ -93,7 +93,8 @@ mod wave_table_node;
 pub use automated_wave_table_node::{automated_wave_table_logic, automated_wave_table_node};
 mod bit_crush_node;
 pub use bit_crush_node::{bit_crusher_logic, bit_crusher_node};
-
+mod pitch_shift_node;
+pub use pitch_shift_node::{pitch_shift_logic, pitch_shift_node};
 pub struct SoundNodeProps<'a> {
     pub inputs: HashMap<String, ValueType>,
     pub state: &'a mut UnserializeableGraphState,
@@ -184,7 +185,7 @@ impl Default for NodeDefinitions {
 }
 
 pub fn get_nodes() -> NodeDefinitions {
-    let mut nodes: Vec<(SoundNode, Box<SoundNodeOp>)> = vec![
+    let nodes: Vec<(SoundNode, Box<SoundNodeOp>)> = vec![
         (mix_node(), Box::new(mix_logic)),
         (duration_node(), Box::new(duration_logic)),
         (delay_node(), Box::new(delay_logic)),
@@ -238,11 +239,12 @@ pub fn get_nodes() -> NodeDefinitions {
         (wave_table_node(), Box::new(wave_table_logic)),
         (reverse_node(), Box::new(reverse_logic)),
         (bit_crusher_node(), Box::new(bit_crusher_logic)),
+        (output_node(), Box::new(output_logic)),
+        (daw_automations_node(), Box::new(daw_automations_logic)),
+        (midi_node(), Box::new(midi_logic)),
+        (file_node(), Box::new(file_logic)),
+        (pitch_shift_node(), Box::new(pitch_shift_logic)),
     ];
-    nodes.push((output_node(), Box::new(output_logic)));
-    nodes.push((daw_automations_node(), Box::new(daw_automations_logic)));
-    nodes.push((midi_node(), Box::new(midi_logic)));
-    nodes.push((file_node(), Box::new(file_logic)));
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
     ))
