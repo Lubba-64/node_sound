@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use rodio::{source::SamplesConverter, Decoder, Source};
+use rodio::{Decoder, Source, source::SamplesConverter};
 
 pub struct CloneableDecoder {
     pub data: Vec<u8>,
