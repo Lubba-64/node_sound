@@ -11,7 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn pitch_shift_node() -> SoundNode {
     SoundNode {
-        name: "Wave Table".to_string(),
+        name: "Pitch Shift".to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
