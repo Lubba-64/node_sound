@@ -241,8 +241,8 @@ pub fn get_nodes() -> NodeDefinitions {
     ];
     nodes.push((output_node(), Box::new(output_logic)));
     nodes.push((daw_automations_node(), Box::new(daw_automations_logic)));
-    nodes.push((output_node(), Box::new(output_logic)));
-    nodes.push((daw_automations_node(), Box::new(daw_automations_logic)));
+    nodes.push((midi_node(), Box::new(midi_logic)));
+    nodes.push((file_node(), Box::new(file_logic)));
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
     ))
