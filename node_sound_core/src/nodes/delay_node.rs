@@ -42,7 +42,7 @@ pub fn delay_node() -> SoundNode {
 
 pub fn delay_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let cloned = props
-        .clone_sound_ref(props.get_source("audio 1")?)?
+        .clone_sound(props.get_source("audio 1")?)?
         .delay(props.get_duration("delay")?);
     Ok(BTreeMap::from([(
         "out".to_string(),

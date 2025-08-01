@@ -5,14 +5,14 @@ use std::f32::consts::PI;
 use std::time::Duration;
 
 #[derive(Clone, Debug)]
-pub struct SquareWave {
+pub struct SineWave {
     freq: f32,
     num_sample: usize,
     speed: f32,
     uses_speed: bool,
 }
 
-impl SquareWave {
+impl SineWave {
     #[inline]
     pub fn new(freq: f32, uses_speed: bool) -> Self {
         Self {
@@ -24,7 +24,7 @@ impl SquareWave {
     }
 }
 
-impl Iterator for SquareWave {
+impl Iterator for SineWave {
     type Item = f32;
 
     #[inline]
@@ -32,11 +32,11 @@ impl Iterator for SquareWave {
         self.num_sample = self.num_sample.wrapping_add(1);
         let value =
             2.0 * PI * self.freq / self.speed * self.num_sample as f32 / DEFAULT_SAMPLE_RATE as f32;
-        Some(value.sin().signum())
+        Some(value.sin())
     }
 }
 
-impl Source for SquareWave {
+impl Source for SineWave {
     #[inline]
     fn current_frame_len(&self) -> Option<usize> {
         None
@@ -58,7 +58,7 @@ impl Source for SquareWave {
     }
 }
 
-impl SetSpeed<f32> for SquareWave {
+impl SetSpeed<f32> for SineWave {
     fn set_speed(&mut self, speed: f32) {
         if !self.uses_speed {
             return;

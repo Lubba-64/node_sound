@@ -22,7 +22,7 @@ use crate::{
         graph::UnserializeableGraphState,
         graph_types::{InputParameter, Output, ValueType},
     },
-    sound_map::{RefSource, RefSourceIterDynClone},
+    sound_map::{GenericSource, SourceIterDynClone},
 };
 use delay_node::{delay_logic, delay_node};
 use std::collections::HashMap;
@@ -93,20 +93,22 @@ mod wave_table_node;
 pub use automated_wave_table_node::{automated_wave_table_logic, automated_wave_table_node};
 mod bit_crush_node;
 pub use bit_crush_node::{bit_crusher_logic, bit_crusher_node};
-mod pitch_shift_node;
-pub use pitch_shift_node::{pitch_shift_logic, pitch_shift_node};
+
 pub struct SoundNodeProps<'a> {
     pub inputs: HashMap<String, ValueType>,
     pub state: &'a mut UnserializeableGraphState,
 }
 
 impl<'a> SoundNodeProps<'a> {
-    fn push_sound(&mut self, sound: Box<dyn RefSourceIterDynClone<f32>>) -> usize {
+    fn push_sound(&mut self, sound: Box<dyn SourceIterDynClone<f32>>) -> usize {
         self.state.queue.push_sound(sound)
     }
 
-    fn clone_sound_ref(&mut self, idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> {
-        self.state.queue.clone_sound_ref(idx)
+    fn clone_sound(
+        &mut self,
+        idx: usize,
+    ) -> Result<GenericSource<f32>, Box<dyn std::error::Error>> {
+        self.state.queue.clone_sound(idx)
     }
 
     fn get_float(&self, name: &str) -> Result<f32, Box<dyn std::error::Error>> {
@@ -116,6 +118,14 @@ impl<'a> SoundNodeProps<'a> {
             .unwrap_or_default()
             .clone()
             .try_to_float()?)
+    }
+    fn get_bool(&self, name: &str) -> Result<bool, Box<dyn std::error::Error>> {
+        Ok(self
+            .inputs
+            .get(name)
+            .unwrap_or_default()
+            .clone()
+            .try_to_bool()?)
     }
     fn get_source(&self, name: &str) -> Result<usize, Box<dyn std::error::Error>> {
         Ok(self
@@ -243,7 +253,6 @@ pub fn get_nodes() -> NodeDefinitions {
         (daw_automations_node(), Box::new(daw_automations_logic)),
         (midi_node(), Box::new(midi_logic)),
         (file_node(), Box::new(file_logic)),
-        (pitch_shift_node(), Box::new(pitch_shift_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

@@ -42,7 +42,7 @@ pub fn skip_node() -> SoundNode {
 }
 pub fn skip_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let cloned = props
-        .clone_sound_ref(props.get_source("audio 1")?)?
+        .clone_sound(props.get_source("audio 1")?)?
         .skip_duration(props.get_duration("duration")?);
     Ok(BTreeMap::from([(
         "out".to_string(),

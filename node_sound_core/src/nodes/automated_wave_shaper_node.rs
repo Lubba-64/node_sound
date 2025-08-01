@@ -33,6 +33,15 @@ pub fn automated_wave_shaper_node() -> SoundNode {
                     value: InputValueConfig::AudioSource {},
                 },
             ),
+            (
+                "uses speed".to_string(),
+                InputParameter {
+                    data_type: DataType::Float,
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "uses speed".to_string(),
+                    value: InputValueConfig::Bool { value: false },
+                },
+            ),
         ]),
         outputs: BTreeMap::from([(
             "out".to_string(),
@@ -45,7 +54,7 @@ pub fn automated_wave_shaper_node() -> SoundNode {
 }
 
 pub fn automated_wave_shaper_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound_ref(props.get_source("frequency")?)?;
+    let cloned = props.clone_sound(props.get_source("frequency")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
@@ -55,6 +64,7 @@ pub fn automated_wave_shaper_logic(mut props: SoundNodeProps) -> SoundNodeResult
                     .get_graph("graph")?
                     .unwrap_or(vec![0.01; WAVE_TABLE_SIZE]),
                 cloned,
+                props.get_bool("uses speed")?,
             ))),
         },
     )]))

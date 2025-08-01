@@ -6,8 +6,8 @@ use crate::nodes::{NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_map::SoundQueue;
-use eframe::egui::Pos2;
-use eframe::egui::{self, DragValue, Vec2};
+use eframe::egui::{self, DragValue, Vec2, Widget};
+use eframe::egui::{Checkbox, Pos2, WidgetText};
 use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
 pub use egui_node_graph_2::*;
 use futures::executor;
@@ -62,10 +62,11 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::Float => egui::Color32::from_rgb(238, 207, 109),
             DataType::AudioSource => egui::Color32::from_rgb(100, 150, 100),
             DataType::AudioFile => egui::Color32::from_rgb(100, 100, 150),
-            DataType::None => egui::Color32::from_rgb(100, 100, 100),
-            DataType::MidiFile => egui::Color32::from_rgb(150, 100, 100),
+            DataType::None => egui::Color32::from_rgb(100, 100, 255),
+            DataType::MidiFile => egui::Color32::from_rgb(150, 100, 255),
             DataType::Graph => egui::Color32::from_rgb(150, 100, 100),
-            DataType::Code => egui::Color32::from_rgb(150, 100, 100),
+            DataType::Code => egui::Color32::from_rgb(150, 100, 150),
+            DataType::Bool => egui::Color32::from_rgb(150, 150, 150),
         }
     }
 
@@ -79,6 +80,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::MidiFile => Cow::Borrowed("Midi"),
             DataType::Graph => Cow::Borrowed("Graph"),
             DataType::Code => Cow::Borrowed("Code"),
+            DataType::Bool => Cow::Borrowed("Bool"),
         }
     }
 }
@@ -142,6 +144,9 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                             id: user_state.wave_shaper_graph_id,
                         }
                     }
+                    InputValueConfig::Bool { value } => ValueType::Bool {
+                        value: value.clone(),
+                    },
                 },
                 input.1.kind,
                 true,
@@ -200,6 +205,9 @@ impl WidgetValueTrait for ValueType {
         _node_data: &Self::NodeData,
     ) -> Vec<ActiveNodeState> {
         match self {
+            ValueType::Bool { value } => {
+                Checkbox::new(value, WidgetText::default()).ui(ui);
+            }
             ValueType::Code { value } => egui::Resize::default().show(ui, |ui| {
                 CodeEditor::default()
                     .id_source("code editor")

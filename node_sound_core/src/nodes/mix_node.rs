@@ -41,8 +41,8 @@ pub fn mix_node() -> SoundNode {
 }
 
 pub fn mix_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned1 = props.clone_sound_ref(props.get_source("audio 2")?)?;
-    let cloned2 = (props.clone_sound_ref(props.get_source("audio 1")?)?).mix(cloned1);
+    let cloned1 = props.clone_sound(props.get_source("audio 2")?)?;
+    let cloned2 = (props.clone_sound(props.get_source("audio 1")?)?).mix(cloned1);
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {

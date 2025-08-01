@@ -10,15 +10,26 @@ use std::collections::BTreeMap;
 pub fn file_node() -> SoundNode {
     SoundNode {
         name: "Audio File".to_string(),
-        inputs: BTreeMap::from([(
-            "file".to_string(),
-            InputParameter {
-                data_type: DataType::AudioFile,
-                kind: InputParamKind::ConstantOnly,
-                name: "file".to_string(),
-                value: InputValueConfig::AudioFile {},
-            },
-        )]),
+        inputs: BTreeMap::from([
+            (
+                "file".to_string(),
+                InputParameter {
+                    data_type: DataType::AudioFile,
+                    kind: InputParamKind::ConstantOnly,
+                    name: "file".to_string(),
+                    value: InputValueConfig::AudioFile {},
+                },
+            ),
+            (
+                "uses speed".to_string(),
+                InputParameter {
+                    data_type: DataType::Float,
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "uses speed".to_string(),
+                    value: InputValueConfig::Bool { value: false },
+                },
+            ),
+        ]),
         outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
@@ -43,7 +54,10 @@ pub fn file_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(CloneableDecoder::new(file.1.clone()))),
+            value: props.push_sound(Box::new(CloneableDecoder::new(
+                file.1.clone(),
+                props.get_bool("uses speed")?,
+            ))),
         },
     )]))
 }

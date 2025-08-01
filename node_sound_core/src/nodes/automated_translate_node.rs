@@ -69,11 +69,11 @@ pub fn automated_translate_node() -> SoundNode {
 }
 
 pub fn automated_translate_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned1 = props.clone_sound_ref(props.get_source("start_min")?)?;
-    let cloned2 = props.clone_sound_ref(props.get_source("start_max")?)?;
-    let cloned3 = props.clone_sound_ref(props.get_source("end_min")?)?;
-    let cloned4 = props.clone_sound_ref(props.get_source("end_max")?)?;
-    let cloned5 = props.clone_sound_ref(props.get_source("audio 1")?)?;
+    let cloned1 = props.clone_sound(props.get_source("start_min")?)?;
+    let cloned2 = props.clone_sound(props.get_source("start_max")?)?;
+    let cloned3 = props.clone_sound(props.get_source("end_min")?)?;
+    let cloned4 = props.clone_sound(props.get_source("end_max")?)?;
+    let cloned5 = props.clone_sound(props.get_source("audio 1")?)?;
 
     Ok(BTreeMap::from([(
         "out".to_string(),

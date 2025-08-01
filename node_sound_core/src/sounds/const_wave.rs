@@ -1,6 +1,6 @@
 use rodio::Source;
 
-use crate::constants::DEFAULT_SAMPLE_RATE;
+use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
 use std::time::Duration;
 
 #[derive(Clone)]
@@ -44,4 +44,8 @@ impl Source for ConstWave {
     fn total_duration(&self) -> Option<Duration> {
         None
     }
+}
+
+impl SetSpeed<f32> for ConstWave {
+    fn set_speed(&mut self, _speed: f32) {}
 }
