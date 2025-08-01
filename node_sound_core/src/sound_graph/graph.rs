@@ -206,7 +206,7 @@ impl WidgetValueTrait for ValueType {
     ) -> Vec<ActiveNodeState> {
         match self {
             ValueType::Bool { value } => {
-                Checkbox::new(value, WidgetText::default()).ui(ui);
+                Checkbox::new(value, WidgetText::from(param_name)).ui(ui);
             }
             ValueType::Code { value } => egui::Resize::default().show(ui, |ui| {
                 CodeEditor::default()
