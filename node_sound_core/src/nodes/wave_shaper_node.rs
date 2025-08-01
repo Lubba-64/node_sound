@@ -38,11 +38,11 @@ pub fn wave_shaper_node() -> SoundNode {
                 },
             ),
             (
-                "uses speed".to_string(),
+                "note independant".to_string(),
                 InputParameter {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
-                    name: "uses speed".to_string(),
+                    name: "note independant".to_string(),
                     value: InputValueConfig::Bool { value: false },
                 },
             ),
@@ -66,7 +66,7 @@ pub fn wave_shaper_logic(mut props: SoundNodeProps) -> SoundNodeResult {
                     props
                         .get_graph("graph")?
                         .unwrap_or(vec![0.01; WAVE_TABLE_SIZE]),
-                    props.get_bool("uses speed")?,
+                    props.get_bool("note independant")?,
                 )
                 .set_frequency(props.get_float("frequency")?),
             )),

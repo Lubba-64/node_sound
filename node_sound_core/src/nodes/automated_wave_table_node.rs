@@ -41,11 +41,11 @@ pub fn automated_wave_table_node() -> SoundNode {
                 },
             ),
             (
-                "uses speed".to_string(),
+                "note independant".to_string(),
                 InputParameter {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
-                    name: "uses speed".to_string(),
+                    name: "note independant".to_string(),
                     value: InputValueConfig::Bool { value: false },
                 },
             ),
@@ -73,7 +73,7 @@ pub fn automated_wave_table_logic(mut props: SoundNodeProps) -> SoundNodeResult 
                 DEFAULT_SAMPLE_RATE,
                 samples,
                 cloned,
-                props.get_bool("uses speed")?,
+                props.get_bool("note independant")?,
             ))),
         },
     )]))

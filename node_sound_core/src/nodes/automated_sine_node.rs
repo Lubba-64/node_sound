@@ -22,11 +22,11 @@ pub fn automated_sine_node() -> SoundNode {
                 },
             ),
             (
-                "uses speed".to_string(),
+                "note independant".to_string(),
                 InputParameter {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
-                    name: "uses speed".to_string(),
+                    name: "note independant".to_string(),
                     value: InputValueConfig::Bool { value: false },
                 },
             ),
@@ -47,7 +47,7 @@ pub fn automated_sine_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         ValueType::AudioSource {
             value: props.push_sound(Box::new(AutomatedSineWave::new(
                 cloned,
-                props.get_bool("uses speed")?,
+                props.get_bool("note independant")?,
             ))),
         },
     )]))
