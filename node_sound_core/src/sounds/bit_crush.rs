@@ -1,6 +1,8 @@
 use rodio::Source;
 use std::time::Duration;
 
+use crate::sound_map::SetSpeed;
+
 #[derive(Clone)]
 pub struct BitCrusher<I: Source<Item = f32>> {
     source: I,
@@ -44,4 +46,8 @@ impl<I: Source<Item = f32>> Source for BitCrusher<I> {
     fn total_duration(&self) -> Option<Duration> {
         self.source.total_duration()
     }
+}
+
+impl<I: Source<Item = f32>> SetSpeed<f32> for BitCrusher<I> {
+    fn set_speed(&mut self, _speed: f32) {}
 }

@@ -47,7 +47,7 @@ pub fn amplify_node() -> SoundNode {
 }
 pub fn amplify_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let cloned = props
-        .clone_sound_ref(props.get_source("audio 1")?)?
+        .clone_sound(props.get_source("audio 1")?)?
         .amplify(props.get_float("amplification")?);
     Ok(BTreeMap::from([(
         "out".to_string(),

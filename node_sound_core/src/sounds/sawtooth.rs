@@ -1,20 +1,24 @@
 use rodio::Source;
 
-use crate::constants::DEFAULT_SAMPLE_RATE;
+use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
 use std::time::Duration;
 
 #[derive(Clone, Debug)]
 pub struct SawToothWave {
     freq: f32,
     num_sample: usize,
+    speed: f32,
+    uses_speed: bool,
 }
 
 impl SawToothWave {
     #[inline]
-    pub fn new(freq: f32) -> Self {
+    pub fn new(freq: f32, uses_speed: bool) -> Self {
         Self {
             freq,
             num_sample: 0,
+            speed: 1.0,
+            uses_speed,
         }
     }
 }
@@ -50,5 +54,14 @@ impl Source for SawToothWave {
     #[inline]
     fn total_duration(&self) -> Option<Duration> {
         None
+    }
+}
+
+impl SetSpeed<f32> for SawToothWave {
+    fn set_speed(&mut self, speed: f32) {
+        if !self.uses_speed {
+            return;
+        }
+        self.speed = speed;
     }
 }

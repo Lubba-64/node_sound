@@ -17,6 +17,7 @@ pub enum DataType {
     MidiFile,
     Graph,
     Code,
+    Bool,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
@@ -48,6 +49,9 @@ pub enum ValueType {
         value: Option<Vec<f32>>,
         id: usize,
     },
+    Bool {
+        value: bool,
+    },
 }
 
 impl Default for &ValueType {
@@ -65,6 +69,7 @@ pub enum InputValueConfig {
     MidiFile {},
     Graph { value: Vec<f32> },
     Code { value: String },
+    Bool { value: bool },
 }
 
 impl Debug for ValueType {
@@ -97,6 +102,13 @@ impl Debug for ValueType {
                 .debug_struct("Code")
                 .field("value", &"Anonymous Code")
                 .finish(),
+            Self::Bool { value } => {
+                if *value {
+                    f.debug_struct("true").finish()
+                } else {
+                    f.debug_struct("false").finish()
+                }
+            }
         }
     }
 }
@@ -126,6 +138,13 @@ impl ValueType {
     pub fn try_to_duration(self) -> Result<Duration, String> {
         match self {
             ValueType::Duration { value } => Ok(value),
+            _ => Err("invalid cast".to_string()),
+        }
+    }
+
+    pub fn try_to_bool(self) -> Result<bool, String> {
+        match self {
+            ValueType::Bool { value } => Ok(value),
             _ => Err("invalid cast".to_string()),
         }
     }

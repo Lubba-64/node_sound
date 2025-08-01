@@ -37,6 +37,15 @@ pub fn wave_shaper_node() -> SoundNode {
                     },
                 },
             ),
+            (
+                "note independant".to_string(),
+                InputParameter {
+                    data_type: DataType::Float,
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "note independant".to_string(),
+                    value: InputValueConfig::Bool { value: false },
+                },
+            ),
         ]),
         outputs: BTreeMap::from([(
             "out".to_string(),
@@ -57,6 +66,7 @@ pub fn wave_shaper_logic(mut props: SoundNodeProps) -> SoundNodeResult {
                     props
                         .get_graph("graph")?
                         .unwrap_or(vec![0.01; WAVE_TABLE_SIZE]),
+                    props.get_bool("note independant")?,
                 )
                 .set_frequency(props.get_float("frequency")?),
             )),

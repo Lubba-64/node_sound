@@ -1,4 +1,4 @@
-use crate::constants::DEFAULT_SAMPLE_RATE;
+use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
 use rodio::Source;
 use std::time::Duration;
 
@@ -6,14 +6,18 @@ use std::time::Duration;
 pub struct TriangleWave {
     freq: f32,
     num_sample: usize,
+    speed: f32,
+    uses_speed: bool,
 }
 
 impl TriangleWave {
     #[inline]
-    pub fn new(freq: f32) -> Self {
+    pub fn new(freq: f32, uses_speed: bool) -> Self {
         Self {
             freq,
             num_sample: 0,
+            speed: 1.0,
+            uses_speed,
         }
     }
 }
@@ -24,7 +28,8 @@ impl Iterator for TriangleWave {
     #[inline]
     fn next(&mut self) -> Option<f32> {
         self.num_sample = self.num_sample.wrapping_add(1);
-        let value = (self.freq / 2.0 * self.num_sample as f32) / DEFAULT_SAMPLE_RATE as f32;
+        let value =
+            (self.freq / self.speed / 2.0 * self.num_sample as f32) / DEFAULT_SAMPLE_RATE as f32;
         Some((((value % 1.0) - 0.5).abs() * 4.0) - 1.0)
     }
 }
@@ -48,5 +53,14 @@ impl Source for TriangleWave {
     #[inline]
     fn total_duration(&self) -> Option<Duration> {
         None
+    }
+}
+
+impl SetSpeed<f32> for TriangleWave {
+    fn set_speed(&mut self, speed: f32) {
+        if !self.uses_speed {
+            return;
+        }
+        self.speed = speed;
     }
 }

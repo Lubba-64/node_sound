@@ -1,6 +1,8 @@
-use rodio::source::UniformSourceIterator;
 use rodio::Source;
+use rodio::source::UniformSourceIterator;
 use std::time::Duration;
+
+use crate::sound_map::SetSpeed;
 
 #[derive(Clone)]
 pub struct RepeatRefSource<I: Source<Item = f32>> {
@@ -72,4 +74,8 @@ impl<I: Source<Item = f32> + Clone> Source for RepeatRefSource<I> {
             .total_duration()
             .map(|d| d * self.repeat_count)
     }
+}
+
+impl<I: Source<Item = f32> + Clone> SetSpeed<f32> for RepeatRefSource<I> {
+    fn set_speed(&mut self, _speed: f32) {}
 }

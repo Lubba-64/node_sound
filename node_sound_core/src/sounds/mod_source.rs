@@ -1,6 +1,6 @@
 use rodio::Source;
 
-use crate::constants::DEFAULT_SAMPLE_RATE;
+use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
 use rodio::source::UniformSourceIterator;
 use std::time::Duration;
 
@@ -49,4 +49,8 @@ impl<I: Source<Item = f32>> Source for Mod<I> {
     fn total_duration(&self) -> Option<Duration> {
         None
     }
+}
+
+impl<I: Source<Item = f32>> SetSpeed<f32> for Mod<I> {
+    fn set_speed(&mut self, _speed: f32) {}
 }

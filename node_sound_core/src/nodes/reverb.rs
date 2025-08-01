@@ -55,7 +55,7 @@ pub fn reverb_node() -> SoundNode {
 }
 
 pub fn reverb_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound_ref(props.get_source("audio 1")?)?.reverb(
+    let cloned = props.clone_sound(props.get_source("audio 1")?)?.reverb(
         props.get_duration("duration")?,
         props.get_float("amplification")?,
     );

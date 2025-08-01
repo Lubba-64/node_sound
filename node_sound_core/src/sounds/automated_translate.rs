@@ -1,6 +1,6 @@
 use rodio::Source;
 
-use crate::constants::DEFAULT_SAMPLE_RATE;
+use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
 use rodio::source::UniformSourceIterator;
 use std::time::Duration;
 
@@ -20,12 +20,12 @@ pub struct AutomatedTranslateWave<
 }
 
 impl<
-        I: Source<Item = f32>,
-        I2: Source<Item = f32>,
-        I3: Source<Item = f32>,
-        I4: Source<Item = f32>,
-        I5: Source<Item = f32>,
-    > AutomatedTranslateWave<I, I2, I3, I4, I5>
+    I: Source<Item = f32>,
+    I2: Source<Item = f32>,
+    I3: Source<Item = f32>,
+    I4: Source<Item = f32>,
+    I5: Source<Item = f32>,
+> AutomatedTranslateWave<I, I2, I3, I4, I5>
 {
     #[inline]
     pub fn new(source: I, start_min: I2, start_max: I3, end_min: I4, end_max: I5) -> Self {
@@ -40,12 +40,12 @@ impl<
 }
 
 impl<
-        I: Source<Item = f32>,
-        I2: Source<Item = f32>,
-        I3: Source<Item = f32>,
-        I4: Source<Item = f32>,
-        I5: Source<Item = f32>,
-    > Iterator for AutomatedTranslateWave<I, I2, I3, I4, I5>
+    I: Source<Item = f32>,
+    I2: Source<Item = f32>,
+    I3: Source<Item = f32>,
+    I4: Source<Item = f32>,
+    I5: Source<Item = f32>,
+> Iterator for AutomatedTranslateWave<I, I2, I3, I4, I5>
 {
     type Item = f32;
 
@@ -83,12 +83,12 @@ impl<
 }
 
 impl<
-        I: Source<Item = f32>,
-        I2: Source<Item = f32>,
-        I3: Source<Item = f32>,
-        I4: Source<Item = f32>,
-        I5: Source<Item = f32>,
-    > Source for AutomatedTranslateWave<I, I2, I3, I4, I5>
+    I: Source<Item = f32>,
+    I2: Source<Item = f32>,
+    I3: Source<Item = f32>,
+    I4: Source<Item = f32>,
+    I5: Source<Item = f32>,
+> Source for AutomatedTranslateWave<I, I2, I3, I4, I5>
 {
     #[inline]
     fn current_frame_len(&self) -> Option<usize> {
@@ -109,4 +109,15 @@ impl<
     fn total_duration(&self) -> Option<Duration> {
         None
     }
+}
+
+impl<
+    I: Source<Item = f32>,
+    I2: Source<Item = f32>,
+    I3: Source<Item = f32>,
+    I4: Source<Item = f32>,
+    I5: Source<Item = f32>,
+> SetSpeed<f32> for AutomatedTranslateWave<I, I2, I3, I4, I5>
+{
+    fn set_speed(&mut self, _speed: f32) {}
 }

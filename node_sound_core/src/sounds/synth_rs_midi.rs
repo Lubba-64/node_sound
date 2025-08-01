@@ -1,12 +1,19 @@
-use crate::constants::DEFAULT_SAMPLE_RATE;
-use rodio::{source::UniformSourceIterator, Source};
+use crate::{
+    constants::{DEFAULT_SAMPLE_RATE, MIDDLE_C_FREQ},
+    sound_map::SetSpeed,
+};
+use rodio::{Source, source::UniformSourceIterator};
 use std::time::Duration;
 use synthrs::{midi::MidiSong, synthesizer::make_samples_from_midi, wave};
 
 #[derive(Clone)]
 pub struct MidiRenderer {
-    samples: Vec<f64>,
+    midi_samples: Vec<f64>,
     num_sample: usize,
+    speed: f32,
+    uses_speed: bool,
+    samples: Vec<f64>,
+    song: MidiSong,
 }
 
 impl MidiRenderer {
@@ -27,15 +34,20 @@ impl MidiRenderer {
                 frequency,
                 &samples,
                 samples.len(),
-                262.0,
+                MIDDLE_C_FREQ as f64,
                 DEFAULT_SAMPLE_RATE as usize,
             )
         };
-        let samples = make_samples_from_midi(sampler, DEFAULT_SAMPLE_RATE as usize, false, song)
-            .expect("midi play failed");
+        let midi_samples =
+            make_samples_from_midi(sampler, DEFAULT_SAMPLE_RATE as usize, false, song.clone())
+                .expect("midi play failed");
         Self {
-            samples,
+            midi_samples,
             num_sample: 0,
+            speed: 1.0,
+            uses_speed: false,
+            samples,
+            song,
         }
     }
 }
@@ -48,10 +60,8 @@ impl Iterator for MidiRenderer {
         self.num_sample = self.num_sample.wrapping_add(1);
         if self.num_sample >= self.samples.len() {
             self.num_sample = 0;
-            None
-        } else {
-            Some(self.samples[self.num_sample] as f32)
         }
+        Some(self.samples[self.num_sample] as f32)
     }
 }
 
@@ -74,5 +84,30 @@ impl Source for MidiRenderer {
     #[inline]
     fn total_duration(&self) -> Option<Duration> {
         None
+    }
+}
+
+impl SetSpeed<f32> for MidiRenderer {
+    fn set_speed(&mut self, speed: f32) {
+        if !self.uses_speed {
+            return;
+        }
+        self.speed = speed;
+        let sampler = |frequency: f64| {
+            wave::sampler(
+                frequency,
+                &self.samples,
+                self.samples.len(),
+                MIDDLE_C_FREQ as f64 / self.speed as f64,
+                DEFAULT_SAMPLE_RATE as usize,
+            )
+        };
+        self.midi_samples = make_samples_from_midi(
+            sampler,
+            DEFAULT_SAMPLE_RATE as usize,
+            false,
+            self.song.clone(),
+        )
+        .expect("midi play failed");
     }
 }

@@ -1,6 +1,6 @@
 use rodio::Source;
 
-use crate::constants::DEFAULT_SAMPLE_RATE;
+use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
 use rodio::source::UniformSourceIterator;
 use std::time::Duration;
 
@@ -57,4 +57,8 @@ impl<I: Source<Item = f32>, I2: Source<Item = f32>> Source for MergeChannels<I, 
     fn total_duration(&self) -> Option<Duration> {
         None
     }
+}
+
+impl<I: Source<Item = f32>, I2: Source<Item = f32>> SetSpeed<f32> for MergeChannels<I, I2> {
+    fn set_speed(&mut self, _speed: f32) {}
 }

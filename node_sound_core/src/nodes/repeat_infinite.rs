@@ -32,7 +32,7 @@ pub fn repeat_infinite_node() -> SoundNode {
 
 pub fn repeat_infinite_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let cloned = props
-        .clone_sound_ref(props.get_source("audio 1")?)?
+        .clone_sound(props.get_source("audio 1")?)?
         .repeat_infinite();
 
     Ok(BTreeMap::from([(

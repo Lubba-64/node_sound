@@ -47,7 +47,7 @@ pub fn repeat_n_node() -> SoundNode {
 
 pub fn repeat_n_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let repeat_count = props.get_float("n")?.floor() as usize;
-    let source = props.clone_sound_ref(props.get_source("audio 1")?)?;
+    let source = props.clone_sound(props.get_source("audio 1")?)?;
 
     let repeated_source = RepeatRefSource::new(source, repeat_count as u32);
 
