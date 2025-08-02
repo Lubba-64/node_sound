@@ -18,7 +18,7 @@ pub struct MidiRenderer {
 
 impl MidiRenderer {
     #[inline]
-    pub fn new<I: Source<Item = f32>>(source: I, song: MidiSong) -> Self {
+    pub fn new<I: Source<Item = f32>>(source: I, song: MidiSong, uses_speed: bool) -> Self {
         let mut source = UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE);
         let length = source
             .current_frame_len()
@@ -39,13 +39,13 @@ impl MidiRenderer {
             )
         };
         let midi_samples =
-            make_samples_from_midi(sampler, DEFAULT_SAMPLE_RATE as usize, false, song.clone())
+            make_samples_from_midi(sampler, DEFAULT_SAMPLE_RATE as usize, true, song.clone())
                 .expect("midi play failed");
         Self {
             midi_samples,
             num_sample: 0,
             speed: 1.0,
-            uses_speed: false,
+            uses_speed,
             samples,
             song,
         }
@@ -58,10 +58,10 @@ impl Iterator for MidiRenderer {
     #[inline]
     fn next(&mut self) -> Option<f32> {
         self.num_sample = self.num_sample.wrapping_add(1);
-        if self.num_sample >= self.samples.len() {
+        if self.num_sample >= self.midi_samples.len() {
             self.num_sample = 0;
         }
-        Some(self.samples[self.num_sample] as f32)
+        Some(self.midi_samples[self.num_sample] as f32)
     }
 }
 
@@ -95,10 +95,10 @@ impl SetSpeed<f32> for MidiRenderer {
         self.speed = speed;
         let sampler = |frequency: f64| {
             wave::sampler(
-                frequency,
+                frequency / self.speed as f64,
                 &self.samples,
                 self.samples.len(),
-                MIDDLE_C_FREQ as f64 / self.speed as f64,
+                MIDDLE_C_FREQ as f64,
                 DEFAULT_SAMPLE_RATE as usize,
             )
         };

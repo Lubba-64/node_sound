@@ -27,7 +27,8 @@ impl WavetableOscillator {
     }
 
     pub fn set_frequency(mut self, frequency: f32) -> Self {
-        self.index_increment = frequency * self.wave_table.len() as f32 / self.sample_rate as f32;
+        self.index_increment =
+            frequency * self.wave_table.len() as f32 / self.sample_rate as f32 / self.speed;
         self
     }
 

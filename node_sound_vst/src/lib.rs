@@ -473,7 +473,7 @@ impl Plugin for NodeSound {
                             Some(node_id) => {
                                 x.wav_file_path = Some((
                                     rfd::FileDialog::new()
-                                        .add_filter("audio", &["wav"])
+                                        .add_filter("audio", &["wav", "mp3", "flac", "ogg"])
                                         .pick_file()
                                         .unwrap_or_default()
                                         .to_str()
