@@ -30,7 +30,7 @@ impl Iterator for SawToothWave {
     fn next(&mut self) -> Option<f32> {
         self.num_sample = self.num_sample.wrapping_add(1);
 
-        let value = (self.freq * self.num_sample as f32) / DEFAULT_SAMPLE_RATE as f32;
+        let value = (self.freq * self.num_sample as f32) / self.speed / DEFAULT_SAMPLE_RATE as f32;
         Some((value % 2.0) - 1.0)
     }
 }

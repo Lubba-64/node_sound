@@ -1,6 +1,6 @@
 [package]
 name = "node_sound_core"
-version = "2.1.0"
+version = "3.0.0"
 authors = ["Lubba64"]
 edition = "2024"
 
@@ -34,4 +34,3 @@ egui_extras_xt = { version = "*", git = "https://github.com/xTibor/egui_extras_x
 arboard = "3.6.0"
 egui_plot = "0.31"
 egui_code_editor = "^0.2.13"
-rustfft = "6.4.0"

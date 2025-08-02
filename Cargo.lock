@@ -2573,7 +2573,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_core"
-version = "2.1.0"
+version = "3.0.0"
 dependencies = [
  "arboard",
  "dyn-clone",
@@ -2593,7 +2593,6 @@ dependencies = [
  "rfd",
  "rodio",
  "ron",
- "rustfft",
  "seeded-random",
  "serde",
  "synthrs",
@@ -2603,7 +2602,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_vst"
-version = "2.1.0"
+version = "3.0.0"
 dependencies = [
  "crossbeam",
  "ezing",
