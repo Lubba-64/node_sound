@@ -1,4 +1,5 @@
 use crate::constants::DEFAULT_SAMPLE_RATE;
+use crate::sound_map::SetSpeed;
 use rodio::Source;
 use std::sync::Mutex;
 use std::{sync::Arc, time::Duration};
@@ -47,4 +48,8 @@ impl Source for DawAutomationChannel {
     fn total_duration(&self) -> Option<Duration> {
         None
     }
+}
+
+impl SetSpeed<f32> for DawAutomationChannel {
+    fn set_speed(&mut self, _speed: f32) {}
 }

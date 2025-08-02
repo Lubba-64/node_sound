@@ -1,26 +1,35 @@
 use dyn_clone::DynClone;
-use rodio::source::{Source, Zero};
+use rodio::source::{Amplify, Delay, Mix, Repeat, SkipDuration, Source, Speed, TakeDuration, Zero};
 use rodio::{Decoder, Sample};
-use std::cell::RefCell;
 use std::io::ErrorKind;
-use std::rc::Rc;
 
 use crate::constants::DEFAULT_SAMPLE_RATE;
 
-pub trait RefSourceIter<Item: Sample>:
-    Source<Item = Item> + Iterator<Item = Item> + 'static
+pub trait SourceIter<Item: Sample>: Source<Item = Item> + Iterator<Item = Item> + 'static {}
+pub trait SourceIterDynClone<Item: Sample>: DynClone + SourceIter<Item> + SetSpeed<Item> {}
+impl<I> SourceIter<f32> for I where I: Iterator<Item = f32> + Source + 'static {}
+impl<T: std::io::Read + std::io::Seek + 'static> SourceIter<i16> for Decoder<T> {}
+impl<I> SourceIterDynClone<f32> for I where I: SourceIter<f32> + Clone + SetSpeed<f32> {}
+pub trait SetSpeed<Item: Sample>: Source<Item = Item> + Iterator<Item = Item> {
+    fn set_speed(&mut self, _speed: f32) {}
+}
+impl SetSpeed<f32> for Zero<f32> {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for Speed<I> {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for Delay<I> {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for SkipDuration<I> {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for Repeat<I> {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for TakeDuration<I> {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for Amplify<I> {}
+impl<I: Iterator<Item = f32> + Source, I2: Iterator<Item = f32> + Source> SetSpeed<f32>
+    for Mix<I, I2>
 {
 }
-pub trait RefSourceIterDynClone<Item: Sample>: DynClone + RefSourceIter<Item> {}
-impl<I> RefSourceIter<f32> for I where I: Iterator<Item = f32> + Source + 'static {}
-impl<T: std::io::Read + std::io::Seek + 'static> RefSourceIter<i16> for Decoder<T> {}
-impl<I> RefSourceIterDynClone<f32> for I where I: RefSourceIter<f32> + Clone {}
 
 pub struct GenericSource<T>
 where
     T: Sample,
 {
-    sound: Box<dyn RefSourceIterDynClone<T>>,
+    sound: Box<dyn SourceIterDynClone<T>>,
 }
 
 impl Clone for GenericSource<f32> {
@@ -36,7 +45,7 @@ impl<T> GenericSource<T>
 where
     T: Sample,
 {
-    pub fn new(sound: Box<dyn RefSourceIterDynClone<T>>) -> Self {
+    pub fn new(sound: Box<dyn SourceIterDynClone<T>>) -> Self {
         Self { sound: sound }
     }
 }
@@ -68,106 +77,8 @@ impl<'a, S: Sample> Source for GenericSource<S> {
 }
 
 #[derive(Clone)]
-pub struct RepeatSource<I: RefSourceIterDynClone<f32>> {
-    source: I,
-    pub repeats: usize,
-    repeat: usize,
-    last: Option<f32>,
-}
-
-impl<I: RefSourceIterDynClone<f32>> RepeatSource<I> {
-    pub fn new(source: I, repeats: usize) -> Self {
-        RepeatSource {
-            repeats: repeats,
-            source: source,
-            last: None,
-            repeat: 0,
-        }
-    }
-}
-
-impl<I: RefSourceIterDynClone<f32>> Source for RepeatSource<I> {
-    fn current_frame_len(&self) -> Option<usize> {
-        self.source.current_frame_len()
-    }
-
-    fn channels(&self) -> u16 {
-        self.source.channels()
-    }
-
-    fn sample_rate(&self) -> u32 {
-        self.source.sample_rate()
-    }
-
-    fn total_duration(&self) -> Option<std::time::Duration> {
-        self.source.total_duration()
-    }
-}
-
-impl<I: RefSourceIterDynClone<f32>> Iterator for RepeatSource<I> {
-    type Item = f32;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.repeat == 0 {
-            self.repeat = self.repeats;
-            self.last = self.source.next();
-        }
-        self.repeat -= 1;
-        return self.last;
-    }
-}
-
-pub struct RefSource {
-    source: Rc<RefCell<dyn RefSourceIterDynClone<f32>>>,
-}
-
-impl Clone for RefSource {
-    fn clone(&self) -> Self {
-        return RefSource {
-            source: Rc::new(RefCell::new(GenericSource::new(dyn_clone::clone_box(
-                &*self.source.borrow(),
-            )))),
-        };
-    }
-}
-
-unsafe impl Send for RefSource {}
-
-impl RefSource {
-    pub fn new<I: RefSourceIterDynClone<f32>>(source: Rc<RefCell<I>>) -> Self {
-        Self { source: source }
-    }
-}
-
-impl Iterator for RefSource {
-    type Item = f32;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.source.borrow_mut().next()
-    }
-}
-
-impl Source for RefSource {
-    fn current_frame_len(&self) -> Option<usize> {
-        self.source.borrow().current_frame_len()
-    }
-
-    fn channels(&self) -> u16 {
-        self.source.borrow().channels()
-    }
-
-    fn sample_rate(&self) -> u32 {
-        self.source.borrow().sample_rate()
-    }
-
-    fn total_duration(&self) -> Option<std::time::Duration> {
-        self.source.borrow().total_duration()
-    }
-}
-
-#[derive(Clone)]
 pub struct SoundQueue {
-    queue: Vec<Rc<RefCell<RepeatSource<GenericSource<f32>>>>>,
+    queue: Vec<GenericSource<f32>>,
 }
 
 impl Default for SoundQueue {
@@ -193,27 +104,12 @@ impl SoundQueue {
                 "Sound queue accessed an out of bounds element",
             )));
         }
-        self.queue[idx].borrow_mut().repeats += 1;
-        return Ok(self.queue[idx].borrow().source.clone());
+        return Ok(self.queue[idx].clone());
     }
 
-    pub fn push_sound(&mut self, sound: Box<dyn RefSourceIterDynClone<f32>>) -> usize {
-        self.queue.push(Rc::new(RefCell::new(RepeatSource::new(
-            GenericSource::new(sound),
-            0,
-        ))));
+    pub fn push_sound(&mut self, sound: Box<dyn SourceIterDynClone<f32>>) -> usize {
+        self.queue.push(GenericSource::new(sound));
         return self.queue.len() - 1;
-    }
-
-    pub fn clone_sound_ref(&mut self, idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> {
-        if idx >= self.queue.len() {
-            return Err(Box::new(std::io::Error::new(
-                ErrorKind::Other,
-                "Sound queue accessed an out of bounds element",
-            )));
-        }
-        self.queue[idx].borrow_mut().repeats += 1;
-        return Ok(RefSource::new(self.queue[idx].clone()));
     }
 
     pub fn sound_queue_len(&mut self) -> usize {
@@ -224,7 +120,9 @@ impl SoundQueue {
         self.queue.clear()
     }
 
-    pub fn set_repeats(&mut self, idx: usize, repeats: usize) {
-        self.queue[idx].borrow_mut().repeats = repeats;
+    pub fn set_speed(&mut self, speed: f32) {
+        for n in 0..self.queue.len() {
+            self.queue[n].sound.set_speed(speed);
+        }
     }
 }

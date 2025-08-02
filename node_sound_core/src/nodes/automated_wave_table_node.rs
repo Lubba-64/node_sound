@@ -3,7 +3,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::{samples_from_source, AutomatedWavetableOscillator};
+use crate::sounds::{AutomatedWavetableOscillator, samples_from_source};
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
@@ -40,6 +40,15 @@ pub fn automated_wave_table_node() -> SoundNode {
                     value: InputValueConfig::AudioSource {},
                 },
             ),
+            (
+                "note independant".to_string(),
+                InputParameter {
+                    data_type: DataType::Float,
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "note independant".to_string(),
+                    value: InputValueConfig::Bool { value: false },
+                },
+            ),
         ]),
         outputs: BTreeMap::from([(
             "out".to_string(),
@@ -53,10 +62,10 @@ pub fn automated_wave_table_node() -> SoundNode {
 
 pub fn automated_wave_table_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let samples = samples_from_source(
-        props.clone_sound_ref(props.get_source("audio 1")?)?,
+        props.clone_sound(props.get_source("audio 1")?)?,
         props.get_duration("duration")?.as_millis() as usize,
     );
-    let cloned = props.clone_sound_ref(props.get_source("frequency")?)?;
+    let cloned = props.clone_sound(props.get_source("frequency")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
@@ -64,6 +73,7 @@ pub fn automated_wave_table_logic(mut props: SoundNodeProps) -> SoundNodeResult 
                 DEFAULT_SAMPLE_RATE,
                 samples,
                 cloned,
+                props.get_bool("note independant")?,
             ))),
         },
     )]))

@@ -1,6 +1,7 @@
 use crate::constants::DEFAULT_SAMPLE_RATE;
-use rodio::source::UniformSourceIterator;
+use crate::sound_map::SetSpeed;
 use rodio::Source;
+use rodio::source::UniformSourceIterator;
 use std::time::Duration;
 
 #[derive(Clone)]
@@ -77,4 +78,8 @@ impl<I: Source<Item = f32>> Source for TranslateWave<I> {
     fn total_duration(&self) -> Option<Duration> {
         None
     }
+}
+
+impl<I: Source<Item = f32>> SetSpeed<f32> for TranslateWave<I> {
+    fn set_speed(&mut self, _speed: f32) {}
 }

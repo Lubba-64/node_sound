@@ -45,7 +45,7 @@ pub fn mod_node() -> SoundNode {
     }
 }
 pub fn mod_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound_ref(props.get_source("audio 1")?)?;
+    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {

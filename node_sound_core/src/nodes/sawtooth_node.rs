@@ -12,19 +12,30 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn sawtooth_node() -> SoundNode {
     SoundNode {
         name: "Sawtooth Wave".to_string(),
-        inputs: BTreeMap::from([(
-            "frequency".to_string(),
-            InputParameter {
-                data_type: DataType::Float,
-                kind: InputParamKind::ConnectionOrConstant,
-                name: "frequency".to_string(),
-                value: InputValueConfig::Float {
-                    value: 0.0,
-                    min: 0.0,
-                    max: MAX_FREQ,
+        inputs: BTreeMap::from([
+            (
+                "frequency".to_string(),
+                InputParameter {
+                    data_type: DataType::Float,
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "frequency".to_string(),
+                    value: InputValueConfig::Float {
+                        value: 0.0,
+                        min: 0.0,
+                        max: MAX_FREQ,
+                    },
                 },
-            },
-        )]),
+            ),
+            (
+                "note independant".to_string(),
+                InputParameter {
+                    data_type: DataType::Float,
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "note independant".to_string(),
+                    value: InputValueConfig::Bool { value: false },
+                },
+            ),
+        ]),
         outputs: BTreeMap::from([(
             "out".to_string(),
             Output {
@@ -38,7 +49,10 @@ pub fn sawtooth_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(SawToothWave::new(props.get_float("frequency")?))),
+            value: props.push_sound(Box::new(SawToothWave::new(
+                props.get_float("frequency")?,
+                props.get_bool("note independant")?,
+            ))),
         },
     )]))
 }

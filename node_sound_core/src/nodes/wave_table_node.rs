@@ -3,7 +3,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::{samples_from_source, WavetableOscillator};
+use crate::sounds::{WavetableOscillator, samples_from_source};
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
@@ -44,6 +44,15 @@ pub fn wave_table_node() -> SoundNode {
                     value: InputValueConfig::Duration { value: 1.0 },
                 },
             ),
+            (
+                "note independant".to_string(),
+                InputParameter {
+                    data_type: DataType::Float,
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "note independant".to_string(),
+                    value: InputValueConfig::Bool { value: false },
+                },
+            ),
         ]),
         outputs: BTreeMap::from([(
             "out".to_string(),
@@ -57,7 +66,7 @@ pub fn wave_table_node() -> SoundNode {
 
 pub fn wave_table_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let samples = samples_from_source(
-        props.clone_sound_ref(props.get_source("audio 1")?)?,
+        props.clone_sound(props.get_source("audio 1")?)?,
         props.get_duration("duration")?.as_millis() as usize,
     );
 
@@ -65,8 +74,12 @@ pub fn wave_table_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         "out".to_string(),
         ValueType::AudioSource {
             value: props.push_sound(Box::new(
-                WavetableOscillator::new(DEFAULT_SAMPLE_RATE, samples)
-                    .set_frequency(props.get_float("frequency")?),
+                WavetableOscillator::new(
+                    DEFAULT_SAMPLE_RATE,
+                    samples,
+                    props.get_bool("note independant")?,
+                )
+                .set_frequency(props.get_float("frequency")?),
             )),
         },
     )]))

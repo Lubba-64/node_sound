@@ -473,7 +473,7 @@ impl Plugin for NodeSound {
                             Some(node_id) => {
                                 x.wav_file_path = Some((
                                     rfd::FileDialog::new()
-                                        .add_filter("audio", &["wav"])
+                                        .add_filter("audio", &["wav", "mp3", "flac", "ogg"])
                                         .pick_file()
                                         .unwrap_or_default()
                                         .to_str()
@@ -555,18 +555,7 @@ impl Plugin for NodeSound {
                                         }
                                     };
                                     **sound_result_id = Some(source_id);
-                                    let sound = match graph
-                                        .state
-                                        ._unserializeable_state
-                                        .queue
-                                        .clone_sound(source_id.clone())
-                                    {
-                                        Err(_err) => GenericSource::new(Box::new(Zero::new(
-                                            1,
-                                            DEFAULT_SAMPLE_RATE,
-                                        ))),
-                                        Ok(x) => x,
-                                    };
+                                    let queue = &graph.state._unserializeable_state.queue;
 
                                     fn to_semitones(f1: f32, f2: f32) -> f32 {
                                         12.0 * f32::log2(f2 / f1)
@@ -587,9 +576,17 @@ impl Plugin for NodeSound {
                                                 + 0.2
                                                 + 0.1,
                                         ) / MIDDLE_C_FREQ;
-
+                                        let mut queue = queue.clone();
+                                        queue.set_speed(speed);
+                                        let sound = match queue.clone_sound(source_id.clone()) {
+                                            Err(_err) => GenericSource::new(Box::new(Zero::new(
+                                                1,
+                                                DEFAULT_SAMPLE_RATE,
+                                            ))),
+                                            Ok(x) => x,
+                                        };
                                         sound_buffers[vidx] = Some(UniformSourceIterator::new(
-                                            sound.clone().speed(speed),
+                                            sound.speed(speed),
                                             2,
                                             **sample_rate as u32,
                                         ));

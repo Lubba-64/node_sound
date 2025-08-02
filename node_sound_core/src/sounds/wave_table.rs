@@ -2,26 +2,33 @@ use std::time::Duration;
 
 use rodio::Source;
 
+use crate::sound_map::SetSpeed;
+
 #[derive(Clone)]
 pub struct WavetableOscillator {
     sample_rate: u32,
     wave_table: Vec<f32>,
     index: f32,
     index_increment: f32,
+    speed: f32,
+    uses_speed: bool,
 }
 
 impl WavetableOscillator {
-    pub fn new(sample_rate: u32, wave_table: Vec<f32>) -> WavetableOscillator {
+    pub fn new(sample_rate: u32, wave_table: Vec<f32>, uses_speed: bool) -> WavetableOscillator {
         return WavetableOscillator {
             sample_rate,
             wave_table,
             index: 0.0,
             index_increment: 0.0,
+            speed: 1.0,
+            uses_speed,
         };
     }
 
     pub fn set_frequency(mut self, frequency: f32) -> Self {
-        self.index_increment = frequency * self.wave_table.len() as f32 / self.sample_rate as f32;
+        self.index_increment =
+            frequency * self.wave_table.len() as f32 / self.sample_rate as f32 / self.speed;
         self
     }
 
@@ -68,5 +75,14 @@ impl Iterator for WavetableOscillator {
 
     fn next(&mut self) -> Option<Self::Item> {
         return self.get_sample();
+    }
+}
+
+impl SetSpeed<f32> for WavetableOscillator {
+    fn set_speed(&mut self, speed: f32) {
+        if !self.uses_speed {
+            return;
+        }
+        self.speed = speed;
     }
 }

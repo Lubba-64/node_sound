@@ -1,6 +1,6 @@
 [package]
 name = "node_sound_core"
-version = "2.1.0"
+version = "3.0.0"
 authors = ["Lubba64"]
 edition = "2024"
 
