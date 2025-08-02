@@ -62,6 +62,18 @@ pub struct NodeSound {
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
     current_idx: usize,
+    source_sound_buffers: Arc<
+        Mutex<
+            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
+                MIDI_NOTES_LEN as usize],
+        >,
+    >,
+    voice_sound_buffers: Arc<
+        Mutex<
+            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
+                MIDI_NOTES_LEN as usize],
+        >,
+    >,
 }
 
 pub struct PluginPresetState {
@@ -83,18 +95,6 @@ pub struct NodeSoundParams {
     /// The amplitude envelope release time. This is the same for every voice.
     #[id = "amp_rel"]
     amp_release_ms: FloatParam,
-    source_sound_buffers: Arc<
-        Mutex<
-            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
-                MIDI_NOTES_LEN as usize],
-        >,
-    >,
-    voice_sound_buffers: Arc<
-        Mutex<
-            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
-                MIDI_NOTES_LEN as usize],
-        >,
-    >,
     #[id = "a1"]
     pub a1: FloatParam,
     #[id = "a2"]
@@ -160,6 +160,8 @@ impl Default for NodeSound {
             next_internal_voice_id: 0,
             sample_rate: Arc::new(Mutex::new(48000.0)),
             current_idx: 0,
+            source_sound_buffers: Arc::new(Mutex::new([0; MIDI_NOTES_LEN as usize].map(|_| None))),
+            voice_sound_buffers: Arc::new(Mutex::new([0; MIDI_NOTES_LEN as usize].map(|_| None))),
         }
     }
 }
@@ -201,8 +203,6 @@ impl Default for NodeSoundParams {
         mkparam! {a18, "A18"}
 
         Self {
-            source_sound_buffers: Arc::new(Mutex::new([0; MIDI_NOTES_LEN as usize].map(|_| None))),
-            voice_sound_buffers: Arc::new(Mutex::new([0; MIDI_NOTES_LEN as usize].map(|_| None))),
             editor_state: EguiState::from_size(1280, 720),
             plugin_state: PluginPresetState {
                 graph: Arc::new(Mutex::new(
@@ -495,7 +495,7 @@ impl Plugin for NodeSound {
             self.params.editor_state.clone(),
             (
                 self.params.plugin_state.graph.clone(),
-                self.params.source_sound_buffers.clone(),
+                self.source_sound_buffers.clone(),
                 self.sample_rate.clone(),
                 self.params.root_sound_id.clone(),
                 false,
@@ -540,6 +540,7 @@ impl Plugin for NodeSound {
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
                     match graph.state.user_state.vst_output_node_id {
                         Some(outputid) => {
+                            graph.state._unserializeable_state.queue.clear();
                             match evaluate_node(
                                 &graph.state.editor_state.graph.clone(),
                                 outputid,
@@ -602,7 +603,9 @@ impl Plugin for NodeSound {
                         }
                     }
                     if clear {
-                        **sound_buffers = [0; MIDI_NOTES_LEN as usize].map(|_| None);
+                        for buffer in (**sound_buffers).iter_mut() {
+                            *buffer = None;
+                        }
                         graph.state._unserializeable_state.queue.clear();
                         **sound_result_id = None
                     }
@@ -800,13 +803,13 @@ impl Plugin for NodeSound {
             output[0][block_start..block_end].fill(0.0);
             output[1][block_start..block_end].fill(0.0);
 
-            let sound_buffers = match self.params.source_sound_buffers.lock() {
+            let sound_buffers = match self.source_sound_buffers.lock() {
                 Ok(x) => x,
                 Err(_x) => {
                     return ProcessStatus::KeepAlive;
                 }
             };
-            let mut voice_sound_buffers = match self.params.voice_sound_buffers.lock() {
+            let mut voice_sound_buffers = match self.voice_sound_buffers.lock() {
                 Ok(x) => x,
                 Err(_x) => {
                     return ProcessStatus::KeepAlive;
