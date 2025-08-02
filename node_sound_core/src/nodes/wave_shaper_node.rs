@@ -57,19 +57,18 @@ pub fn wave_shaper_node() -> SoundNode {
     }
 }
 pub fn wave_shaper_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let mut audio = WavetableOscillator::new(
+        DEFAULT_SAMPLE_RATE,
+        props
+            .get_graph("graph")?
+            .unwrap_or(vec![0.01; WAVE_TABLE_SIZE]),
+        props.get_bool("note independant")?,
+    );
+    audio.set_frequency(props.get_float("frequency")?);
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(
-                WavetableOscillator::new(
-                    DEFAULT_SAMPLE_RATE,
-                    props
-                        .get_graph("graph")?
-                        .unwrap_or(vec![0.01; WAVE_TABLE_SIZE]),
-                    props.get_bool("note independant")?,
-                )
-                .set_frequency(props.get_float("frequency")?),
-            )),
+            value: props.push_sound(Box::new(audio)),
         },
     )]))
 }

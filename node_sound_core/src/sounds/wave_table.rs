@@ -12,6 +12,7 @@ pub struct WavetableOscillator {
     index_increment: f32,
     speed: f32,
     uses_speed: bool,
+    freq: f32,
 }
 
 impl WavetableOscillator {
@@ -23,13 +24,14 @@ impl WavetableOscillator {
             index_increment: 0.0,
             speed: 1.0,
             uses_speed,
+            freq: 1.0,
         };
     }
 
-    pub fn set_frequency(mut self, frequency: f32) -> Self {
+    pub fn set_frequency(&mut self, frequency: f32) {
+        self.freq = frequency;
         self.index_increment =
             frequency * self.wave_table.len() as f32 / self.sample_rate as f32 / self.speed;
-        self
     }
 
     fn get_sample(&mut self) -> Option<f32> {
@@ -84,5 +86,6 @@ impl SetSpeed<f32> for WavetableOscillator {
             return;
         }
         self.speed = speed;
+        self.set_frequency(self.freq);
     }
 }

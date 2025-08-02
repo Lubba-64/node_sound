@@ -69,18 +69,16 @@ pub fn wave_table_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         props.clone_sound(props.get_source("audio 1")?)?,
         props.get_duration("duration")?.as_millis() as usize,
     );
-
+    let mut audio = WavetableOscillator::new(
+        DEFAULT_SAMPLE_RATE,
+        samples,
+        props.get_bool("note independant")?,
+    );
+    audio.set_frequency(props.get_float("frequency")?);
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(
-                WavetableOscillator::new(
-                    DEFAULT_SAMPLE_RATE,
-                    samples,
-                    props.get_bool("note independant")?,
-                )
-                .set_frequency(props.get_float("frequency")?),
-            )),
+            value: props.push_sound(Box::new(audio)),
         },
     )]))
 }
