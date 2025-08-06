@@ -6,7 +6,7 @@ use crate::sound_map::SetSpeed;
 
 #[derive(Clone)]
 pub struct RepeatRefSource<I: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
+    source: UniformSourceIterator<I>,
     repeat_count: u32,
     current_repeat: u32,
     original_source: I,
@@ -54,8 +54,8 @@ impl<I: Source<Item = f32> + Clone> Iterator for RepeatRefSource<I> {
 
 impl<I: Source<Item = f32> + Clone> Source for RepeatRefSource<I> {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        self.source.current_frame_len()
+    fn current_span_len(&self) -> Option<usize> {
+        self.source.current_span_len()
     }
 
     #[inline]
@@ -76,6 +76,6 @@ impl<I: Source<Item = f32> + Clone> Source for RepeatRefSource<I> {
     }
 }
 
-impl<I: Source<Item = f32> + Clone> SetSpeed<f32> for RepeatRefSource<I> {
+impl<I: Source<Item = f32> + Clone> SetSpeed for RepeatRefSource<I> {
     fn set_speed(&mut self, _speed: f32) {}
 }

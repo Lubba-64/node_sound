@@ -31,8 +31,8 @@ impl<I: Source<Item = f32>> Iterator for BitCrusher<I> {
 
 impl<I: Source<Item = f32>> Source for BitCrusher<I> {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        self.source.current_frame_len()
+    fn current_span_len(&self) -> Option<usize> {
+        self.source.current_span_len()
     }
     #[inline]
     fn channels(&self) -> u16 {
@@ -48,6 +48,6 @@ impl<I: Source<Item = f32>> Source for BitCrusher<I> {
     }
 }
 
-impl<I: Source<Item = f32>> SetSpeed<f32> for BitCrusher<I> {
+impl<I: Source<Item = f32>> SetSpeed for BitCrusher<I> {
     fn set_speed(&mut self, _speed: f32) {}
 }

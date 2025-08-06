@@ -6,7 +6,7 @@ use std::time::Duration;
 
 #[derive(Clone)]
 pub struct Wrapper<I: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
+    source: UniformSourceIterator<I>,
     last: Option<f32>,
 }
 
@@ -45,7 +45,7 @@ impl<I: Source<Item = f32>> Iterator for Wrapper<I> {
 
 impl<I: Source<Item = f32>> Source for Wrapper<I> {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -65,6 +65,6 @@ impl<I: Source<Item = f32>> Source for Wrapper<I> {
     }
 }
 
-impl<I: Source<Item = f32>> SetSpeed<f32> for Wrapper<I> {
+impl<I: Source<Item = f32>> SetSpeed for Wrapper<I> {
     fn set_speed(&mut self, _speed: f32) {}
 }

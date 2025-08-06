@@ -38,7 +38,7 @@ impl Iterator for Noise {
 
 impl Source for Noise {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -58,6 +58,6 @@ impl Source for Noise {
     }
 }
 
-impl SetSpeed<f32> for Noise {
+impl SetSpeed for Noise {
     fn set_speed(&mut self, _speed: f32) {}
 }

@@ -39,7 +39,7 @@ impl Iterator for ReverseSource {
 
 impl Source for ReverseSource {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -59,6 +59,6 @@ impl Source for ReverseSource {
     }
 }
 
-impl SetSpeed<f32> for ReverseSource {
+impl SetSpeed for ReverseSource {
     fn set_speed(&mut self, _speed: f32) {}
 }

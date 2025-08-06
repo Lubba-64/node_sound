@@ -6,7 +6,7 @@ use std::time::Duration;
 
 #[derive(Clone)]
 pub struct TranslateWave<I: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
+    source: UniformSourceIterator<I>,
     start_min: f32,
     start_max: f32,
     end_min: f32,
@@ -60,7 +60,7 @@ impl<I: Source<Item = f32>> Iterator for TranslateWave<I> {
 
 impl<I: Source<Item = f32>> Source for TranslateWave<I> {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -80,6 +80,6 @@ impl<I: Source<Item = f32>> Source for TranslateWave<I> {
     }
 }
 
-impl<I: Source<Item = f32>> SetSpeed<f32> for TranslateWave<I> {
+impl<I: Source<Item = f32>> SetSpeed for TranslateWave<I> {
     fn set_speed(&mut self, _speed: f32) {}
 }

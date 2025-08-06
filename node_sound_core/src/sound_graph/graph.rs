@@ -6,6 +6,7 @@ use crate::nodes::{NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_map::SoundQueue;
+use crate::sounds::AudioSampleDatabase;
 use eframe::egui::{self, DragValue, Vec2, Widget};
 use eframe::egui::{Checkbox, Pos2, WidgetText};
 use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
@@ -51,6 +52,9 @@ pub struct SoundGraphUserState {
     pub is_saved: bool,
     pub vst_output_node_id: Option<NodeId>,
     pub wave_shaper_graph_id: usize,
+    pub refresh_database: bool,
+    pub file_database: AudioSampleDatabase,
+    // unserializeable but must be included in user state for graph trait access.
     #[serde(skip)]
     pub files: Arc<Mutex<FileManager>>,
 }
@@ -262,6 +266,7 @@ impl WidgetValueTrait for ValueType {
                                         Err(_x) => {}
                                         Ok(x2) => *value = Some((x.0.clone(), x2)),
                                     };
+                                    user_state.refresh_database = true;
                                 }
                             }
                             None => {}
@@ -292,6 +297,7 @@ impl WidgetValueTrait for ValueType {
                                         Err(_x) => {}
                                         Ok(x2) => *value = Some((x.0.clone(), x2)),
                                     };
+                                    user_state.refresh_database = true;
                                 }
                             }
                             None => {}
@@ -406,6 +412,27 @@ impl SoundNodeGraph {
         SoundNodeGraph::default()
     }
 
+    fn get_active_samples(&self) -> HashSet<String> {
+        let mut active_samples = HashSet::new();
+
+        for node in self.state.editor_state.graph.iter_nodes() {
+            for input in self.state.editor_state.graph.nodes[node]
+                .inputs
+                .iter()
+                .map(|(_x, y)| y)
+            {
+                if let ValueType::AudioFile {
+                    value: Some((path, _)),
+                } = &self.state.editor_state.graph.get_input(*input).value
+                {
+                    active_samples.insert(path.clone());
+                }
+            }
+        }
+
+        active_samples
+    }
+
     fn update_output_node(&mut self) {
         let mut found = false;
         for node in self.state.editor_state.graph.iter_nodes() {
@@ -424,6 +451,14 @@ impl SoundNodeGraph {
     }
 
     pub fn update_root(&mut self, ctx: &egui::Context) {
+        if self.state.user_state.refresh_database {
+            let active_samples = self.get_active_samples();
+            self.state
+                .user_state
+                .file_database
+                .cleanup_unused_samples(&active_samples);
+            self.state.user_state.refresh_database = false;
+        }
         self.update_output_node();
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -540,7 +575,7 @@ pub fn evaluate_node<'a>(
 
     let res = (node.1)(SoundNodeProps {
         inputs: input_to_name,
-        state: &mut state._unserializeable_state,
+        state,
     })?;
 
     for (name, value) in &res {

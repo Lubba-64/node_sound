@@ -36,7 +36,7 @@ impl Iterator for TriangleWave {
 
 impl Source for TriangleWave {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -56,7 +56,7 @@ impl Source for TriangleWave {
     }
 }
 
-impl SetSpeed<f32> for TriangleWave {
+impl SetSpeed for TriangleWave {
     fn set_speed(&mut self, speed: f32) {
         if !self.uses_speed {
             return;

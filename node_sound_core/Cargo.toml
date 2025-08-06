@@ -5,7 +5,7 @@ authors = ["Lubba64"]
 edition = "2024"
 
 [dependencies]
-rodio = { version = "0.19", features = ["wasm-bindgen"] }
+rodio = { version = "0.21.1", features = ["wav", "mp3", "flac"] }
 eframe = { version = "0.31", features = ["ron", "serde"] }
 egui_node_graph_2 = { version = "0.4.1", git = "https://github.com/Lubba-64/egui_node_graph_2.git", features = [
   "persistence",

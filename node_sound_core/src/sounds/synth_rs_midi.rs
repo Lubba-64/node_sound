@@ -21,7 +21,7 @@ impl MidiRenderer {
     pub fn new<I: Source<Item = f32>>(source: I, song: MidiSong, uses_speed: bool) -> Self {
         let mut source = UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE);
         let length = source
-            .current_frame_len()
+            .current_span_len()
             .unwrap_or(DEFAULT_SAMPLE_RATE as usize) as f64
             / DEFAULT_SAMPLE_RATE as f64;
         let num_samples = (DEFAULT_SAMPLE_RATE as f64 * length).floor() as usize;
@@ -67,7 +67,7 @@ impl Iterator for MidiRenderer {
 
 impl Source for MidiRenderer {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -87,7 +87,7 @@ impl Source for MidiRenderer {
     }
 }
 
-impl SetSpeed<f32> for MidiRenderer {
+impl SetSpeed for MidiRenderer {
     fn set_speed(&mut self, speed: f32) {
         if !self.uses_speed {
             return;

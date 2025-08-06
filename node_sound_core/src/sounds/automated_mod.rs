@@ -6,8 +6,8 @@ use std::time::Duration;
 
 #[derive(Clone)]
 pub struct AutomatedMod<I: Source<Item = f32>, I2: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
-    mod_by: UniformSourceIterator<I2, I2::Item>,
+    source: UniformSourceIterator<I>,
+    mod_by: UniformSourceIterator<I2>,
 }
 
 impl<I: Source<Item = f32>, I2: Source<Item = f32>> AutomatedMod<I, I2> {
@@ -34,7 +34,7 @@ impl<I: Source<Item = f32>, I2: Source<Item = f32>> Iterator for AutomatedMod<I,
 
 impl<I: Source<Item = f32>, I2: Source<Item = f32>> Source for AutomatedMod<I, I2> {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -54,6 +54,6 @@ impl<I: Source<Item = f32>, I2: Source<Item = f32>> Source for AutomatedMod<I, I
     }
 }
 
-impl<I: Source<Item = f32>, I2: Source<Item = f32>> SetSpeed<f32> for AutomatedMod<I, I2> {
+impl<I: Source<Item = f32>, I2: Source<Item = f32>> SetSpeed for AutomatedMod<I, I2> {
     fn set_speed(&mut self, _speed: f32) {}
 }

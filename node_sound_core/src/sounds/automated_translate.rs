@@ -12,11 +12,11 @@ pub struct AutomatedTranslateWave<
     I4: Source<Item = f32>,
     I5: Source<Item = f32>,
 > {
-    source: UniformSourceIterator<I, I::Item>,
-    start_min: UniformSourceIterator<I2, I::Item>,
-    start_max: UniformSourceIterator<I3, I::Item>,
-    end_min: UniformSourceIterator<I4, I::Item>,
-    end_max: UniformSourceIterator<I5, I::Item>,
+    source: UniformSourceIterator<I>,
+    start_min: UniformSourceIterator<I2>,
+    start_max: UniformSourceIterator<I3>,
+    end_min: UniformSourceIterator<I4>,
+    end_max: UniformSourceIterator<I5>,
 }
 
 impl<
@@ -91,7 +91,7 @@ impl<
 > Source for AutomatedTranslateWave<I, I2, I3, I4, I5>
 {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -117,7 +117,7 @@ impl<
     I3: Source<Item = f32>,
     I4: Source<Item = f32>,
     I5: Source<Item = f32>,
-> SetSpeed<f32> for AutomatedTranslateWave<I, I2, I3, I4, I5>
+> SetSpeed for AutomatedTranslateWave<I, I2, I3, I4, I5>
 {
     fn set_speed(&mut self, _speed: f32) {}
 }

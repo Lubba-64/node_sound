@@ -6,7 +6,7 @@ use std::time::Duration;
 
 #[derive(Clone)]
 pub struct Abs<I: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
+    source: UniformSourceIterator<I>,
 }
 
 impl<I: Source<Item = f32>> Abs<I> {
@@ -29,7 +29,7 @@ impl<I: Source<Item = f32>> Iterator for Abs<I> {
 
 impl<I: Source<Item = f32>> Source for Abs<I> {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -49,6 +49,6 @@ impl<I: Source<Item = f32>> Source for Abs<I> {
     }
 }
 
-impl<I: Source<Item = f32>> SetSpeed<f32> for Abs<I> {
+impl<I: Source<Item = f32>> SetSpeed for Abs<I> {
     fn set_speed(&mut self, _speed: f32) {}
 }

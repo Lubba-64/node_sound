@@ -37,7 +37,7 @@ impl Iterator for SawToothWave {
 
 impl Source for SawToothWave {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -57,7 +57,7 @@ impl Source for SawToothWave {
     }
 }
 
-impl SetSpeed<f32> for SawToothWave {
+impl SetSpeed for SawToothWave {
     fn set_speed(&mut self, speed: f32) {
         if !self.uses_speed {
             return;

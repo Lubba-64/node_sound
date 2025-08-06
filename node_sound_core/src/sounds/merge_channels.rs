@@ -6,8 +6,8 @@ use std::time::Duration;
 
 #[derive(Clone)]
 pub struct MergeChannels<I: Source<Item = f32>, I2: Source<Item = f32>> {
-    source1: UniformSourceIterator<I, I::Item>,
-    source2: UniformSourceIterator<I2, I2::Item>,
+    source1: UniformSourceIterator<I>,
+    source2: UniformSourceIterator<I2>,
     flop: bool,
 }
 
@@ -39,7 +39,7 @@ impl<I: Source<Item = f32>, I2: Source<Item = f32>> Iterator for MergeChannels<I
 
 impl<I: Source<Item = f32>, I2: Source<Item = f32>> Source for MergeChannels<I, I2> {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -59,6 +59,6 @@ impl<I: Source<Item = f32>, I2: Source<Item = f32>> Source for MergeChannels<I, 
     }
 }
 
-impl<I: Source<Item = f32>, I2: Source<Item = f32>> SetSpeed<f32> for MergeChannels<I, I2> {
+impl<I: Source<Item = f32>, I2: Source<Item = f32>> SetSpeed for MergeChannels<I, I2> {
     fn set_speed(&mut self, _speed: f32) {}
 }

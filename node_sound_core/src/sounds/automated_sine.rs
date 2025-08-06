@@ -9,7 +9,7 @@ use crate::sound_map::SetSpeed;
 
 #[derive(Clone)]
 pub struct AutomatedSineWave<T: rodio::Source<Item = f32>> {
-    freq: UniformSourceIterator<T, f32>,
+    freq: UniformSourceIterator<T>,
     num_sample: usize,
     uses_speed: bool,
     speed: f32,
@@ -44,7 +44,7 @@ impl<T: rodio::Source<Item = f32>> Iterator for AutomatedSineWave<T> {
 
 impl<T: rodio::Source<Item = f32>> Source for AutomatedSineWave<T> {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -64,7 +64,7 @@ impl<T: rodio::Source<Item = f32>> Source for AutomatedSineWave<T> {
     }
 }
 
-impl<I: Source<Item = f32>> SetSpeed<f32> for AutomatedSineWave<I> {
+impl<I: Source<Item = f32>> SetSpeed for AutomatedSineWave<I> {
     fn set_speed(&mut self, speed: f32) {
         if !self.uses_speed {
             return;

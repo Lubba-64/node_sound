@@ -38,7 +38,7 @@ impl Iterator for SineWave {
 
 impl Source for SineWave {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -58,7 +58,7 @@ impl Source for SineWave {
     }
 }
 
-impl SetSpeed<f32> for SineWave {
+impl SetSpeed for SineWave {
     fn set_speed(&mut self, speed: f32) {
         if !self.uses_speed {
             return;

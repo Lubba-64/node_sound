@@ -11,6 +11,7 @@ use node_sound_core::{
         graph_types::ValueType,
     },
     sound_map::GenericSource,
+    sounds::helpers::{from_semitones, to_semitones},
 };
 use rodio::{
     Source,
@@ -62,18 +63,10 @@ pub struct NodeSound {
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
     current_idx: usize,
-    source_sound_buffers: Arc<
-        Mutex<
-            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
-                MIDI_NOTES_LEN as usize],
-        >,
-    >,
-    voice_sound_buffers: Arc<
-        Mutex<
-            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
-                MIDI_NOTES_LEN as usize],
-        >,
-    >,
+    source_sound_buffers:
+        Arc<Mutex<[Option<UniformSourceIterator<Speed<GenericSource>>>; MIDI_NOTES_LEN as usize]>>,
+    voice_sound_buffers:
+        Arc<Mutex<[Option<UniformSourceIterator<Speed<GenericSource>>>; MIDI_NOTES_LEN as usize]>>,
 }
 
 pub struct PluginPresetState {
@@ -540,63 +533,52 @@ impl Plugin for NodeSound {
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
                     match graph.state.user_state.vst_output_node_id {
                         Some(outputid) => {
-                            graph.state._unserializeable_state.queue.clear();
-                            match evaluate_node(
-                                &graph.state.editor_state.graph.clone(),
-                                outputid,
-                                &mut HashMap::new(),
-                                &get_nodes(),
-                                &mut graph.state,
-                            ) {
-                                Ok(val) => {
-                                    let source_id = match val {
-                                        ValueType::AudioSource { value } => value,
-                                        _ => {
-                                            return;
-                                        }
-                                    };
-                                    **sound_result_id = Some(source_id);
-                                    let queue = &graph.state._unserializeable_state.queue;
-
-                                    fn to_semitones(f1: f32, f2: f32) -> f32 {
-                                        12.0 * f32::log2(f2 / f1)
+                            for vidx in 0..MIDI_NOTES_LEN as usize {
+                                let speed = from_semitones(
+                                    MIDDLE_C_FREQ,
+                                    to_semitones(midi_note_to_freq(vidx as u8), MIDDLE_C_FREQ)
+                                        + 10.5
+                                        + 1.8
+                                        - 0.5
+                                        + 0.2
+                                        + 0.1,
+                                ) / MIDDLE_C_FREQ;
+                                graph.state._unserializeable_state.queue.clear();
+                                let val = match evaluate_node(
+                                    &graph.state.editor_state.graph.clone(),
+                                    outputid,
+                                    &mut HashMap::new(),
+                                    &get_nodes(),
+                                    &mut graph.state,
+                                ) {
+                                    Ok(val) => val,
+                                    Err(_err) => {
+                                        clear = true;
+                                        break;
                                     }
-                                    fn from_semitones(f2: f32, n: f32) -> f32 {
-                                        f2 / 2.0_f32.powf(n / 12.0)
+                                };
+                                let source_id = match val {
+                                    ValueType::AudioSource { value } => value,
+                                    _ => {
+                                        return;
                                     }
-
-                                    for vidx in 0..MIDI_NOTES_LEN as usize {
-                                        let speed = from_semitones(
-                                            MIDDLE_C_FREQ,
-                                            to_semitones(
-                                                midi_note_to_freq(vidx as u8),
-                                                MIDDLE_C_FREQ,
-                                            ) + 10.5
-                                                + 1.8
-                                                - 0.5
-                                                + 0.2
-                                                + 0.1,
-                                        ) / MIDDLE_C_FREQ;
-                                        let mut queue = queue.clone();
-                                        queue.set_speed(speed);
-                                        let sound = match queue.clone_sound(source_id.clone()) {
-                                            Err(_err) => GenericSource::new(Box::new(Zero::new(
-                                                1,
-                                                DEFAULT_SAMPLE_RATE,
-                                            ))),
-                                            Ok(x) => x,
-                                        };
-                                        sound_buffers[vidx] = Some(UniformSourceIterator::new(
-                                            sound.speed(speed),
-                                            2,
-                                            **sample_rate as u32,
-                                        ));
-                                    }
-                                }
-                                Err(_err) => {
-                                    clear = true;
-                                }
-                            };
+                                };
+                                **sound_result_id = Some(source_id);
+                                let queue = &mut graph.state._unserializeable_state.queue;
+                                queue.set_speed(speed);
+                                let sound = match queue.clone_sound(source_id.clone()) {
+                                    Err(_err) => GenericSource::new(Box::new(Zero::new(
+                                        1,
+                                        DEFAULT_SAMPLE_RATE,
+                                    ))),
+                                    Ok(x) => x,
+                                };
+                                sound_buffers[vidx] = Some(UniformSourceIterator::new(
+                                    sound.speed(speed),
+                                    2,
+                                    **sample_rate as u32,
+                                ));
+                            }
                         }
                         None => {
                             clear = true;

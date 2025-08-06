@@ -38,7 +38,7 @@ impl Iterator for SquareWave {
 
 impl Source for SquareWave {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -58,7 +58,7 @@ impl Source for SquareWave {
     }
 }
 
-impl SetSpeed<f32> for SquareWave {
+impl SetSpeed for SquareWave {
     fn set_speed(&mut self, speed: f32) {
         if !self.uses_speed {
             return;

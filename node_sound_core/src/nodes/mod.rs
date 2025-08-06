@@ -19,7 +19,7 @@ use square_node::{square_logic, square_node};
 mod delay_node;
 use crate::{
     sound_graph::{
-        graph::UnserializeableGraphState,
+        graph::SoundNodeGraphState,
         graph_types::{InputParameter, Output, ValueType},
     },
     sound_map::{GenericSource, SourceIterDynClone},
@@ -96,19 +96,16 @@ pub use bit_crush_node::{bit_crusher_logic, bit_crusher_node};
 
 pub struct SoundNodeProps<'a> {
     pub inputs: HashMap<String, ValueType>,
-    pub state: &'a mut UnserializeableGraphState,
+    pub state: &'a mut SoundNodeGraphState,
 }
 
 impl<'a> SoundNodeProps<'a> {
-    fn push_sound(&mut self, sound: Box<dyn SourceIterDynClone<f32>>) -> usize {
-        self.state.queue.push_sound(sound)
+    fn push_sound(&mut self, sound: Box<dyn SourceIterDynClone>) -> usize {
+        self.state._unserializeable_state.queue.push_sound(sound)
     }
 
-    fn clone_sound(
-        &mut self,
-        idx: usize,
-    ) -> Result<GenericSource<f32>, Box<dyn std::error::Error>> {
-        self.state.queue.clone_sound(idx)
+    fn clone_sound(&mut self, idx: usize) -> Result<GenericSource, Box<dyn std::error::Error>> {
+        self.state._unserializeable_state.queue.clone_sound(idx)
     }
 
     fn get_float(&self, name: &str) -> Result<f32, Box<dyn std::error::Error>> {

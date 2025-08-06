@@ -8,7 +8,7 @@ use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
 pub struct AutomatedWavetableOscillator<I: Source<Item = f32>> {
     sample_rate: u32,
     wave_table: Vec<f32>,
-    freq: UniformSourceIterator<I, f32>,
+    freq: UniformSourceIterator<I>,
     index: f32,
     uses_speed: bool,
     speed: f32,
@@ -61,7 +61,7 @@ impl<I: Source<Item = f32>> Source for AutomatedWavetableOscillator<I> {
         return self.sample_rate;
     }
 
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         return None;
     }
 
@@ -78,7 +78,7 @@ impl<I: Source<Item = f32>> Iterator for AutomatedWavetableOscillator<I> {
     }
 }
 
-impl<I: Source<Item = f32>> SetSpeed<f32> for AutomatedWavetableOscillator<I> {
+impl<I: Source<Item = f32>> SetSpeed for AutomatedWavetableOscillator<I> {
     fn set_speed(&mut self, speed: f32) {
         if !self.uses_speed {
             return;

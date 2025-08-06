@@ -41,7 +41,7 @@ pub fn file_node() -> SoundNode {
 }
 
 pub fn file_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let file = match props.get_file("file")? {
+    let (name, data) = match props.get_file("file")? {
         None => {
             return Ok(BTreeMap::from([(
                 "out".to_string(),
@@ -51,13 +51,30 @@ pub fn file_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         Some(x) => x,
     };
 
+    props
+        .state
+        .user_state
+        .file_database
+        .add_sample(name.clone(), data);
+
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(CloneableDecoder::new(
-                file.1.clone(),
-                props.get_bool("note independant")?,
-            ))),
+            value: props.push_sound(Box::new(
+                match CloneableDecoder::new(
+                    &props.state.user_state.file_database,
+                    name,
+                    props.get_float("note independant")? != 0.0,
+                ) {
+                    None => {
+                        return Err(Box::new(std::io::Error::new(
+                            std::io::ErrorKind::NotFound,
+                            "Sample not found in database after adding.",
+                        )));
+                    }
+                    Some(x) => x,
+                },
+            )),
         },
     )]))
 }

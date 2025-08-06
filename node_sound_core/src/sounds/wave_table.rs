@@ -63,7 +63,7 @@ impl Source for WavetableOscillator {
         return self.sample_rate;
     }
 
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         return None;
     }
 
@@ -80,7 +80,7 @@ impl Iterator for WavetableOscillator {
     }
 }
 
-impl SetSpeed<f32> for WavetableOscillator {
+impl SetSpeed for WavetableOscillator {
     fn set_speed(&mut self, speed: f32) {
         if !self.uses_speed {
             return;

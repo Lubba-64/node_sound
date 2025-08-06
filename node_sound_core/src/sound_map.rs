@@ -1,66 +1,55 @@
 use dyn_clone::DynClone;
 use rodio::source::{Amplify, Delay, Mix, Repeat, SkipDuration, Source, Speed, TakeDuration, Zero};
-use rodio::{Decoder, Sample};
 use std::io::ErrorKind;
 
 use crate::constants::DEFAULT_SAMPLE_RATE;
 
-pub trait SourceIter<Item: Sample>: Source<Item = Item> + Iterator<Item = Item> + 'static {}
-pub trait SourceIterDynClone<Item: Sample>: DynClone + SourceIter<Item> + SetSpeed<Item> {}
-impl<I> SourceIter<f32> for I where I: Iterator<Item = f32> + Source + 'static {}
-impl<T: std::io::Read + std::io::Seek + 'static> SourceIter<i16> for Decoder<T> {}
-impl<I> SourceIterDynClone<f32> for I where I: SourceIter<f32> + Clone + SetSpeed<f32> {}
-pub trait SetSpeed<Item: Sample>: Source<Item = Item> + Iterator<Item = Item> {
+pub trait SourceIter: Source + Iterator<Item = f32> + 'static {}
+pub trait SourceIterDynClone: DynClone + SourceIter<Item = f32> + SetSpeed {}
+impl<I> SourceIter for I where I: Iterator<Item = f32> + Source + 'static {}
+impl<I> SourceIterDynClone for I where I: SourceIter + Clone + SetSpeed {}
+pub trait SetSpeed: Source + Iterator<Item = f32> {
     fn set_speed(&mut self, _speed: f32) {}
 }
-impl SetSpeed<f32> for Zero<f32> {}
-impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for Speed<I> {}
-impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for Delay<I> {}
-impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for SkipDuration<I> {}
-impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for Repeat<I> {}
-impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for TakeDuration<I> {}
-impl<I: Iterator<Item = f32> + Source> SetSpeed<f32> for Amplify<I> {}
-impl<I: Iterator<Item = f32> + Source, I2: Iterator<Item = f32> + Source> SetSpeed<f32>
-    for Mix<I, I2>
-{
+impl SetSpeed for Zero {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed for Speed<I> {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed for Delay<I> {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed for SkipDuration<I> {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed for Repeat<I> {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed for TakeDuration<I> {}
+impl<I: Iterator<Item = f32> + Source> SetSpeed for Amplify<I> {}
+impl<I: Iterator<Item = f32> + Source, I2: Iterator<Item = f32> + Source> SetSpeed for Mix<I, I2> {}
+
+pub struct GenericSource {
+    sound: Box<dyn SourceIterDynClone>,
 }
 
-pub struct GenericSource<T>
-where
-    T: Sample,
-{
-    sound: Box<dyn SourceIterDynClone<T>>,
-}
-
-impl Clone for GenericSource<f32> {
+impl Clone for GenericSource {
     fn clone(&self) -> Self {
         Self {
             sound: dyn_clone::clone_box(&*self.sound),
         }
     }
 }
-unsafe impl<T: Sample> Send for GenericSource<T> {}
+unsafe impl Send for GenericSource {}
 
-impl<T> GenericSource<T>
-where
-    T: Sample,
-{
-    pub fn new(sound: Box<dyn SourceIterDynClone<T>>) -> Self {
+impl GenericSource {
+    pub fn new(sound: Box<dyn SourceIterDynClone>) -> Self {
         Self { sound: sound }
     }
 }
 
-impl<'a, S: Sample> Iterator for GenericSource<S> {
-    type Item = S;
+impl Iterator for GenericSource {
+    type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.sound.next()
     }
 }
 
-impl<'a, S: Sample> Source for GenericSource<S> {
-    fn current_frame_len(&self) -> Option<usize> {
-        self.sound.current_frame_len()
+impl Source for GenericSource {
+    fn current_span_len(&self) -> Option<usize> {
+        self.sound.current_span_len()
     }
 
     fn channels(&self) -> u16 {
@@ -78,7 +67,7 @@ impl<'a, S: Sample> Source for GenericSource<S> {
 
 #[derive(Clone)]
 pub struct SoundQueue {
-    queue: Vec<GenericSource<f32>>,
+    queue: Vec<GenericSource>,
 }
 
 impl Default for SoundQueue {
@@ -94,10 +83,7 @@ impl SoundQueue {
         return queue;
     }
 
-    pub fn clone_sound(
-        &mut self,
-        idx: usize,
-    ) -> Result<GenericSource<f32>, Box<dyn std::error::Error>> {
+    pub fn clone_sound(&mut self, idx: usize) -> Result<GenericSource, Box<dyn std::error::Error>> {
         if idx >= self.queue.len() {
             return Err(Box::new(std::io::Error::new(
                 ErrorKind::Other,
@@ -107,7 +93,7 @@ impl SoundQueue {
         return Ok(self.queue[idx].clone());
     }
 
-    pub fn push_sound(&mut self, sound: Box<dyn SourceIterDynClone<f32>>) -> usize {
+    pub fn push_sound(&mut self, sound: Box<dyn SourceIterDynClone>) -> usize {
         self.queue.push(GenericSource::new(sound));
         return self.queue.len() - 1;
     }

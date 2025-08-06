@@ -30,7 +30,7 @@ impl Iterator for DawAutomationChannel {
 
 impl Source for DawAutomationChannel {
     #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn current_span_len(&self) -> Option<usize> {
         None
     }
 
@@ -50,6 +50,6 @@ impl Source for DawAutomationChannel {
     }
 }
 
-impl SetSpeed<f32> for DawAutomationChannel {
+impl SetSpeed for DawAutomationChannel {
     fn set_speed(&mut self, _speed: f32) {}
 }
