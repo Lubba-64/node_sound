@@ -41,7 +41,7 @@ pub fn file_node() -> SoundNode {
 }
 
 pub fn file_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let (name, data) = match props.get_file("file")? {
+    let (name, _data) = match props.get_file("file")? {
         None => {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
@@ -50,12 +50,6 @@ pub fn file_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         }
         Some(x) => x,
     };
-
-    props
-        .state
-        .user_state
-        .file_database
-        .add_sample(name.clone(), data);
 
     Ok(BTreeMap::from([(
         "out".to_string(),

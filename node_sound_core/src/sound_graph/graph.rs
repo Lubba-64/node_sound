@@ -396,11 +396,15 @@ unsafe impl Sync for SoundNodeGraph {}
 
 impl SoundNodeGraph {
     pub fn new_vst_synth() -> Self {
-        SoundNodeGraph::default()
+        let mut graph = SoundNodeGraph::default();
+        graph.state.user_state.refresh_database = true;
+        graph
     }
 
     pub fn new_vst_effect() -> Self {
-        SoundNodeGraph::default()
+        let mut graph = SoundNodeGraph::default();
+        graph.state.user_state.refresh_database = true;
+        graph
     }
 
     pub fn new_app(cc: Option<&eframe::CreationContext<'_>>) -> Self {
@@ -450,6 +454,34 @@ impl SoundNodeGraph {
         }
     }
 
+    fn sync_to_database(&mut self) {
+        for node in self.state.editor_state.graph.iter_nodes() {
+            for input in self.state.editor_state.graph.nodes[node]
+                .inputs
+                .iter()
+                .map(|(_x, y)| y)
+            {
+                if let ValueType::AudioFile {
+                    value: Some((path, data)),
+                } = &self.state.editor_state.graph.get_input(*input).value
+                {
+                    if !self
+                        .state
+                        .user_state
+                        .file_database
+                        .samples
+                        .contains_key(path)
+                    {
+                        self.state
+                            .user_state
+                            .file_database
+                            .add_sample(path.clone(), data.clone());
+                    }
+                }
+            }
+        }
+    }
+
     pub fn update_root(&mut self, ctx: &egui::Context) {
         if self.state.user_state.refresh_database {
             let active_samples = self.get_active_samples();
@@ -457,6 +489,7 @@ impl SoundNodeGraph {
                 .user_state
                 .file_database
                 .cleanup_unused_samples(&active_samples);
+            self.sync_to_database();
             self.state.user_state.refresh_database = false;
         }
         self.update_output_node();

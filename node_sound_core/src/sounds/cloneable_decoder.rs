@@ -8,7 +8,7 @@ use std::{
 
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct AudioSampleDatabase {
-    samples: HashMap<String, (Arc<[f32]>, u16, u32)>,
+    pub samples: HashMap<String, (Arc<[f32]>, u16, u32)>,
 }
 
 impl AudioSampleDatabase {
