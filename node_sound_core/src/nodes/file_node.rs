@@ -23,7 +23,7 @@ pub fn file_node() -> SoundNode {
             (
                 "note independant".to_string(),
                 InputParameter {
-                    data_type: DataType::Float,
+                    data_type: DataType::Bool,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "note independant".to_string(),
                     value: InputValueConfig::Bool { value: false },
@@ -43,10 +43,10 @@ pub fn file_node() -> SoundNode {
 pub fn file_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let (name, data) = match props.get_file("file")? {
         None => {
-            return Ok(BTreeMap::from([(
-                "out".to_string(),
-                ValueType::AudioSource { value: 0 },
-            )]));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Sample not found in database after adding.",
+            )));
         }
         Some(x) => x,
     };
@@ -64,7 +64,7 @@ pub fn file_logic(mut props: SoundNodeProps) -> SoundNodeResult {
                 match CloneableDecoder::new(
                     &props.state.user_state.file_database,
                     name,
-                    props.get_float("note independant")? != 0.0,
+                    props.get_bool("note independant")?,
                 ) {
                     None => {
                         return Err(Box::new(std::io::Error::new(

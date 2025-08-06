@@ -28,7 +28,7 @@ pub fn sine_node() -> SoundNode {
             (
                 "note independant".to_string(),
                 InputParameter {
-                    data_type: DataType::Float,
+                    data_type: DataType::Bool,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "note independant".to_string(),
                     value: InputValueConfig::Bool { value: false },

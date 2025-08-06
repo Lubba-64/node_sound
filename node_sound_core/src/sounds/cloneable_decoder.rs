@@ -1,22 +1,17 @@
 use crate::sound_map::SetSpeed;
 use rodio::Source;
 use serde::{Deserialize, Serialize};
-use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
-use std::rc::Rc;
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct AudioSampleDatabase {
-    samples: HashMap<String, (Rc<[f32]>, u16, u32)>,
+    samples: HashMap<String, (Arc<[f32]>, u16, u32)>,
 }
 
 impl AudioSampleDatabase {
-    pub fn new() -> Rc<RefCell<Self>> {
-        Rc::new(RefCell::new(Self {
-            samples: HashMap::new(),
-        }))
-    }
-
     pub fn cleanup_unused_samples(&mut self, active_samples: &HashSet<String>) {
         self.samples.retain(|key, _| active_samples.contains(key));
     }
@@ -40,7 +35,7 @@ fn decode_samples(data: Vec<u8>) -> (Vec<f32>, u16, u32) {
 }
 
 pub struct CloneableDecoder {
-    samples: Rc<[f32]>,
+    samples: Arc<[f32]>,
     index: usize,
     channels: u16,
     sample_rate: u32,
@@ -56,7 +51,7 @@ impl CloneableDecoder {
     ) -> Option<Self> {
         let (samples, channels, sample_rate) = {
             let (samples, channels, sample_rate) = database.samples.get(&sample_key)?;
-            (Rc::clone(samples), *channels, *sample_rate)
+            (Arc::clone(samples), *channels, *sample_rate)
         };
 
         Some(Self {
@@ -73,7 +68,7 @@ impl CloneableDecoder {
 impl Clone for CloneableDecoder {
     fn clone(&self) -> Self {
         Self {
-            samples: Rc::clone(&self.samples),
+            samples: Arc::clone(&self.samples),
             index: 0, // Reset index for new iterator
             channels: self.channels,
             sample_rate: self.sample_rate,
@@ -105,7 +100,7 @@ impl Iterator for CloneableDecoder {
 
 impl Source for CloneableDecoder {
     fn current_span_len(&self) -> Option<usize> {
-        Some(self.samples.len().saturating_sub(self.index))
+        None
     }
 
     fn channels(&self) -> u16 {
@@ -113,13 +108,11 @@ impl Source for CloneableDecoder {
     }
 
     fn sample_rate(&self) -> u32 {
-        (self.sample_rate as f32 * self.speed) as u32
+        self.sample_rate
     }
 
     fn total_duration(&self) -> Option<std::time::Duration> {
-        let samples_per_channel = self.samples.len() / self.channels as usize;
-        let duration_secs = samples_per_channel as f32 / self.sample_rate as f32;
-        Some(std::time::Duration::from_secs_f32(duration_secs))
+        None
     }
 }
 
