@@ -18,6 +18,7 @@ mod square_node;
 use square_node::{square_logic, square_node};
 mod delay_node;
 use crate::{
+    nodes::flip_node::{flip_logic, flip_node},
     sound_graph::{
         graph::UnserializeableGraphState,
         graph_types::{InputParameter, Output, ValueType},
@@ -93,6 +94,7 @@ mod wave_table_node;
 pub use automated_wave_table_node::{automated_wave_table_logic, automated_wave_table_node};
 mod bit_crush_node;
 pub use bit_crush_node::{bit_crusher_logic, bit_crusher_node};
+pub mod flip_node;
 
 pub struct SoundNodeProps<'a> {
     pub inputs: HashMap<String, ValueType>,
@@ -253,6 +255,7 @@ pub fn get_nodes() -> NodeDefinitions {
         (daw_automations_node(), Box::new(daw_automations_logic)),
         (midi_node(), Box::new(midi_logic)),
         (file_node(), Box::new(file_logic)),
+        (flip_node(), Box::new(flip_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

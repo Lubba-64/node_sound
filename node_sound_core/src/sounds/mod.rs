@@ -62,3 +62,4 @@ mod bit_crush;
 pub use bit_crush::BitCrusher;
 mod sine;
 pub use sine::SineWave;
+pub mod flip;
