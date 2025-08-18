@@ -13,6 +13,3 @@ If you want the windows VST, a precompiled release will be available in `release
  - install [rustup](https://www.rust-lang.org/tools/install)
  - clone the repository with `git clone <repo>` [git](https://git-scm.com/downloads)
  - run `cargo run --bin xtask bundle node_sound_vst --release` in the root of the repo to generate a VST and CLAP plugin for your OS of choice.
- - run `cargo run --bin node_sound_app --release --features non-wasm` in the root of the repo to generate a standalone desktop app for your OS of choice.
- - run `cd  node_sound_app`, `cargo install trunk` and `trunk serve --release` to host and build run a production ready web version.
-
