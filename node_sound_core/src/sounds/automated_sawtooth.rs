@@ -6,9 +6,9 @@ use std::time::Duration;
 #[derive(Clone)]
 pub struct AutomatedSawToothWave<T: rodio::Source<Item = f32>> {
     freq: UniformSourceIterator<T, f32>,
-    num_sample: usize,
     uses_speed: bool,
     speed: f32,
+    phase: f32,
 }
 
 impl<T: rodio::Source<Item = f32>> AutomatedSawToothWave<T> {
@@ -16,7 +16,7 @@ impl<T: rodio::Source<Item = f32>> AutomatedSawToothWave<T> {
     pub fn new(freq: T, uses_speed: bool) -> Self {
         Self {
             freq: UniformSourceIterator::new(freq, 1, DEFAULT_SAMPLE_RATE),
-            num_sample: 0,
+            phase: 0.0,
             speed: 1.0,
             uses_speed,
         }
@@ -28,11 +28,10 @@ impl<T: rodio::Source<Item = f32>> Iterator for AutomatedSawToothWave<T> {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        self.num_sample = self.num_sample.wrapping_add(1);
         self.freq.next().map(|freq| {
-            let value = (freq * (self.num_sample as f32 % DEFAULT_SAMPLE_RATE as f32))
-                / DEFAULT_SAMPLE_RATE as f32;
-            (value % 2.0) - 1.0
+            let phase_increment = 2.0 * freq / DEFAULT_SAMPLE_RATE as f32 / self.speed;
+            self.phase = (self.phase + phase_increment) % 2.0;
+            self.phase - 1.0
         })
     }
 }

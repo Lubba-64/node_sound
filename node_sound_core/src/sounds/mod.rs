@@ -64,3 +64,4 @@ mod sine;
 pub use sine::SineWave;
 pub mod automated_mod_raw;
 pub mod flip;
+pub mod minus;

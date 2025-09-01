@@ -21,6 +21,7 @@ use crate::{
     nodes::{
         automated_mod_raw_node::{automated_mod_raw_logic, automated_mod_raw_node},
         flip_node::{flip_logic, flip_node},
+        minus_node::{minus_logic, minus_node},
     },
     sound_graph::{
         graph::UnserializeableGraphState,
@@ -99,7 +100,7 @@ mod bit_crush_node;
 pub use bit_crush_node::{bit_crusher_logic, bit_crusher_node};
 pub mod automated_mod_raw_node;
 pub mod flip_node;
-
+pub mod minus_node;
 pub struct SoundNodeProps<'a> {
     pub inputs: HashMap<String, ValueType>,
     pub state: &'a mut UnserializeableGraphState,
@@ -261,6 +262,7 @@ pub fn get_nodes() -> NodeDefinitions {
         (file_node(), Box::new(file_logic)),
         (flip_node(), Box::new(flip_logic)),
         (automated_mod_raw_node(), Box::new(automated_mod_raw_logic)),
+        (minus_node(), Box::new(minus_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

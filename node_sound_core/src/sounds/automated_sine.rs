@@ -10,7 +10,7 @@ use crate::sound_map::SetSpeed;
 #[derive(Clone)]
 pub struct AutomatedSineWave<T: rodio::Source<Item = f32>> {
     freq: UniformSourceIterator<T, f32>,
-    num_sample: usize,
+    phase: f32,
     uses_speed: bool,
     speed: f32,
 }
@@ -20,9 +20,9 @@ impl<T: rodio::Source<Item = f32>> AutomatedSineWave<T> {
     pub fn new(freq: T, uses_speed: bool) -> AutomatedSineWave<T> {
         AutomatedSineWave {
             freq: UniformSourceIterator::new(freq, 1, DEFAULT_SAMPLE_RATE),
-            num_sample: 0,
-            speed: 1.0,
+            phase: 0.0,
             uses_speed,
+            speed: 1.0,
         }
     }
 }
@@ -32,12 +32,10 @@ impl<T: rodio::Source<Item = f32>> Iterator for AutomatedSineWave<T> {
 
     #[inline]
     fn next(&mut self) -> Option<f32> {
-        self.num_sample = self.num_sample.wrapping_add(1);
         self.freq.next().map(|freq| {
-            let value = 2.0 * PI * freq * (self.num_sample as f32 % DEFAULT_SAMPLE_RATE as f32)
-                / DEFAULT_SAMPLE_RATE as f32
-                / self.speed;
-            value.sin()
+            let phase_increment = 2.0 * PI * freq / DEFAULT_SAMPLE_RATE as f32 / self.speed;
+            self.phase = (self.phase + phase_increment) % (2.0 * PI);
+            self.phase.sin()
         })
     }
 }
