@@ -1,54 +1,21 @@
-use rodio::Source;
-
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
-pub struct Signum<I: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
+pub struct Signum<I: DawSource> {
+    source: I,
 }
 
-impl<I: Source<Item = f32>> Signum<I> {
+impl<I: DawSource> Signum<I> {
     #[inline]
     pub fn new(source: I) -> Self {
-        Self {
-            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
-        }
+        Self { source }
     }
 }
 
-impl<I: Source<Item = f32>> Iterator for Signum<I> {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        self.source.next().map(|val| val.signum())
+impl<I: DawSource> DawSource for Signum<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.source.next(index, channel).map(|x| x.signum())
     }
-}
-
-impl<I: Source<Item = f32>> Source for Signum<I> {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
-    }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
-    }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl<I: Source<Item = f32>> SetSpeed<f32> for Signum<I> {
-    fn set_speed(&mut self, _speed: f32) {}
+    fn note_speed(&mut self, _speed: f32) {}
+    fn set_sample_rate(&mut self, _rate: f32) {}
 }

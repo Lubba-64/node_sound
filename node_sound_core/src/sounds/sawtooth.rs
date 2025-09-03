@@ -1,67 +1,39 @@
-use rodio::Source;
+use crate::constants::{DEFAULT_SAMPLE_RATE, TWO_PI};
+use crate::sound_map::DawSource;
 
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use std::time::Duration;
-
-#[derive(Clone, Debug)]
-pub struct SawToothWave {
-    freq: f32,
-    num_sample: usize,
+pub struct SawtoothWave {
+    frequency: f32,
     speed: f32,
+    sample_rate: f32,
     uses_speed: bool,
 }
 
-impl SawToothWave {
+impl SawtoothWave {
     #[inline]
-    pub fn new(freq: f32, uses_speed: bool) -> Self {
+    pub fn new(frequency: f32, uses_speed: bool) -> Self {
         Self {
-            freq,
-            num_sample: 0,
+            frequency,
             speed: 1.0,
+            sample_rate: DEFAULT_SAMPLE_RATE as f32,
             uses_speed,
         }
     }
 }
 
-impl Iterator for SawToothWave {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        self.num_sample = self.num_sample.wrapping_add(1);
-
-        let value = (self.freq * self.num_sample as f32) / self.speed / DEFAULT_SAMPLE_RATE as f32;
-        Some((value % 2.0) - 1.0)
-    }
-}
-
-impl Source for SawToothWave {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+impl DawSource for SawtoothWave {
+    fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
+        let phase_increment = self.frequency / self.sample_rate / self.speed;
+        let phase = (phase_increment * index) % 1.0;
+        Some((phase * 2.0) - 1.0)
     }
 
-    #[inline]
-    fn channels(&self) -> u16 {
-        1
-    }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl SetSpeed<f32> for SawToothWave {
-    fn set_speed(&mut self, speed: f32) {
-        if !self.uses_speed {
-            return;
+    fn note_speed(&mut self, speed: f32) {
+        if self.uses_speed {
+            self.speed = speed;
         }
-        self.speed = speed;
+    }
+
+    fn set_sample_rate(&mut self, rate: f32) {
+        self.sample_rate = rate
     }
 }

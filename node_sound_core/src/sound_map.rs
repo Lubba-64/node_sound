@@ -5,6 +5,12 @@ use std::io::ErrorKind;
 
 use crate::constants::DEFAULT_SAMPLE_RATE;
 
+pub trait DawSource {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32>;
+    fn note_speed(&mut self, speed: f32);
+    fn set_sample_rate(&mut self, rate: f32);
+}
+
 pub trait SourceIter<Item: Sample>: Source<Item = Item> + Iterator<Item = Item> + 'static {}
 pub trait SourceIterDynClone<Item: Sample>: DynClone + SourceIter<Item> + SetSpeed<Item> {}
 impl<I> SourceIter<f32> for I where I: Iterator<Item = f32> + Source + 'static {}
