@@ -1,4 +1,4 @@
-use crate::constants::{DEFAULT_SAMPLE_RATE, TWO_PI};
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use crate::sound_map::DawSource;
 
 #[derive(Clone)]
