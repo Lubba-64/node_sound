@@ -53,6 +53,20 @@ pub fn float_selector(
             })
             .inner
             .unwrap_or(Err(()));
-        *note = NoteValue(octave_res.unwrap_or_default(), note_res.unwrap_or_default());
+        match (note_res, octave_res) {
+            (Ok(note_res), Err(_)) => {
+                *note = NoteValue(note.0.clone(), note_res);
+                *value = note.match_freq();
+            }
+            (Err(_), Ok(octave_res)) => {
+                *note = NoteValue(octave_res, note.1.clone());
+                *value = note.match_freq();
+            }
+            (Ok(note_res), Ok(octave_res)) => {
+                *note = NoteValue(octave_res, note_res);
+                *value = note.match_freq();
+            }
+            (Err(_), Err(_)) => {}
+        }
     });
 }

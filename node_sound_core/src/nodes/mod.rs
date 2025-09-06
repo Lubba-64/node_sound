@@ -17,6 +17,7 @@ pub mod flip_node;
 pub mod lfo_node;
 pub mod minus_node;
 pub mod mix_node;
+pub mod output_node;
 pub mod sawtooth_node;
 pub mod sine_node;
 pub mod speed_node;
@@ -121,7 +122,31 @@ impl Default for NodeDefinitions {
 }
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: Vec<(SoundNode, Box<SoundNodeOp>)> = vec![];
+    let nodes: Vec<(SoundNode, Box<SoundNodeOp>)> = vec![
+        (
+            sawtooth_node::sawtooth_node(),
+            Box::new(sawtooth_node::sawtooth_logic),
+        ),
+        (sine_node::sine_node(), Box::new(sine_node::sine_logic)),
+        (
+            square_node::square_node(),
+            Box::new(square_node::square_logic),
+        ),
+        (
+            triangle_node::triangle_node(),
+            Box::new(triangle_node::triangle_logic),
+        ),
+        (mix_node::mix_node(), Box::new(mix_node::mix_logic)),
+        (minus_node::minus_node(), Box::new(minus_node::minus_logic)),
+        (const_node::const_node(), Box::new(const_node::const_logic)),
+        (speed_node::speed_node(), Box::new(speed_node::speed_logic)),
+        (lfo_node::lfo_node(), Box::new(lfo_node::lfo_logic)),
+        (flip_node::flip_node(), Box::new(flip_node::flip_logic)),
+        (
+            output_node::output_node(),
+            Box::new(output_node::output_logic),
+        ),
+    ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
     ))
