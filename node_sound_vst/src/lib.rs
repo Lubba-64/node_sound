@@ -1,8 +1,9 @@
 use futures::executor;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
+use node_sound_core::sound_map::DawSource;
 use node_sound_core::{
-    constants::{DEFAULT_SAMPLE_RATE, MIDDLE_C_FREQ},
+    constants::MIDDLE_C_FREQ,
     nodes::get_nodes,
     sound_graph::{
         self,
@@ -11,10 +12,7 @@ use node_sound_core::{
         graph_types::ValueType,
     },
     sound_map::GenericSource,
-};
-use rodio::{
-    Source,
-    source::{Speed, UniformSourceIterator, Zero},
+    sounds::{const_wave::ConstWave, speed::Speed},
 };
 use std::{
     collections::HashMap,
@@ -62,18 +60,8 @@ pub struct NodeSound {
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
     current_idx: usize,
-    source_sound_buffers: Arc<
-        Mutex<
-            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
-                MIDI_NOTES_LEN as usize],
-        >,
-    >,
-    voice_sound_buffers: Arc<
-        Mutex<
-            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
-                MIDI_NOTES_LEN as usize],
-        >,
-    >,
+    source_sound_buffers: Arc<Mutex<[Option<GenericSource>; MIDI_NOTES_LEN as usize]>>,
+    voice_sound_buffers: Arc<Mutex<[Option<GenericSource>; MIDI_NOTES_LEN as usize]>>,
 }
 
 pub struct PluginPresetState {
@@ -578,19 +566,17 @@ impl Plugin for NodeSound {
                                                 + 0.1,
                                         ) / MIDDLE_C_FREQ;
                                         let mut queue = queue.clone();
-                                        queue.set_speed(speed);
+                                        queue.note_speed(speed);
+                                        queue.sample_rate(**sample_rate);
                                         let sound = match queue.clone_sound(source_id.clone()) {
-                                            Err(_err) => GenericSource::new(Box::new(Zero::new(
-                                                1,
-                                                DEFAULT_SAMPLE_RATE,
-                                            ))),
+                                            Err(_err) => {
+                                                GenericSource::new(Box::new(ConstWave::new(0.0)))
+                                            }
                                             Ok(x) => x,
                                         };
-                                        sound_buffers[vidx] = Some(UniformSourceIterator::new(
-                                            sound.speed(speed),
-                                            2,
-                                            **sample_rate as u32,
-                                        ));
+                                        sound_buffers[vidx] = Some(GenericSource::new(Box::new(
+                                            Speed::new(sound, speed),
+                                        )));
                                     }
                                 }
                                 Err(_err) => {
@@ -842,11 +828,12 @@ impl Plugin for NodeSound {
                     mkparamgetter!(a17, 16, self, automations);
                     mkparamgetter!(a18, 17, self, automations);
                     match buffer {
-                        Some(x) => {
-                            output[0][sample_idx] +=
-                                x.next().map(|x| x * amp).unwrap_or(0.0).clamp(-1.0, 1.0);
-                            output[1][sample_idx] +=
-                                x.next().map(|x| x * amp).unwrap_or(0.0).clamp(-1.0, 1.0);
+                        Some(source) => {
+                            let time_index = (self.current_idx + sample_idx) as f32;
+                            let left_sample = source.next(time_index, 0).unwrap_or(0.0) * amp;
+                            let right_sample = source.next(time_index, 1).unwrap_or(0.0) * amp;
+                            output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
+                            output[1][sample_idx] += right_sample.clamp(-1.0, 1.0);
                         }
                         None => {}
                     }

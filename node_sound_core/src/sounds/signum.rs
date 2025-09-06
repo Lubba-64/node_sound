@@ -12,7 +12,7 @@ impl<I: DawSource> Signum<I> {
     }
 }
 
-impl<I: DawSource> DawSource for Signum<I> {
+impl<I: DawSource + Clone> DawSource for Signum<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.source.next(index, channel).map(|x| x.signum())
     }

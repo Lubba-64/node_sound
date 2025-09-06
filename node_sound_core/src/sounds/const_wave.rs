@@ -1,51 +1,24 @@
-use rodio::Source;
-
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use std::time::Duration;
+use crate::constants::DEFAULT_SAMPLE_RATE;
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
 pub struct ConstWave {
-    amplitude: f32,
+    val: f32,
 }
 
 impl ConstWave {
     #[inline]
-    pub fn new(amplitude: f32) -> Self {
-        Self { amplitude }
+    pub fn new(val: f32) -> Self {
+        Self { val }
     }
 }
 
-impl Iterator for ConstWave {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        Some(self.amplitude)
-    }
-}
-
-impl Source for ConstWave {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+impl DawSource for ConstWave {
+    fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
+        Some(self.val)
     }
 
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
-    }
+    fn note_speed(&mut self, _speed: f32) {}
 
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl SetSpeed<f32> for ConstWave {
-    fn set_speed(&mut self, _speed: f32) {}
+    fn set_sample_rate(&mut self, _rate: f32) {}
 }

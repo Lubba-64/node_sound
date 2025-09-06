@@ -1,6 +1,7 @@
 use crate::constants::{DEFAULT_SAMPLE_RATE, TWO_PI};
 use crate::sound_map::DawSource;
 
+#[derive(Clone)]
 pub struct SineWave {
     frequency: f32,
     speed: f32,
