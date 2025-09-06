@@ -1,19 +1,15 @@
-use crate::constants::DEFAULT_SAMPLE_RATE;
-use crate::sound_map::SetSpeed;
-use rodio::Source;
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
-pub struct TranslateWave<I: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
+pub struct TranslateWave<I: DawSource> {
+    source: I,
     start_min: f32,
     start_max: f32,
     end_min: f32,
     end_max: f32,
 }
 
-impl<I: Source<Item = f32>> TranslateWave<I> {
+impl<I: DawSource> TranslateWave<I> {
     #[inline]
     pub fn new(
         source: I,
@@ -33,7 +29,7 @@ impl<I: Source<Item = f32>> TranslateWave<I> {
             end_max = other;
         }
         Self {
-            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
+            source: source,
             start_min,
             start_max,
             end_min,
@@ -42,12 +38,9 @@ impl<I: Source<Item = f32>> TranslateWave<I> {
     }
 }
 
-impl<I: Source<Item = f32>> Iterator for TranslateWave<I> {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        return match self.source.next() {
+impl<I: DawSource + Clone> DawSource for TranslateWave<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        return match self.source.next(index, channel) {
             Some(p) => Some(
                 self.end_min
                     + ((self.end_max - self.end_min) / (self.start_max - self.start_min))
@@ -56,30 +49,6 @@ impl<I: Source<Item = f32>> Iterator for TranslateWave<I> {
             _ => None,
         };
     }
-}
-
-impl<I: Source<Item = f32>> Source for TranslateWave<I> {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
-    }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
-    }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl<I: Source<Item = f32>> SetSpeed<f32> for TranslateWave<I> {
-    fn set_speed(&mut self, _speed: f32) {}
+    fn note_speed(&mut self, _speed: f32) {}
+    fn set_sample_rate(&mut self, _rate: f32) {}
 }

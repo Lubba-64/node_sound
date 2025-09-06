@@ -2,7 +2,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::AutomatedTriangleWave;
+use crate::sounds::automated_triangle::AutomatedTriangleWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 

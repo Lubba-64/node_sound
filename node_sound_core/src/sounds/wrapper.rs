@@ -16,7 +16,7 @@ impl<I: DawSource> Wrapper<I> {
     }
 }
 
-impl<I: DawSource> DawSource for Wrapper<I> {
+impl<I: DawSource + Clone> DawSource for Wrapper<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.last[channel as usize] = match (
             self.source.next(index, channel),

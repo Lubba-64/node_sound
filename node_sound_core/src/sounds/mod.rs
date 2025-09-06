@@ -1,3 +1,4 @@
+pub mod automated_triangle;
 pub mod const_wave;
 pub mod flip;
 pub mod lfo;
@@ -8,4 +9,8 @@ pub mod signum;
 pub mod sine;
 pub mod speed;
 pub mod square;
+pub mod synth_rs_midi;
+pub mod translate;
 pub mod triangle;
+pub mod wave_table;
+pub mod wrapper;
