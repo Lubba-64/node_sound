@@ -13,7 +13,7 @@ impl ConstWave {
 }
 
 impl DawSource for ConstWave {
-    fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
+    fn next(&mut self, _index: f32, _channel: u8) -> Option<f32> {
         Some(self.val)
     }
 
