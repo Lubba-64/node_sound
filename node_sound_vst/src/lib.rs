@@ -566,8 +566,7 @@ impl Plugin for NodeSound {
                                                 + 0.1,
                                         ) / MIDDLE_C_FREQ;
                                         let mut queue = queue.clone();
-                                        queue.note_speed(speed);
-                                        queue.sample_rate(**sample_rate);
+                                        queue.note_speed(speed, **sample_rate);
                                         let sound = match queue.clone_sound(source_id.clone()) {
                                             Err(_err) => {
                                                 GenericSource::new(Box::new(ConstWave::new(0.0)))
@@ -805,6 +804,13 @@ impl Plugin for NodeSound {
                 voice_sound_buffers[note] = sound_buffers[note].clone();
             }
 
+            let active_voices = self
+                .voices
+                .iter()
+                .filter(|voice| voice.is_some())
+                .collect::<Vec<_>>()
+                .len() as f32;
+
             for sample_idx in block_start..block_end {
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                     let buffer = &mut voice_sound_buffers[voice.note as usize];
@@ -830,8 +836,10 @@ impl Plugin for NodeSound {
                     match buffer {
                         Some(source) => {
                             let time_index = (self.current_idx + sample_idx) as f32;
-                            let left_sample = source.next(time_index, 0).unwrap_or(0.0) * amp;
-                            let right_sample = source.next(time_index, 1).unwrap_or(0.0) * amp;
+                            let left_sample =
+                                source.next(time_index, 0).unwrap_or(0.0) / active_voices * amp;
+                            let right_sample =
+                                source.next(time_index, 1).unwrap_or(0.0) / active_voices * amp;
                             output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
                             output[1][sample_idx] += right_sample.clamp(-1.0, 1.0);
                         }

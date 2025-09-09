@@ -18,6 +18,5 @@ impl<I: DawSource + Clone> DawSource for Speed<I> {
         self.source.next(scaled_index, channel)
     }
 
-    fn note_speed(&mut self, _speed: f32) {}
-    fn set_sample_rate(&mut self, _rate: f32) {}
+    fn note_speed(&mut self, _speed: f32, _rate: f32) {}
 }

@@ -28,13 +28,11 @@ impl DawSource for SineWave {
         Some(phase.sin())
     }
 
-    fn note_speed(&mut self, speed: f32) {
-        if self.uses_speed {
-            self.speed = speed;
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.sample_rate = rate;
+        if !self.uses_speed {
+            return;
         }
-    }
-
-    fn set_sample_rate(&mut self, rate: f32) {
-        self.sample_rate = rate
+        self.speed = speed;
     }
 }

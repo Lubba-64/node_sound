@@ -23,18 +23,16 @@ impl TriangleWave {
 
 impl DawSource for TriangleWave {
     fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
-        let phase_increment = self.frequency / self.sample_rate / self.speed;
-        let phase = (phase_increment * index) % 1.0;
+        let phase_increment = self.frequency / self.sample_rate;
+        let phase = (phase_increment * index / self.speed) % 1.0;
         Some((((phase * 2.0) - 1.0).abs() - 1.0) * 2.0)
     }
 
-    fn note_speed(&mut self, speed: f32) {
-        if self.uses_speed {
-            self.speed = speed;
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.sample_rate = rate;
+        if !self.uses_speed {
+            return;
         }
-    }
-
-    fn set_sample_rate(&mut self, rate: f32) {
-        self.sample_rate = rate
+        self.speed = speed;
     }
 }

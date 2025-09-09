@@ -1,107 +1,97 @@
 use crate::{
     constants::{DEFAULT_SAMPLE_RATE, MIDDLE_C_FREQ},
     sound_map::DawSource,
+    sounds::wave_table::WavetableOscillator,
 };
 use synthrs::{midi::MidiSong, synthesizer::make_samples_from_midi, wave};
 
 #[derive(Clone)]
 pub struct MidiRenderer {
-    midi_samples: Vec<f32>,
-    speed: f32,
-    uses_speed: bool,
-    source_samples: Vec<f32>,
+    wavetable: WavetableOscillator,
+    source_samples: Vec<f64>,
     song: MidiSong,
     sample_rate: f32,
+    uses_speed: bool,
+    speed: f32,
 }
 
 impl MidiRenderer {
     #[inline]
-    pub fn new<S: DawSource>(source: &mut S, song: MidiSong, uses_speed: bool) -> Self {
+    pub fn new<S: DawSource>(mut source: S, song: MidiSong, uses_speed: bool) -> Self {
         let sample_rate = DEFAULT_SAMPLE_RATE as f32;
         let num_samples = sample_rate as usize;
-        let mut source_samples = Vec::with_capacity(num_samples);
+        let mut source_samples: Vec<f64> = Vec::with_capacity(num_samples);
         for i in 0..num_samples {
             let sample = source.next(i as f32, 0).unwrap_or(0.0);
-            source_samples.push(sample);
+            source_samples.push(sample.into());
         }
-        let midi_samples = Self::render_midi_samples(&source_samples, &song, sample_rate, 1.0);
         Self {
-            midi_samples,
-            speed: 1.0,
-            uses_speed,
+            wavetable: Self::render_midi_samples(
+                &source_samples,
+                &song,
+                sample_rate,
+                1.0,
+                uses_speed,
+            ),
             source_samples,
             song,
             sample_rate,
+            uses_speed,
+            speed: 1.0,
         }
     }
 
     fn render_midi_samples(
-        source_samples: &[f32],
+        source_samples: &Vec<f64>,
         song: &MidiSong,
         sample_rate: f32,
         speed: f32,
-    ) -> Vec<f32> {
+        uses_speed: bool,
+    ) -> WavetableOscillator {
         let sampler = |frequency: f64| {
             wave::sampler(
-                frequency / speed as f64,
-                &source_samples.iter().map(|&x| x as f64).collect::<Vec<_>>(),
+                frequency * speed as f64,
+                source_samples,
                 source_samples.len(),
                 MIDDLE_C_FREQ as f64,
                 sample_rate as usize,
             )
         };
-
-        make_samples_from_midi(sampler, sample_rate as usize, true, song.clone())
-            .expect("midi play failed")
-            .into_iter()
-            .map(|x| x as f32)
-            .collect()
+        let midi_samples =
+            make_samples_from_midi(sampler, sample_rate as usize, true, song.clone())
+                .expect("midi play failed");
+        let left: Vec<_> = midi_samples.iter().map(|&x| x as f32).collect();
+        WavetableOscillator::new_stereo(
+            left.clone(),
+            left,
+            sample_rate as u32,
+            MIDDLE_C_FREQ,
+            uses_speed,
+        )
     }
 
     pub fn get_duration(&self) -> f32 {
-        self.midi_samples.len() as f32 / self.sample_rate
+        self.wavetable.duration_seconds()
     }
 }
 
 impl DawSource for MidiRenderer {
-    fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
-        let len = self.midi_samples.len() as f32;
-        if len == 0.0 {
-            return Some(0.0);
-        }
-        let position = (index * self.speed) % len;
-        let truncated = position as usize;
-        if truncated >= self.midi_samples.len() {
-            return Some(0.0);
-        }
-        let next = (truncated + 1) % self.midi_samples.len();
-        let weight = position - truncated as f32;
-        let sample =
-            self.midi_samples[truncated] * (1.0 - weight) + self.midi_samples[next] * weight;
-
-        Some(sample)
+    fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
+        index /= self.speed;
+        self.wavetable.next(index, channel)
     }
 
-    fn note_speed(&mut self, speed: f32) {
-        if !self.uses_speed {
-            return;
-        }
-        self.speed = speed;
-        self.midi_samples = Self::render_midi_samples(
-            &self.source_samples,
-            &self.song,
-            self.sample_rate,
-            self.speed,
-        );
-    }
-
-    fn set_sample_rate(&mut self, rate: f32) {
+    fn note_speed(&mut self, speed: f32, rate: f32) {
         self.sample_rate = rate;
-        self.midi_samples = Self::render_midi_samples(
+        if self.uses_speed {
+            self.speed = speed;
+        }
+        self.wavetable = Self::render_midi_samples(
             &self.source_samples,
             &self.song,
             self.sample_rate,
             self.speed,
+            self.uses_speed,
         );
     }
 }

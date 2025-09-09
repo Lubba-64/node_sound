@@ -71,7 +71,7 @@ impl WavetableOscillator {
     }
 
     fn get_sample(&self, index: f32, channel: u8) -> f32 {
-        let playback_rate = (self.frequency / self.base_frequency) * self.speed;
+        let playback_rate = self.frequency / self.base_frequency;
         let speed_adjusted_index = index * playback_rate;
         let wrapped_index = speed_adjusted_index % self.duration_samples;
 
@@ -96,18 +96,16 @@ impl WavetableOscillator {
 }
 
 impl DawSource for WavetableOscillator {
-    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+    fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
+        index /= self.speed;
         Some(self.get_sample(index, channel))
     }
 
-    fn note_speed(&mut self, speed: f32) {
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.sample_rate = rate;
         if !self.uses_speed {
             return;
         }
         self.speed = speed;
-    }
-
-    fn set_sample_rate(&mut self, rate: f32) {
-        self.sample_rate = rate;
     }
 }

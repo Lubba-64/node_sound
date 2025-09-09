@@ -21,21 +21,19 @@ impl<F: DawSource> AutomatedTriangleWave<F> {
 }
 
 impl<F: DawSource + Clone> DawSource for AutomatedTriangleWave<F> {
-    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+    fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
+        index /= self.speed;
         let freq = self.freq_source.next(index, channel).unwrap_or(0.0);
-        let phase_increment = freq / self.sample_rate / self.speed;
+        let phase_increment = freq / self.sample_rate;
         let phase = (phase_increment * index) % 1.0;
         let triangle = (((phase * 2.0) - 1.0).abs() - 0.5) * 2.0;
         Some(triangle)
     }
 
-    fn note_speed(&mut self, speed: f32) {
+    fn note_speed(&mut self, speed: f32, rate: f32) {
         if self.uses_speed {
             self.speed = speed;
         }
-    }
-
-    fn set_sample_rate(&mut self, rate: f32) {
         self.sample_rate = rate;
     }
 }

@@ -16,12 +16,15 @@ pub mod automated_triangle_node;
 pub mod const_node;
 pub mod flip_node;
 pub mod lfo_node;
+pub mod merge_channels_node;
+pub mod midi_node;
 pub mod minus_node;
 pub mod mix_node;
 pub mod output_node;
 pub mod sawtooth_node;
 pub mod sine_node;
 pub mod speed_node;
+pub mod split_channels_node;
 pub mod square_node;
 pub mod translate_node;
 pub mod triangle_node;
@@ -170,6 +173,15 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             automated_triangle_node::automated_triangle_node(),
             Box::new(automated_triangle_node::automated_triangle_logic),
+        ),
+        (midi_node::midi_node(), Box::new(midi_node::midi_logic)),
+        (
+            split_channels_node::split_channels_node(),
+            Box::new(split_channels_node::split_channels_logic),
+        ),
+        (
+            merge_channels_node::merge_channels_node(),
+            Box::new(merge_channels_node::merge_channels_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

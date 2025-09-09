@@ -5,8 +5,7 @@ use crate::sounds::const_wave::ConstWave;
 
 pub trait DawSource: DynClone {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32>;
-    fn note_speed(&mut self, speed: f32);
-    fn set_sample_rate(&mut self, rate: f32);
+    fn note_speed(&mut self, speed: f32, rate: f32);
 }
 
 pub struct GenericSource {
@@ -32,11 +31,8 @@ impl DawSource for GenericSource {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.sound.next(index, channel)
     }
-    fn note_speed(&mut self, speed: f32) {
-        self.sound.note_speed(speed);
-    }
-    fn set_sample_rate(&mut self, rate: f32) {
-        self.sound.set_sample_rate(rate);
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.sound.note_speed(speed, rate);
     }
 }
 
@@ -81,15 +77,9 @@ impl SoundQueue {
         self.queue.clear()
     }
 
-    pub fn note_speed(&mut self, speed: f32) {
+    pub fn note_speed(&mut self, speed: f32, sample_rate: f32) {
         for n in 0..self.queue.len() {
-            self.queue[n].sound.note_speed(speed);
-        }
-    }
-
-    pub fn sample_rate(&mut self, sample_rate: f32) {
-        for n in 0..self.queue.len() {
-            self.queue[n].sound.set_sample_rate(sample_rate);
+            self.queue[n].sound.note_speed(speed, sample_rate);
         }
     }
 }

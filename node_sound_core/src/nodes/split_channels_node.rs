@@ -2,7 +2,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::SplitChannels;
+use crate::sounds::split_channels::SplitChannels;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
@@ -51,7 +51,7 @@ pub fn split_channels_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         ValueType::AudioSource {
             value: props.push_sound(Box::new(SplitChannels::new(
                 cloned,
-                props.get_float("channel")?.round() as u16,
+                props.get_float("channel")?.round() as u8,
             ))),
         },
     )]))

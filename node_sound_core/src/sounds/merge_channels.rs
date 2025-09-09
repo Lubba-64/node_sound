@@ -1,64 +1,27 @@
-use rodio::Source;
-
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
-pub struct MergeChannels<I: Source<Item = f32>, I2: Source<Item = f32>> {
-    source1: UniformSourceIterator<I, I::Item>,
-    source2: UniformSourceIterator<I2, I2::Item>,
-    flop: bool,
+pub struct MergeChannels<I1: DawSource, I2: DawSource> {
+    source1: I1,
+    source2: I2,
 }
 
-impl<I: Source<Item = f32>, I2: Source<Item = f32>> MergeChannels<I, I2> {
+impl<I1: DawSource, I2: DawSource> MergeChannels<I1, I2> {
     #[inline]
-    pub fn new(source1: I, source2: I2) -> Self {
-        Self {
-            source1: UniformSourceIterator::new(source1, 1, DEFAULT_SAMPLE_RATE),
-            source2: UniformSourceIterator::new(source2, 1, DEFAULT_SAMPLE_RATE),
-            flop: false,
+    pub fn new(source1: I1, source2: I2) -> Self {
+        Self { source1, source2 }
+    }
+}
+
+impl<I1: DawSource + Clone, I2: DawSource + Clone> DawSource for MergeChannels<I1, I2> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        if channel == 0 {
+            self.source1.next(index, 0)
+        } else if channel == 1 {
+            self.source2.next(index, 0)
+        } else {
+            None
         }
     }
-}
-
-impl<I: Source<Item = f32>, I2: Source<Item = f32>> Iterator for MergeChannels<I, I2> {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        self.flop = !self.flop;
-
-        match (self.flop, self.source1.next(), self.source2.next()) {
-            (true, Some(sample), _) => Some(sample),
-            (false, _, Some(sample)) => Some(sample),
-            _ => None,
-        }
-    }
-}
-
-impl<I: Source<Item = f32>, I2: Source<Item = f32>> Source for MergeChannels<I, I2> {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
-    }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
-    }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl<I: Source<Item = f32>, I2: Source<Item = f32>> SetSpeed<f32> for MergeChannels<I, I2> {
-    fn set_speed(&mut self, _speed: f32) {}
+    fn note_speed(&mut self, _speed: f32, _rate: f32) {}
 }
