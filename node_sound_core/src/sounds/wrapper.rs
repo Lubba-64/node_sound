@@ -37,5 +37,7 @@ impl<I: DawSource + Clone> DawSource for Wrapper<I> {
         };
         self.last[channel as usize]
     }
-    fn note_speed(&mut self, _speed: f32, _rate: f32) {}
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.source.note_speed(speed, rate);
+    }
 }

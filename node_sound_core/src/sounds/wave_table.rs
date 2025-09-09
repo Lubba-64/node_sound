@@ -66,10 +66,6 @@ impl WavetableOscillator {
         self.frequency = frequency;
     }
 
-    pub fn duration_seconds(&self) -> f32 {
-        self.duration_samples / self.sample_rate
-    }
-
     fn get_sample(&self, index: f32, channel: u8) -> f32 {
         let playback_rate = self.frequency / self.base_frequency;
         let speed_adjusted_index = index * playback_rate;

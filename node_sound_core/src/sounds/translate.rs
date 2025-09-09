@@ -49,5 +49,7 @@ impl<I: DawSource + Clone> DawSource for TranslateWave<I> {
             _ => None,
         };
     }
-    fn note_speed(&mut self, _speed: f32, _rate: f32) {}
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.source.note_speed(speed, rate);
+    }
 }

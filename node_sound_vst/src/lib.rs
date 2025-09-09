@@ -836,10 +836,12 @@ impl Plugin for NodeSound {
                     match buffer {
                         Some(source) => {
                             let time_index = (self.current_idx + sample_idx) as f32;
-                            let left_sample =
-                                source.next(time_index, 0).unwrap_or(0.0) / active_voices * amp;
-                            let right_sample =
-                                source.next(time_index, 1).unwrap_or(0.0) / active_voices * amp;
+                            let left_sample = (source.next(time_index, 0).unwrap_or(0.0)
+                                / active_voices.max(1.0))
+                                * amp;
+                            let right_sample = (source.next(time_index, 1).unwrap_or(0.0)
+                                / active_voices.max(1.0))
+                                * amp;
                             output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
                             output[1][sample_idx] += right_sample.clamp(-1.0, 1.0);
                         }

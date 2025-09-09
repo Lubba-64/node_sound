@@ -78,8 +78,10 @@ impl SoundQueue {
     }
 
     pub fn note_speed(&mut self, speed: f32, sample_rate: f32) {
-        for n in 0..self.queue.len() {
-            self.queue[n].sound.note_speed(speed, sample_rate);
+        if self.queue.len() == 0 {
+            return;
         }
+        let last = self.queue.len() - 1;
+        self.queue[last].sound.note_speed(speed, sample_rate);
     }
 }

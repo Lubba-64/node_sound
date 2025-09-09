@@ -15,13 +15,13 @@ impl<I1: DawSource, I2: DawSource> Mix<I1, I2> {
 
 impl<I1: DawSource + Clone, I2: DawSource + Clone> DawSource for Mix<I1, I2> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
-        match (
-            self.source2.next(index, channel),
-            self.source1.next(index, channel),
-        ) {
-            (Some(x), Some(y)) => Some((x + y) / 2.0),
-            _ => None,
-        }
+        let s1 = self.source1.next(index, channel)?;
+        let s2 = self.source2.next(index, channel)?;
+        Some((s1 + s2) / 2.0)
     }
-    fn note_speed(&mut self, _speed: f32, _rate: f32) {}
+
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.source1.note_speed(speed, rate);
+        self.source2.note_speed(speed, rate);
+    }
 }

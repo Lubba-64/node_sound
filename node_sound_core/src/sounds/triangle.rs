@@ -22,10 +22,12 @@ impl TriangleWave {
 }
 
 impl DawSource for TriangleWave {
-    fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
+    fn next(&mut self, mut index: f32, _channel: u8) -> Option<f32> {
+        index /= self.speed;
         let phase_increment = self.frequency / self.sample_rate;
-        let phase = (phase_increment * index / self.speed) % 1.0;
-        Some((((phase * 2.0) - 1.0).abs() - 1.0) * 2.0)
+        let phase = (phase_increment * index) % 1.0;
+        let triangle = (((phase * 2.0) - 1.0).abs() - 0.5) * 2.0;
+        Some(triangle)
     }
 
     fn note_speed(&mut self, speed: f32, rate: f32) {

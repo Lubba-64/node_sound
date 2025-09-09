@@ -5,6 +5,7 @@ pub mod lfo;
 pub mod merge_channels;
 pub mod minus;
 pub mod mix;
+pub mod reverse;
 pub mod sawtooth;
 pub mod signum;
 pub mod sine;

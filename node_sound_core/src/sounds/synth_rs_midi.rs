@@ -69,10 +69,6 @@ impl MidiRenderer {
             uses_speed,
         )
     }
-
-    pub fn get_duration(&self) -> f32 {
-        self.wavetable.duration_seconds()
-    }
 }
 
 impl DawSource for MidiRenderer {

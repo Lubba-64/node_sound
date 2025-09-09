@@ -33,6 +33,7 @@ impl<F: DawSource + Clone> DawSource for AutomatedTriangleWave<F> {
     fn note_speed(&mut self, speed: f32, rate: f32) {
         if self.uses_speed {
             self.speed = speed;
+            self.freq_source.note_speed(1.0, rate);
         }
         self.sample_rate = rate;
     }

@@ -21,6 +21,7 @@ pub mod midi_node;
 pub mod minus_node;
 pub mod mix_node;
 pub mod output_node;
+pub mod reverse_node;
 pub mod sawtooth_node;
 pub mod sine_node;
 pub mod speed_node;
@@ -182,6 +183,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             merge_channels_node::merge_channels_node(),
             Box::new(merge_channels_node::merge_channels_logic),
+        ),
+        (
+            reverse_node::reverse_node(),
+            Box::new(reverse_node::reverse_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(
