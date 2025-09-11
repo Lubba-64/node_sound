@@ -4,8 +4,10 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
+use crate::sounds::amplify::Amplify;
+use crate::sounds::delay::Delay;
+use crate::sounds::mix::Mix;
 use egui_node_graph_2::InputParamKind;
-use rodio::Source;
 use std::collections::BTreeMap;
 
 pub fn reverb_node() -> SoundNode {
@@ -43,6 +45,15 @@ pub fn reverb_node() -> SoundNode {
                     value: InputValueConfig::AudioSource {},
                 },
             ),
+            (
+                "note independant".to_string(),
+                InputParameter {
+                    data_type: DataType::Float,
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "note independant".to_string(),
+                    value: InputValueConfig::Bool { value: false },
+                },
+            ),
         ]),
         outputs: BTreeMap::from([(
             "out".to_string(),
@@ -55,14 +66,19 @@ pub fn reverb_node() -> SoundNode {
 }
 
 pub fn reverb_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?.reverb(
-        props.get_duration("duration")?,
-        props.get_float("amplification")?,
+    let cloned = Delay::new(
+        props.get_duration("duration")?.as_secs_f32(),
+        Amplify::new(
+            props.clone_sound(props.get_source("audio 1")?)?,
+            props.get_float("amplification")?,
+        ),
+        props.get_bool("note independant")?,
     );
+    let mixed = Mix::new(props.clone_sound(props.get_source("audio 1")?)?, cloned);
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(cloned)),
+            value: props.push_sound(Box::new(mixed)),
         },
     )]))
 }

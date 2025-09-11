@@ -2,8 +2,8 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
+use crate::sounds::skip::Skip;
 use egui_node_graph_2::InputParamKind;
-use rodio::Source;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
@@ -30,6 +30,15 @@ pub fn skip_node() -> SoundNode {
                     value: InputValueConfig::Duration { value: 1.0 },
                 },
             ),
+            (
+                "note independant".to_string(),
+                InputParameter {
+                    data_type: DataType::Float,
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "note independant".to_string(),
+                    value: InputValueConfig::Bool { value: false },
+                },
+            ),
         ]),
         outputs: BTreeMap::from([(
             "out".to_string(),
@@ -41,9 +50,11 @@ pub fn skip_node() -> SoundNode {
     }
 }
 pub fn skip_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props
-        .clone_sound(props.get_source("audio 1")?)?
-        .skip_duration(props.get_duration("duration")?);
+    let cloned = Skip::new(
+        props.get_duration("duration")?.as_secs_f32(),
+        props.clone_sound(props.get_source("audio 1")?)?,
+        props.get_bool("note independant")?,
+    );
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {

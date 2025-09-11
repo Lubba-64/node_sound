@@ -12,20 +12,30 @@ use crate::{
     sound_map::{DawSource, GenericSource},
 };
 
+pub mod amplify_node;
 pub mod automated_triangle_node;
+pub mod clamp_node;
 pub mod const_node;
+pub mod daw_automation_source_node;
+pub mod delay_node;
+pub mod file_node;
 pub mod flip_node;
 pub mod lfo_node;
 pub mod merge_channels_node;
 pub mod midi_node;
 pub mod minus_node;
 pub mod mix_node;
+pub mod mod_node;
+pub mod mod_raw_node;
+pub mod noise_node;
 pub mod output_node;
 pub mod repeat_infinite;
-pub mod repeat_n;
+pub mod repeat_n_node;
+pub mod reverb_node;
 pub mod reverse_node;
 pub mod sawtooth_node;
 pub mod sine_node;
+pub mod skip_node;
 pub mod speed_node;
 pub mod split_channels_node;
 pub mod square_node;
@@ -195,9 +205,31 @@ pub fn get_nodes() -> NodeDefinitions {
             Box::new(repeat_infinite::repeat_infinite_logic),
         ),
         (
-            repeat_n::repeat_n_node(),
-            Box::new(repeat_n::repeat_n_logic),
+            repeat_n_node::repeat_n_node(),
+            Box::new(repeat_n_node::repeat_n_logic),
         ),
+        (file_node::file_node(), Box::new(file_node::file_logic)),
+        (skip_node::skip_node(), Box::new(skip_node::skip_logic)),
+        (delay_node::delay_node(), Box::new(delay_node::delay_logic)),
+        (
+            amplify_node::amplify_node(),
+            Box::new(amplify_node::amplify_logic),
+        ),
+        (
+            reverb_node::reverb_node(),
+            Box::new(reverb_node::reverb_logic),
+        ),
+        (noise_node::noise_node(), Box::new(noise_node::noise_logic)),
+        (mod_node::mod_node(), Box::new(mod_node::mod_logic)),
+        (
+            mod_raw_node::mod_raw_node(),
+            Box::new(mod_raw_node::mod_raw_logic),
+        ),
+        (
+            daw_automation_source_node::daw_automations_node(),
+            Box::new(daw_automation_source_node::daw_automations_logic),
+        ),
+        (clamp_node::clamp_node(), Box::new(clamp_node::clamp_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

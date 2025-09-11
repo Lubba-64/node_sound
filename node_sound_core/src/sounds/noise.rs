@@ -1,8 +1,5 @@
-use rodio::Source;
-
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
+use crate::sound_map::DawSource;
 use rand::prelude::*;
-use std::time::Duration;
 
 #[derive(Clone)]
 pub struct Noise {
@@ -27,37 +24,12 @@ impl Noise {
     }
 }
 
-impl Iterator for Noise {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
+impl DawSource for Noise {
+    fn next(&mut self, _index: f32, _channel: u8) -> Option<f32> {
         Some(thread_rng().gen_range(self.min..self.max))
     }
-}
-
-impl Source for Noise {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
+    fn note_speed(&mut self, _speed: f32, _rate: f32) {}
+    fn size_hint(&self) -> Option<f32> {
         None
     }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
-    }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl SetSpeed<f32> for Noise {
-    fn set_speed(&mut self, _speed: f32) {}
 }

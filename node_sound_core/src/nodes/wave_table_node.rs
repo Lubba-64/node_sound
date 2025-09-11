@@ -1,4 +1,4 @@
-use crate::constants::{DEFAULT_SAMPLE_RATE, MAX_FREQ, MIDDLE_C_FREQ};
+use crate::constants::{DEFAULT_SAMPLE_RATE, MAX_FREQ};
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
@@ -69,7 +69,7 @@ pub fn wave_table_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         props.clone_sound(props.get_source("audio 1")?)?,
         DEFAULT_SAMPLE_RATE,
         props.get_duration("duration")?.as_secs_f32(),
-        MIDDLE_C_FREQ,
+        1.0,
         props.get_bool("note independant")?,
     );
     audio.set_frequency(props.get_float("frequency")?);

@@ -1,17 +1,13 @@
-use rodio::Source;
-
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
-pub struct Clamp<I: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
+pub struct Clamp<I: DawSource> {
+    source: I,
     min: f32,
     max: f32,
 }
 
-impl<I: Source<Item = f32>> Clamp<I> {
+impl<I: DawSource> Clamp<I> {
     #[inline]
     pub fn new(source: I, min: Option<f32>, max: Option<f32>) -> Self {
         let mut min_1 = min.unwrap_or(f32::MIN);
@@ -22,44 +18,24 @@ impl<I: Source<Item = f32>> Clamp<I> {
             max_1 = other;
         }
         Self {
-            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
+            source,
             max: max_1,
             min: min_1,
         }
     }
 }
 
-impl<I: Source<Item = f32>> Iterator for Clamp<I> {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        return self.source.next().map(|val| val.clamp(self.min, self.max));
+impl<I: DawSource + Clone> DawSource for Clamp<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        return self
+            .source
+            .next(index, channel)
+            .map(|val| val.clamp(self.min, self.max));
     }
-}
-
-impl<I: Source<Item = f32>> Source for Clamp<I> {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.source.note_speed(speed, rate);
     }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
+    fn size_hint(&self) -> Option<f32> {
+        self.source.size_hint()
     }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl<I: Source<Item = f32>> SetSpeed<f32> for Clamp<I> {
-    fn set_speed(&mut self, _speed: f32) {}
 }
