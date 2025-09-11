@@ -37,4 +37,8 @@ impl<F: DawSource + Clone> DawSource for AutomatedTriangleWave<F> {
         }
         self.sample_rate = rate;
     }
+
+    fn size_hint(&self) -> Option<f32> {
+        None
+    }
 }

@@ -21,6 +21,8 @@ pub mod midi_node;
 pub mod minus_node;
 pub mod mix_node;
 pub mod output_node;
+pub mod repeat_infinite;
+pub mod repeat_n;
 pub mod reverse_node;
 pub mod sawtooth_node;
 pub mod sine_node;
@@ -187,6 +189,14 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             reverse_node::reverse_node(),
             Box::new(reverse_node::reverse_logic),
+        ),
+        (
+            repeat_infinite::repeat_infinite_node(),
+            Box::new(repeat_infinite::repeat_infinite_logic),
+        ),
+        (
+            repeat_n::repeat_n_node(),
+            Box::new(repeat_n::repeat_n_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

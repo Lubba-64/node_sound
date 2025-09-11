@@ -21,4 +21,8 @@ impl<I: DawSource + Clone> DawSource for Speed<I> {
     fn note_speed(&mut self, speed: f32, rate: f32) {
         self.source.note_speed(speed, rate);
     }
+
+    fn size_hint(&self) -> Option<f32> {
+        self.source.size_hint().map(|x| x / self.speed)
+    }
 }

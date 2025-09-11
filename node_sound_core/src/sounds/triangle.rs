@@ -37,4 +37,8 @@ impl DawSource for TriangleWave {
         }
         self.speed = speed;
     }
+
+    fn size_hint(&self) -> Option<f32> {
+        None
+    }
 }

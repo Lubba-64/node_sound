@@ -2,32 +2,36 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::reverse::ReverseSource;
+use crate::sounds::repeat_n::RepeatRefSource;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn reverse_node() -> SoundNode {
+pub fn repeat_n_node() -> SoundNode {
     SoundNode {
-        name: "Reverse".to_string(),
+        name: "Repeat N".to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
                 InputParameter {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
-                    name: "audio 1".to_string(),
+                    name: "audio source 1".to_string(),
                     value: InputValueConfig::AudioSource {},
                 },
             ),
             (
-                "duration".to_string(),
+                "n".to_string(),
                 InputParameter {
-                    data_type: DataType::Duration,
+                    data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
-                    name: "duration".to_string(),
-                    value: InputValueConfig::Duration { value: 1.0 },
+                    name: "n".to_string(),
+                    value: InputValueConfig::Float {
+                        value: 2.,
+                        min: 1.,
+                        max: 100.,
+                    },
                 },
             ),
         ]),
@@ -40,15 +44,16 @@ pub fn reverse_node() -> SoundNode {
         )]),
     }
 }
-pub fn reverse_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+
+pub fn repeat_n_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let repeated_source = RepeatRefSource::new(
+        props.clone_sound(props.get_source("audio 1")?)?,
+        Some(props.get_float("n")?.floor() as u32),
+    );
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(ReverseSource::new(
-                cloned,
-                props.get_duration("duration")?.as_secs_f32(),
-            ))),
+            value: props.push_sound(Box::new(repeated_source)),
         },
     )]))
 }

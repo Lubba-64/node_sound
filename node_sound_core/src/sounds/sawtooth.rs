@@ -35,4 +35,8 @@ impl DawSource for SawtoothWave {
         }
         self.speed = speed;
     }
+
+    fn size_hint(&self) -> Option<f32> {
+        None
+    }
 }

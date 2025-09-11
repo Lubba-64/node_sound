@@ -19,4 +19,7 @@ impl<I1: DawSource + Clone> DawSource for Flip<I1> {
     fn note_speed(&mut self, speed: f32, rate: f32) {
         self.source.note_speed(speed, rate);
     }
+    fn size_hint(&self) -> Option<f32> {
+        self.source.size_hint()
+    }
 }

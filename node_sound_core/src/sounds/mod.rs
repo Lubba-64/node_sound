@@ -1,10 +1,12 @@
 pub mod automated_triangle;
+pub mod cloneable_decoder;
 pub mod const_wave;
 pub mod flip;
 pub mod lfo;
 pub mod merge_channels;
 pub mod minus;
 pub mod mix;
+pub mod repeat_n;
 pub mod reverse;
 pub mod sawtooth;
 pub mod signum;

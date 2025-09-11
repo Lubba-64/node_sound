@@ -59,9 +59,8 @@ pub struct NodeSound {
     voices: [Option<Voice>; NUM_VOICES as usize],
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
-    current_idx: usize,
     source_sound_buffers: Arc<Mutex<[Option<GenericSource>; MIDI_NOTES_LEN as usize]>>,
-    voice_sound_buffers: Arc<Mutex<[Option<GenericSource>; MIDI_NOTES_LEN as usize]>>,
+    voice_sound_buffers: Arc<Mutex<[(Option<GenericSource>, usize); MIDI_NOTES_LEN as usize]>>,
 }
 
 pub struct PluginPresetState {
@@ -147,9 +146,10 @@ impl Default for NodeSound {
             voices: [0; NUM_VOICES as usize].map(|_| None),
             next_internal_voice_id: 0,
             sample_rate: Arc::new(Mutex::new(48000.0)),
-            current_idx: 0,
             source_sound_buffers: Arc::new(Mutex::new([0; MIDI_NOTES_LEN as usize].map(|_| None))),
-            voice_sound_buffers: Arc::new(Mutex::new([0; MIDI_NOTES_LEN as usize].map(|_| None))),
+            voice_sound_buffers: Arc::new(Mutex::new(
+                [0; MIDI_NOTES_LEN as usize].map(|_| (None, 0)),
+            )),
         }
     }
 }
@@ -801,7 +801,7 @@ impl Plugin for NodeSound {
                 }
             };
             for note in notes_to_reset {
-                voice_sound_buffers[note] = sound_buffers[note].clone();
+                voice_sound_buffers[note] = (sound_buffers[note].clone(), 0);
             }
 
             let active_voices = self
@@ -833,9 +833,9 @@ impl Plugin for NodeSound {
                     mkparamgetter!(a16, 15, self, automations);
                     mkparamgetter!(a17, 16, self, automations);
                     mkparamgetter!(a18, 17, self, automations);
-                    match buffer {
+                    match &mut buffer.0 {
                         Some(source) => {
-                            let time_index = (self.current_idx + sample_idx) as f32;
+                            let time_index = (buffer.1 + sample_idx) as f32;
                             let left_sample = (source.next(time_index, 0).unwrap_or(0.0)
                                 / active_voices.max(1.0))
                                 * amp;
@@ -869,7 +869,16 @@ impl Plugin for NodeSound {
             block_end = (block_start + MAX_BLOCK_SIZE).min(num_samples);
         }
 
-        self.current_idx += num_samples;
+        let mut voice_sound_buffers = match self.voice_sound_buffers.lock() {
+            Ok(x) => x,
+            Err(_x) => {
+                return ProcessStatus::KeepAlive;
+            }
+        };
+
+        for buffer in voice_sound_buffers.iter_mut() {
+            buffer.1 += num_samples;
+        }
 
         ProcessStatus::Normal
     }

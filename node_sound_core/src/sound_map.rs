@@ -6,6 +6,7 @@ use crate::sounds::const_wave::ConstWave;
 pub trait DawSource: DynClone {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32>;
     fn note_speed(&mut self, speed: f32, rate: f32);
+    fn size_hint(&self) -> Option<f32>;
 }
 
 pub struct GenericSource {
@@ -33,6 +34,9 @@ impl DawSource for GenericSource {
     }
     fn note_speed(&mut self, speed: f32, rate: f32) {
         self.sound.note_speed(speed, rate);
+    }
+    fn size_hint(&self) -> Option<f32> {
+        self.sound.size_hint()
     }
 }
 

@@ -27,4 +27,9 @@ impl<I1: DawSource + Clone, I2: DawSource + Clone> DawSource for Minus<I1, I2> {
         self.source1.note_speed(speed, rate);
         self.source2.note_speed(speed, rate);
     }
+    fn size_hint(&self) -> Option<f32> {
+        let s1 = self.source1.size_hint()?;
+        let s2 = self.source2.size_hint()?;
+        Some(s1.max(s2))
+    }
 }
