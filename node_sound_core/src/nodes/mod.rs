@@ -276,8 +276,16 @@ pub fn get_nodes() -> NodeDefinitions {
             Box::new(duration_node::duration_logic),
         ),
         (
-            bit_crush_node::bit_crusher_node(),
-            Box::new(bit_crush_node::bit_crusher_logic),
+            bit_crush_node::bit_crush_node(),
+            Box::new(bit_crush_node::bit_crush_logic),
+        ),
+        (
+            automated_wave_shaper_node::automated_wave_shaper_node(),
+            Box::new(automated_wave_shaper_node::automated_wave_shaper_logic),
+        ),
+        (
+            automated_wave_table_node::automated_wave_table_node(),
+            Box::new(automated_wave_table_node::automated_wave_table_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

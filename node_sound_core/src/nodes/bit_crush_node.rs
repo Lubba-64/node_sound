@@ -7,7 +7,7 @@ use crate::sounds::bit_crush::BitCrusher;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
-pub fn bit_crusher_node() -> SoundNode {
+pub fn bit_crush_node() -> SoundNode {
     SoundNode {
         name: "Bit Crusher".to_string(),
         inputs: BTreeMap::from([
@@ -44,7 +44,7 @@ pub fn bit_crusher_node() -> SoundNode {
     }
 }
 
-pub fn bit_crusher_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+pub fn bit_crush_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let cloned = props.clone_sound(props.get_source("audio")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),

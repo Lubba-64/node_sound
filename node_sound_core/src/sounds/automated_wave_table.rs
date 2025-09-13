@@ -26,13 +26,13 @@ pub struct AutomatedWaveTableOscillator<F: DawSource> {
 }
 
 impl<F: DawSource> AutomatedWaveTableOscillator<F> {
-    pub fn new_stereo(sample_rate: f32, frequency: F) -> Self {
+    pub fn new_stereo(sample_rate: f32, frequency: F, base_frequency: f32) -> Self {
         Self {
             left_table: vec![],
             right_table: vec![],
             sample_rate: sample_rate,
             frequency,
-            base_frequency: 1.0,
+            base_frequency,
             duration_seconds: 0.0,
             speed: 1.0,
             uses_speed: false,

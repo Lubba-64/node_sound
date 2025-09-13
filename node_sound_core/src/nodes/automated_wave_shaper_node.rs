@@ -1,4 +1,4 @@
-use crate::constants::{DEFAULT_SAMPLE_RATE, WAVE_TABLE_SIZE};
+use crate::constants::{DEFAULT_SAMPLE_RATE, MIDDLE_C_FREQ, WAVE_TABLE_SIZE};
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
@@ -55,7 +55,8 @@ pub fn automated_wave_shaper_node() -> SoundNode {
 
 pub fn automated_wave_shaper_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let cloned = props.clone_sound(props.get_source("frequency")?)?;
-    let mut stereo = AutomatedWaveTableOscillator::new_stereo(DEFAULT_SAMPLE_RATE as f32, cloned);
+    let mut stereo =
+        AutomatedWaveTableOscillator::new_stereo(DEFAULT_SAMPLE_RATE as f32, cloned, MIDDLE_C_FREQ);
     stereo.set_uses_speed(props.get_bool("note independant")?);
     stereo.rebuild_table(
         DEFAULT_SAMPLE_RATE as f32,
