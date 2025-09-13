@@ -12,15 +12,24 @@ use crate::{
     sound_map::{DawSource, GenericSource},
 };
 
+pub mod abs_node;
 pub mod amplify_node;
+pub mod automated_clamp_node;
+pub mod automated_mod_node;
+pub mod automated_mod_raw_node;
 pub mod automated_sawtooth_node;
 pub mod automated_sine_node;
 pub mod automated_square_node;
+pub mod automated_translate_node;
 pub mod automated_triangle_node;
+pub mod automated_wave_shaper_node;
+pub mod automated_wave_table_node;
+pub mod bit_crush_node;
 pub mod clamp_node;
 pub mod const_node;
 pub mod daw_automation_source_node;
 pub mod delay_node;
+pub mod duration_node;
 pub mod file_node;
 pub mod flip_node;
 pub mod lfo_node;
@@ -245,6 +254,31 @@ pub fn get_nodes() -> NodeDefinitions {
             Box::new(daw_automation_source_node::daw_automations_logic),
         ),
         (clamp_node::clamp_node(), Box::new(clamp_node::clamp_logic)),
+        (abs_node::abs_node(), Box::new(abs_node::abs_logic)),
+        (
+            automated_clamp_node::automated_clamp_node(),
+            Box::new(automated_clamp_node::automated_clamp_logic),
+        ),
+        (
+            automated_mod_node::automated_mod_node(),
+            Box::new(automated_mod_node::automated_mod_logic),
+        ),
+        (
+            automated_mod_raw_node::automated_mod_raw_node(),
+            Box::new(automated_mod_raw_node::automated_mod_raw_logic),
+        ),
+        (
+            automated_translate_node::automated_translate_node(),
+            Box::new(automated_translate_node::automated_translate_logic),
+        ),
+        (
+            duration_node::duration_node(),
+            Box::new(duration_node::duration_logic),
+        ),
+        (
+            bit_crush_node::bit_crusher_node(),
+            Box::new(bit_crush_node::bit_crusher_logic),
+        ),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

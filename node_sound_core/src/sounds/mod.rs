@@ -1,8 +1,15 @@
+pub mod abs;
 pub mod amplify;
+pub mod automated_clamp;
+pub mod automated_mod;
+pub mod automated_mod_raw;
 pub mod automated_sawtooth;
 pub mod automated_sine;
 pub mod automated_square;
+pub mod automated_translate;
 pub mod automated_triangle;
+pub mod automated_wave_table;
+pub mod bit_crush;
 pub mod clamp;
 pub mod cloneable_decoder;
 pub mod const_wave;

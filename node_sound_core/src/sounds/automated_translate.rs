@@ -1,62 +1,50 @@
-use rodio::Source;
-
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
 pub struct AutomatedTranslateWave<
-    I: Source<Item = f32>,
-    I2: Source<Item = f32>,
-    I3: Source<Item = f32>,
-    I4: Source<Item = f32>,
-    I5: Source<Item = f32>,
+    I1: DawSource,
+    I2: DawSource,
+    I3: DawSource,
+    I4: DawSource,
+    I5: DawSource,
 > {
-    source: UniformSourceIterator<I, I::Item>,
-    start_min: UniformSourceIterator<I2, I::Item>,
-    start_max: UniformSourceIterator<I3, I::Item>,
-    end_min: UniformSourceIterator<I4, I::Item>,
-    end_max: UniformSourceIterator<I5, I::Item>,
+    source: I1,
+    start_min: I2,
+    start_max: I3,
+    end_min: I4,
+    end_max: I5,
 }
 
-impl<
-    I: Source<Item = f32>,
-    I2: Source<Item = f32>,
-    I3: Source<Item = f32>,
-    I4: Source<Item = f32>,
-    I5: Source<Item = f32>,
-> AutomatedTranslateWave<I, I2, I3, I4, I5>
+impl<I1: DawSource, I2: DawSource, I3: DawSource, I4: DawSource, I5: DawSource>
+    AutomatedTranslateWave<I1, I2, I3, I4, I5>
 {
     #[inline]
-    pub fn new(source: I, start_min: I2, start_max: I3, end_min: I4, end_max: I5) -> Self {
+    pub fn new(source: I1, start_min: I2, start_max: I3, end_min: I4, end_max: I5) -> Self {
         Self {
-            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
-            start_min: UniformSourceIterator::new(start_min, 2, DEFAULT_SAMPLE_RATE),
-            start_max: UniformSourceIterator::new(start_max, 2, DEFAULT_SAMPLE_RATE),
-            end_min: UniformSourceIterator::new(end_min, 2, DEFAULT_SAMPLE_RATE),
-            end_max: UniformSourceIterator::new(end_max, 2, DEFAULT_SAMPLE_RATE),
+            source,
+            start_max,
+            start_min,
+            end_max,
+            end_min,
         }
     }
 }
 
 impl<
-    I: Source<Item = f32>,
-    I2: Source<Item = f32>,
-    I3: Source<Item = f32>,
-    I4: Source<Item = f32>,
-    I5: Source<Item = f32>,
-> Iterator for AutomatedTranslateWave<I, I2, I3, I4, I5>
+    I1: DawSource + Clone,
+    I2: DawSource + Clone,
+    I3: DawSource + Clone,
+    I4: DawSource + Clone,
+    I5: DawSource + Clone,
+> DawSource for AutomatedTranslateWave<I1, I2, I3, I4, I5>
 {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         match (
-            self.source.next(),
-            self.start_min.next(),
-            self.start_max.next(),
-            self.end_min.next(),
-            self.end_max.next(),
+            self.source.next(index, channel),
+            self.start_min.next(index, channel),
+            self.start_max.next(index, channel),
+            self.end_min.next(index, channel),
+            self.end_max.next(index, channel),
         ) {
             (
                 Some(p),
@@ -80,44 +68,19 @@ impl<
             _ => None,
         }
     }
-}
-
-impl<
-    I: Source<Item = f32>,
-    I2: Source<Item = f32>,
-    I3: Source<Item = f32>,
-    I4: Source<Item = f32>,
-    I5: Source<Item = f32>,
-> Source for AutomatedTranslateWave<I, I2, I3, I4, I5>
-{
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.end_max.note_speed(speed, rate);
+        self.end_min.note_speed(speed, rate);
+        self.start_max.note_speed(speed, rate);
+        self.start_min.note_speed(speed, rate);
+        self.source.note_speed(speed, rate);
     }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
+    fn size_hint(&self) -> Option<f32> {
+        let end_max = self.end_max.size_hint()?;
+        let end_min = self.end_min.size_hint()?;
+        let start_max = self.start_max.size_hint()?;
+        let start_min = self.start_min.size_hint()?;
+        let source = self.source.size_hint()?;
+        Some(end_max.max(end_min.max(start_max.max(start_min.max(source)))))
     }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl<
-    I: Source<Item = f32>,
-    I2: Source<Item = f32>,
-    I3: Source<Item = f32>,
-    I4: Source<Item = f32>,
-    I5: Source<Item = f32>,
-> SetSpeed<f32> for AutomatedTranslateWave<I, I2, I3, I4, I5>
-{
-    fn set_speed(&mut self, _speed: f32) {}
 }

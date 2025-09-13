@@ -1,37 +1,28 @@
-use rodio::Source;
-
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
-pub struct AutomatedClamp<I: Source<Item = f32>, I2: Source<Item = f32>, I3: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
-    min: UniformSourceIterator<I2, I2::Item>,
-    max: UniformSourceIterator<I3, I3::Item>,
+pub struct AutomatedClamp<I1: DawSource, I2: DawSource, I3: DawSource> {
+    source: I1,
+    min: I2,
+    max: I3,
 }
 
-impl<I: Source<Item = f32>, I2: Source<Item = f32>, I3: Source<Item = f32>>
-    AutomatedClamp<I, I2, I3>
-{
+impl<I1: DawSource, I2: DawSource, I3: DawSource> AutomatedClamp<I1, I2, I3> {
     #[inline]
-    pub fn new(source: I, min: I2, max: I3) -> Self {
-        Self {
-            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
-            max: UniformSourceIterator::new(max, 1, DEFAULT_SAMPLE_RATE),
-            min: UniformSourceIterator::new(min, 1, DEFAULT_SAMPLE_RATE),
-        }
+    pub fn new(source: I1, min: I2, max: I3) -> Self {
+        Self { source, max, min }
     }
 }
 
-impl<I: Source<Item = f32>, I2: Source<Item = f32>, I3: Source<Item = f32>> Iterator
-    for AutomatedClamp<I, I2, I3>
+impl<I1: DawSource + Clone, I2: DawSource + Clone, I3: DawSource + Clone> DawSource
+    for AutomatedClamp<I1, I2, I3>
 {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        match (self.source.next(), self.min.next(), self.max.next()) {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        match (
+            self.source.next(index, channel),
+            self.min.next(index, channel),
+            self.max.next(index, channel),
+        ) {
             (Some(source), Some(mut min), Some(mut max)) => {
                 if min > max {
                     std::mem::swap(&mut min, &mut max);
@@ -41,34 +32,15 @@ impl<I: Source<Item = f32>, I2: Source<Item = f32>, I3: Source<Item = f32>> Iter
             _ => None,
         }
     }
-}
-
-impl<I: Source<Item = f32>, I2: Source<Item = f32>, I3: Source<Item = f32>> Source
-    for AutomatedClamp<I, I2, I3>
-{
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.min.note_speed(speed, rate);
+        self.max.note_speed(speed, rate);
+        self.source.note_speed(speed, rate);
     }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
+    fn size_hint(&self) -> Option<f32> {
+        let max = self.max.size_hint()?;
+        let min = self.min.size_hint()?;
+        let source = self.source.size_hint()?;
+        Some(max.max(min.max(source)))
     }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl<I: Source<Item = f32>, I2: Source<Item = f32>, I3: Source<Item = f32>> SetSpeed<f32>
-    for AutomatedClamp<I, I2, I3>
-{
-    fn set_speed(&mut self, _speed: f32) {}
 }

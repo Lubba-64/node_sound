@@ -9,18 +9,14 @@ pub struct Clamp<I: DawSource> {
 
 impl<I: DawSource> Clamp<I> {
     #[inline]
-    pub fn new(source: I, min: Option<f32>, max: Option<f32>) -> Self {
-        let mut min_1 = min.unwrap_or(f32::MIN);
-        let mut max_1 = max.unwrap_or(f32::MAX);
-        if min_1 > max_1 {
-            let other = min_1;
-            min_1 = max_1;
-            max_1 = other;
+    pub fn new(source: I, mut min: f32, mut max: f32) -> Self {
+        if min > max {
+            std::mem::swap(&mut min, &mut max);
         }
         Self {
             source,
-            max: max_1,
-            min: min_1,
+            max: max,
+            min: min,
         }
     }
 }

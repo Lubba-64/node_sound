@@ -64,8 +64,8 @@ pub fn clamp_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         ValueType::AudioSource {
             value: props.push_sound(Box::new(Clamp::new(
                 cloned,
-                Some(props.get_float("min")?),
-                Some(props.get_float("max")?),
+                props.get_float("min")?,
+                props.get_float("max")?,
             ))),
         },
     )]))
