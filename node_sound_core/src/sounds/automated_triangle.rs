@@ -29,7 +29,7 @@ impl<F: DawSource + Clone> DawSource for AutomatedTriangleWave<F> {
         index /= self.speed;
         let freq = self.freq_source.next(index, channel).unwrap_or(0.0);
         let phase_increment = 2.0 * PI * freq / self.sample_rate;
-        self.phase = (self.phase + phase_increment * (index % 1.0)) % (2.0 * PI);
+        self.phase = (self.phase + phase_increment * (index % (2.0 * PI))) % (2.0 * PI);
         Some(if self.phase < PI {
             -1.0 + (2.0 * self.phase / PI)
         } else {

@@ -37,10 +37,9 @@ impl DawSource for TriangleWave {
 
     fn note_speed(&mut self, speed: f32, rate: f32) {
         self.sample_rate = rate;
-        if !self.uses_speed {
-            return;
+        if self.uses_speed {
+            self.speed = speed;
         }
-        self.speed = speed;
     }
 
     fn size_hint(&self) -> Option<f32> {

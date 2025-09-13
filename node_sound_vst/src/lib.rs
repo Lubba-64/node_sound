@@ -836,10 +836,10 @@ impl Plugin for NodeSound {
                     match &mut buffer.0 {
                         Some(source) => {
                             let time_index = (buffer.1 + sample_idx) as f32;
-                            let left_sample = (source.next(time_index, 0).unwrap_or(0.0)
+                            let left_sample = (source.next(time_index, 0).unwrap_or_default()
                                 / active_voices.max(1.0))
                                 * amp;
-                            let right_sample = (source.next(time_index, 1).unwrap_or(0.0)
+                            let right_sample = (source.next(time_index, 1).unwrap_or_default()
                                 / active_voices.max(1.0))
                                 * amp;
                             output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
@@ -885,7 +885,7 @@ impl Plugin for NodeSound {
 }
 
 impl ClapPlugin for NodeSound {
-    const CLAP_ID: &'static str = "com.lubba64-plugins-egui.node-sound-egui";
+    const CLAP_ID: &'static str = "com.lubba64-plugins-egui.node-sound-egui-2";
     const CLAP_DESCRIPTION: Option<&'static str> = Some("A node graph waveform synth");
     const CLAP_MANUAL_URL: Option<&'static str> = Some(Self::URL);
     const CLAP_SUPPORT_URL: Option<&'static str> = None;

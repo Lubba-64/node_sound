@@ -27,7 +27,7 @@ impl DawSource for SquareWave {
     fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
         let phase_increment = (2.0 * PI) * self.frequency / self.sample_rate / self.speed;
         let phase = (phase_increment * index) % (2.0 * PI);
-        Some(phase.sin().signum())
+        Some(if phase < PI { 1.0 } else { -1.0 })
     }
 
     fn note_speed(&mut self, speed: f32, rate: f32) {
