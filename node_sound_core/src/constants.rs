@@ -1,4 +1,3 @@
-pub const TWO_PI: f32 = 2.0 * std::f32::consts::PI;
 pub const DEFAULT_SAMPLE_RATE: u32 = 44100;
 pub const MIDDLE_C_FREQ: f32 = 261.63;
 pub const WAVE_TABLE_SIZE: usize = 100;

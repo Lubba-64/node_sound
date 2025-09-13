@@ -13,6 +13,9 @@ use crate::{
 };
 
 pub mod amplify_node;
+pub mod automated_sawtooth_node;
+pub mod automated_sine_node;
+pub mod automated_square_node;
 pub mod automated_triangle_node;
 pub mod clamp_node;
 pub mod const_node;
@@ -186,6 +189,18 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             automated_triangle_node::automated_triangle_node(),
             Box::new(automated_triangle_node::automated_triangle_logic),
+        ),
+        (
+            automated_sawtooth_node::automated_sawtooth_node(),
+            Box::new(automated_sawtooth_node::automated_sawtooth_logic),
+        ),
+        (
+            automated_sine_node::automated_sine_node(),
+            Box::new(automated_sine_node::automated_sine_logic),
+        ),
+        (
+            automated_square_node::automated_square_node(),
+            Box::new(automated_square_node::automated_square_logic),
         ),
         (midi_node::midi_node(), Box::new(midi_node::midi_logic)),
         (

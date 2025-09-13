@@ -1,4 +1,6 @@
-use crate::constants::{DEFAULT_SAMPLE_RATE, TWO_PI};
+use std::f32::consts::PI;
+
+use crate::constants::DEFAULT_SAMPLE_RATE;
 use crate::sound_map::DawSource;
 
 #[derive(Clone)]
@@ -23,8 +25,8 @@ impl SineWave {
 
 impl DawSource for SineWave {
     fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
-        let phase_increment = TWO_PI * self.frequency / self.sample_rate / self.speed;
-        let phase = (phase_increment * index) % TWO_PI;
+        let phase_increment = (2.0 * PI) * self.frequency / self.sample_rate / self.speed;
+        let phase = (phase_increment * index) % (2.0 * PI);
         Some(phase.sin())
     }
 

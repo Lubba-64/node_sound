@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use crate::constants::DEFAULT_SAMPLE_RATE;
 use crate::sound_map::DawSource;
 
@@ -23,9 +25,9 @@ impl SawtoothWave {
 
 impl DawSource for SawtoothWave {
     fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
-        let phase_increment = self.frequency / self.sample_rate / self.speed;
-        let phase = (phase_increment * index) % 1.0;
-        Some((phase * 2.0) - 1.0)
+        let phase_increment = 2.0 * PI * self.frequency / self.sample_rate;
+        let phase = (phase_increment * index) % (2.0 * PI);
+        Some((phase / PI) - 1.0)
     }
 
     fn note_speed(&mut self, speed: f32, rate: f32) {

@@ -1,68 +1,45 @@
-use rodio::{Source, source::UniformSourceIterator};
+use std::f32::consts::PI;
 
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use std::time::Duration;
+use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::DawSource};
 
 #[derive(Clone)]
-pub struct AutomatedSawToothWave<T: rodio::Source<Item = f32>> {
-    freq: UniformSourceIterator<T, f32>,
-    uses_speed: bool,
+pub struct AutomatedSawtoothWave<F: DawSource> {
+    freq_source: F,
     speed: f32,
-    phase: f32,
+    sample_rate: f32,
+    uses_speed: bool,
 }
 
-impl<T: rodio::Source<Item = f32>> AutomatedSawToothWave<T> {
+impl<F: DawSource> AutomatedSawtoothWave<F> {
     #[inline]
-    pub fn new(freq: T, uses_speed: bool) -> Self {
+    pub fn new(freq_source: F, uses_speed: bool) -> Self {
         Self {
-            freq: UniformSourceIterator::new(freq, 1, DEFAULT_SAMPLE_RATE),
-            phase: 0.0,
+            freq_source,
             speed: 1.0,
+            sample_rate: DEFAULT_SAMPLE_RATE as f32,
             uses_speed,
         }
     }
 }
 
-impl<T: rodio::Source<Item = f32>> Iterator for AutomatedSawToothWave<T> {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        self.freq.next().map(|freq| {
-            let phase_increment = 2.0 * freq / DEFAULT_SAMPLE_RATE as f32 / self.speed;
-            self.phase = (self.phase + phase_increment) % 2.0;
-            self.phase - 1.0
-        })
-    }
-}
-
-impl<T: rodio::Source<Item = f32>> Source for AutomatedSawToothWave<T> {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+impl<F: DawSource + Clone> DawSource for AutomatedSawtoothWave<F> {
+    fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
+        index /= self.speed;
+        let freq = self.freq_source.next(index, channel).unwrap_or(0.0);
+        let phase_increment = 2.0 * PI * freq / self.sample_rate;
+        let phase = (phase_increment * index) % (2.0 * PI);
+        Some((phase / PI) - 1.0)
     }
 
-    #[inline]
-    fn channels(&self) -> u16 {
-        1
-    }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl<I: Source<Item = f32>> SetSpeed<f32> for AutomatedSawToothWave<I> {
-    fn set_speed(&mut self, speed: f32) {
-        if !self.uses_speed {
-            return;
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        if self.uses_speed {
+            self.speed = speed;
+            self.freq_source.note_speed(1.0, rate);
         }
-        self.speed = speed;
+        self.sample_rate = rate;
+    }
+
+    fn size_hint(&self) -> Option<f32> {
+        None
     }
 }

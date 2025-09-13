@@ -1,4 +1,7 @@
 pub mod amplify;
+pub mod automated_sawtooth;
+pub mod automated_sine;
+pub mod automated_square;
 pub mod automated_triangle;
 pub mod clamp;
 pub mod cloneable_decoder;
