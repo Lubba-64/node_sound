@@ -1,64 +1,37 @@
-use rodio::Source;
-
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
+use crate::{
+    constants::DEFAULT_SAMPLE_RATE,
+    sound_map::DawSource,
+    sounds::wave_table::{SourceWavetableOscillator, WaveTableTrait},
+};
 
 #[derive(Clone)]
-pub struct ReverseSource {
-    buffer: Vec<f32>,
-    idx: usize,
+pub struct ReverseSource<S: DawSource> {
+    wavetable: SourceWavetableOscillator<S>,
 }
 
-impl ReverseSource {
+impl<S: DawSource> ReverseSource<S> {
     #[inline]
-    pub fn new(source: impl Source<Item = f32>, duration: Duration) -> Self {
-        let len = (duration.as_secs_f32() * DEFAULT_SAMPLE_RATE as f32).round() as usize * 2;
-        let mut uniform = UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE);
-        Self {
-            buffer: (0..len).map(|_| uniform.next().unwrap_or(0.0)).collect(),
-            idx: 0,
-        }
-    }
-}
+    pub fn new(source: S, duration: f32) -> Self {
+        let sample_rate = DEFAULT_SAMPLE_RATE;
+        let table =
+            SourceWavetableOscillator::from_source(source, sample_rate, duration, 1.0, false);
 
-impl Iterator for ReverseSource {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        if self.idx >= self.buffer.len() {
-            None
-        } else {
-            let sample = self.buffer[self.buffer.len() - self.idx - 1];
-            self.idx += 1;
-            Some(sample)
-        }
+        Self { wavetable: table }
     }
 }
 
-impl Source for ReverseSource {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+impl<S: DawSource + Clone> DawSource for ReverseSource<S> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.wavetable.get_sample(index, channel)
     }
 
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.wavetable.note_speed(speed, rate);
+        self.wavetable.left_table.reverse();
+        self.wavetable.right_table.reverse();
     }
 
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
+    fn size_hint(&self) -> Option<f32> {
+        self.wavetable.size_hint()
     }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl SetSpeed<f32> for ReverseSource {
-    fn set_speed(&mut self, _speed: f32) {}
 }

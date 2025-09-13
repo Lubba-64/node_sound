@@ -3,7 +3,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::{WavetableOscillator, samples_from_source};
+use crate::sounds::wave_table::SourceWavetableOscillator;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
@@ -65,13 +65,11 @@ pub fn wave_table_node() -> SoundNode {
 }
 
 pub fn wave_table_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let samples = samples_from_source(
+    let mut audio = SourceWavetableOscillator::from_source(
         props.clone_sound(props.get_source("audio 1")?)?,
-        props.get_duration("duration")?.as_millis() as usize,
-    );
-    let mut audio = WavetableOscillator::new(
         DEFAULT_SAMPLE_RATE,
-        samples,
+        props.get_duration("duration")?.as_secs_f32(),
+        1.0,
         props.get_bool("note independant")?,
     );
     audio.set_frequency(props.get_float("frequency")?);

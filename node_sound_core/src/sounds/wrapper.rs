@@ -1,31 +1,27 @@
-use crate::constants::DEFAULT_SAMPLE_RATE;
-use crate::sound_map::SetSpeed;
-use rodio::Source;
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
-pub struct Wrapper<I: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
-    last: Option<f32>,
+pub struct Wrapper<I: DawSource> {
+    source: I,
+    last: [Option<f32>; 2],
 }
 
-impl<I: Source<Item = f32>> Wrapper<I> {
+impl<I: DawSource> Wrapper<I> {
     #[inline]
     pub fn new(source: I) -> Self {
         Self {
-            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
-            last: None,
+            source,
+            last: [None; 2],
         }
     }
 }
 
-impl<I: Source<Item = f32>> Iterator for Wrapper<I> {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        self.last = match (self.source.next(), self.last) {
+impl<I: DawSource + Clone> DawSource for Wrapper<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.last[channel as usize] = match (
+            self.source.next(index, channel),
+            self.last[channel as usize],
+        ) {
             (Some(x), Some(y)) => {
                 if x + y > 1.0 {
                     return Some(-1.0 + x + y - 1.0);
@@ -39,32 +35,12 @@ impl<I: Source<Item = f32>> Iterator for Wrapper<I> {
             (Some(x), None) => Some(x),
             _ => Some(0.0),
         };
-        Some(self.last.unwrap_or(0.0))
+        self.last[channel as usize]
     }
-}
-
-impl<I: Source<Item = f32>> Source for Wrapper<I> {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.source.note_speed(speed, rate);
     }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
+    fn size_hint(&self) -> Option<f32> {
+        self.source.size_hint()
     }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl<I: Source<Item = f32>> SetSpeed<f32> for Wrapper<I> {
-    fn set_speed(&mut self, _speed: f32) {}
 }

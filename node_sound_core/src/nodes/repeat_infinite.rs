@@ -2,8 +2,8 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
+use crate::sounds::repeat_n::RepeatRefSource;
 use egui_node_graph_2::InputParamKind;
-use rodio::Source;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
@@ -31,10 +31,7 @@ pub fn repeat_infinite_node() -> SoundNode {
 }
 
 pub fn repeat_infinite_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props
-        .clone_sound(props.get_source("audio 1")?)?
-        .repeat_infinite();
-
+    let cloned = RepeatRefSource::new(props.clone_sound(props.get_source("audio 1")?)?, None);
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {

@@ -3,7 +3,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::SawToothWave;
+use crate::sounds::sawtooth::SawtoothWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
@@ -49,7 +49,7 @@ pub fn sawtooth_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(SawToothWave::new(
+            value: props.push_sound(Box::new(SawtoothWave::new(
                 props.get_float("frequency")?,
                 props.get_bool("note independant")?,
             ))),

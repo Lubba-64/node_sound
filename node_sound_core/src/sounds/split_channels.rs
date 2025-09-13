@@ -1,67 +1,26 @@
-use rodio::Source;
-
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
-pub struct SplitChannels<I: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
-    channel: u16,
+pub struct SplitChannels<I: DawSource> {
+    source: I,
+    channel: u8,
 }
 
-impl<I: Source<Item = f32>> SplitChannels<I> {
+impl<I: DawSource> SplitChannels<I> {
     #[inline]
-    pub fn new(source: I, channel: u16) -> Self {
-        let channels = source.channels();
-        Self {
-            source: UniformSourceIterator::new(source, channels, DEFAULT_SAMPLE_RATE),
-            channel,
-        }
+    pub fn new(source: I, channel: u8) -> Self {
+        Self { source, channel }
     }
 }
 
-impl<I: Source<Item = f32>> Iterator for SplitChannels<I> {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        if self.source.channels() - 1 < self.channel {
-            return None;
-        }
-        for _ in 0..self.channel {
-            let _ = self.source.next().is_none();
-        }
-        let item = self.source.next();
-        for _ in self.channel..self.source.channels() - 1 {
-            let _ = self.source.next().is_none();
-        }
-        return item;
+impl<I: DawSource + Clone> DawSource for SplitChannels<I> {
+    fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
+        self.source.next(index, self.channel)
     }
-}
-
-impl<I: Source<Item = f32>> Source for SplitChannels<I> {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.source.note_speed(speed, rate);
     }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        1
+    fn size_hint(&self) -> Option<f32> {
+        self.source.size_hint()
     }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl<I: Source<Item = f32>> SetSpeed<f32> for SplitChannels<I> {
-    fn set_speed(&mut self, _speed: f32) {}
 }

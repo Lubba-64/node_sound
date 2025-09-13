@@ -1,32 +1,26 @@
 use crate::sound_map::DawSource;
 
 #[derive(Clone)]
-pub struct Clamp<I: DawSource> {
+pub struct Amplify<I: DawSource> {
     source: I,
-    min: f32,
-    max: f32,
+    amplification: f32,
 }
 
-impl<I: DawSource> Clamp<I> {
+impl<I: DawSource> Amplify<I> {
     #[inline]
-    pub fn new(source: I, mut min: f32, mut max: f32) -> Self {
-        if min > max {
-            std::mem::swap(&mut min, &mut max);
-        }
+    pub fn new(source: I, amplification: f32) -> Self {
         Self {
             source,
-            max: max,
-            min: min,
+            amplification,
         }
     }
 }
 
-impl<I: DawSource + Clone> DawSource for Clamp<I> {
+impl<I: DawSource + Clone> DawSource for Amplify<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
-        return self
-            .source
+        self.source
             .next(index, channel)
-            .map(|val| val.clamp(self.min, self.max));
+            .map(|x| x * self.amplification)
     }
     fn note_speed(&mut self, speed: f32, rate: f32) {
         self.source.note_speed(speed, rate);

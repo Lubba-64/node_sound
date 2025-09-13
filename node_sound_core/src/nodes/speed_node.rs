@@ -3,8 +3,8 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
+use crate::sounds::speed::Speed;
 use egui_node_graph_2::InputParamKind;
-use rodio::Source;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
@@ -46,9 +46,10 @@ pub fn speed_node() -> SoundNode {
     }
 }
 pub fn speed_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props
-        .clone_sound(props.get_source("audio 1")?)?
-        .speed(props.get_float("speed")?);
+    let cloned = Speed::new(
+        props.clone_sound(props.get_source("audio 1")?)?,
+        props.get_float("speed")?,
+    );
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {

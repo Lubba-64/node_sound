@@ -1,57 +1,25 @@
-use rodio::Source;
-
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
-pub struct Flip<I: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
+pub struct Flip<I1: DawSource> {
+    source: I1,
 }
 
-impl<I: Source<Item = f32>> Flip<I> {
+impl<I1: DawSource> Flip<I1> {
     #[inline]
-    pub fn new(source: I) -> Self {
-        Self {
-            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
-        }
-    }
-}
-
-impl<I: Source<Item = f32>> Iterator for Flip<I> {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        match self.source.next() {
-            Some(x) => Some(-x),
-            None => None,
-        }
+    pub fn new(source: I1) -> Self {
+        Self { source }
     }
 }
 
-impl<I: Source<Item = f32>> Source for Flip<I> {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+impl<I1: DawSource + Clone> DawSource for Flip<I1> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.source.next(index, channel).map(|x| -x)
     }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.source.note_speed(speed, rate);
     }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
+    fn size_hint(&self) -> Option<f32> {
+        self.source.size_hint()
     }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl<I: Source<Item = f32>> SetSpeed<f32> for Flip<I> {
-    fn set_speed(&mut self, _speed: f32) {}
 }

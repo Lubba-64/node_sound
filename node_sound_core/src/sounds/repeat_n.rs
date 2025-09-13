@@ -1,81 +1,70 @@
-use rodio::Source;
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
-
-use crate::sound_map::SetSpeed;
+use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::DawSource};
+use std::u32;
 
 #[derive(Clone)]
-pub struct RepeatRefSource<I: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
-    repeat_count: u32,
-    current_repeat: u32,
-    original_source: I,
+pub struct RepeatRefSource<I: DawSource> {
+    source: I,
+    repeat_count: Option<u32>,
+    sample_rate: f32,
+    speed: f32,
+    ind_min: f32,
 }
 
-impl<I: Source<Item = f32> + Clone> RepeatRefSource<I> {
+impl<I: DawSource + Clone> RepeatRefSource<I> {
     #[inline]
-    pub fn new(source: I, repeat_count: u32) -> Self {
+    pub fn new(source: I, repeat_count: Option<u32>) -> Self {
         Self {
-            source: UniformSourceIterator::new(
-                source.clone(),
-                source.channels(),
-                source.sample_rate(),
-            ),
+            source,
             repeat_count,
-            current_repeat: 0,
-            original_source: source,
+            sample_rate: DEFAULT_SAMPLE_RATE as f32,
+            speed: 1.0,
+            ind_min: 0.0,
         }
     }
 }
 
-impl<I: Source<Item = f32> + Clone> Iterator for RepeatRefSource<I> {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        match self.source.next() {
-            Some(sample) => Some(sample),
+impl<I: DawSource + Clone> DawSource for RepeatRefSource<I> {
+    fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
+        match self.source.size_hint() {
             None => {
-                if self.current_repeat < self.repeat_count - 1 {
-                    self.current_repeat += 1;
-                    self.source = UniformSourceIterator::new(
-                        self.original_source.clone(),
-                        self.original_source.channels(),
-                        self.original_source.sample_rate(),
-                    );
-                    self.source.next()
-                } else {
-                    None // Stop after reaching the repeat count
+                index -= self.ind_min;
+                match self.source.next(index, channel) {
+                    None => {
+                        self.ind_min += index;
+                        self.source.next(0.0, channel)
+                    }
+                    Some(x) => Some(x),
                 }
+            }
+            Some(x) => {
+                let wrap = x * self.sample_rate;
+
+                match self.repeat_count {
+                    None => {}
+                    Some(repeat_count) => {
+                        if (index / wrap) as u32 > repeat_count {
+                            return None;
+                        }
+                    }
+                }
+
+                index %= wrap;
+                self.source.next(index, channel)
             }
         }
     }
-}
-
-impl<I: Source<Item = f32> + Clone> Source for RepeatRefSource<I> {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        self.source.current_frame_len()
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.source.note_speed(speed, rate);
+        self.sample_rate = rate;
+        self.speed = speed;
     }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        self.source.channels()
+    fn size_hint(&self) -> Option<f32> {
+        match self.repeat_count {
+            None => None,
+            Some(repeats) => match self.source.size_hint() {
+                None => None,
+                Some(size) => Some(size * repeats as f32),
+            },
+        }
     }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        self.source.sample_rate()
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        self.original_source
-            .total_duration()
-            .map(|d| d * self.repeat_count)
-    }
-}
-
-impl<I: Source<Item = f32> + Clone> SetSpeed<f32> for RepeatRefSource<I> {
-    fn set_speed(&mut self, _speed: f32) {}
 }

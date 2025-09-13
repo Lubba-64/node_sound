@@ -1,8 +1,9 @@
 use futures::executor;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
+use node_sound_core::sound_map::DawSource;
 use node_sound_core::{
-    constants::{DEFAULT_SAMPLE_RATE, MIDDLE_C_FREQ},
+    constants::MIDDLE_C_FREQ,
     nodes::get_nodes,
     sound_graph::{
         self,
@@ -11,10 +12,7 @@ use node_sound_core::{
         graph_types::ValueType,
     },
     sound_map::GenericSource,
-};
-use rodio::{
-    Source,
-    source::{Speed, UniformSourceIterator, Zero},
+    sounds::{const_wave::ConstWave, speed::Speed},
 };
 use std::{
     collections::HashMap,
@@ -61,19 +59,8 @@ pub struct NodeSound {
     voices: [Option<Voice>; NUM_VOICES as usize],
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
-    current_idx: usize,
-    source_sound_buffers: Arc<
-        Mutex<
-            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
-                MIDI_NOTES_LEN as usize],
-        >,
-    >,
-    voice_sound_buffers: Arc<
-        Mutex<
-            [Option<UniformSourceIterator<Speed<GenericSource<f32>>, f32>>;
-                MIDI_NOTES_LEN as usize],
-        >,
-    >,
+    source_sound_buffers: Arc<Mutex<[Option<GenericSource>; MIDI_NOTES_LEN as usize]>>,
+    voice_sound_buffers: Arc<Mutex<[(Option<GenericSource>, usize); MIDI_NOTES_LEN as usize]>>,
 }
 
 pub struct PluginPresetState {
@@ -159,9 +146,10 @@ impl Default for NodeSound {
             voices: [0; NUM_VOICES as usize].map(|_| None),
             next_internal_voice_id: 0,
             sample_rate: Arc::new(Mutex::new(48000.0)),
-            current_idx: 0,
             source_sound_buffers: Arc::new(Mutex::new([0; MIDI_NOTES_LEN as usize].map(|_| None))),
-            voice_sound_buffers: Arc::new(Mutex::new([0; MIDI_NOTES_LEN as usize].map(|_| None))),
+            voice_sound_buffers: Arc::new(Mutex::new(
+                [0; MIDI_NOTES_LEN as usize].map(|_| (None, 0)),
+            )),
         }
     }
 }
@@ -578,19 +566,16 @@ impl Plugin for NodeSound {
                                                 + 0.1,
                                         ) / MIDDLE_C_FREQ;
                                         let mut queue = queue.clone();
-                                        queue.set_speed(speed);
+                                        queue.note_speed(speed, **sample_rate);
                                         let sound = match queue.clone_sound(source_id.clone()) {
-                                            Err(_err) => GenericSource::new(Box::new(Zero::new(
-                                                1,
-                                                DEFAULT_SAMPLE_RATE,
-                                            ))),
+                                            Err(_err) => {
+                                                GenericSource::new(Box::new(ConstWave::new(0.0)))
+                                            }
                                             Ok(x) => x,
                                         };
-                                        sound_buffers[vidx] = Some(UniformSourceIterator::new(
-                                            sound.speed(speed),
-                                            2,
-                                            **sample_rate as u32,
-                                        ));
+                                        sound_buffers[vidx] = Some(GenericSource::new(Box::new(
+                                            Speed::new(sound, speed),
+                                        )));
                                     }
                                 }
                                 Err(_err) => {
@@ -816,8 +801,15 @@ impl Plugin for NodeSound {
                 }
             };
             for note in notes_to_reset {
-                voice_sound_buffers[note] = sound_buffers[note].clone();
+                voice_sound_buffers[note] = (sound_buffers[note].clone(), 0);
             }
+
+            let active_voices = self
+                .voices
+                .iter()
+                .filter(|voice| voice.is_some())
+                .collect::<Vec<_>>()
+                .len() as f32;
 
             for sample_idx in block_start..block_end {
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
@@ -841,12 +833,17 @@ impl Plugin for NodeSound {
                     mkparamgetter!(a16, 15, self, automations);
                     mkparamgetter!(a17, 16, self, automations);
                     mkparamgetter!(a18, 17, self, automations);
-                    match buffer {
-                        Some(x) => {
-                            output[0][sample_idx] +=
-                                x.next().map(|x| x * amp).unwrap_or(0.0).clamp(-1.0, 1.0);
-                            output[1][sample_idx] +=
-                                x.next().map(|x| x * amp).unwrap_or(0.0).clamp(-1.0, 1.0);
+                    match &mut buffer.0 {
+                        Some(source) => {
+                            let time_index = (buffer.1 + sample_idx) as f32;
+                            let left_sample = (source.next(time_index, 0).unwrap_or_default()
+                                / active_voices.max(1.0))
+                                * amp;
+                            let right_sample = (source.next(time_index, 1).unwrap_or_default()
+                                / active_voices.max(1.0))
+                                * amp;
+                            output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
+                            output[1][sample_idx] += right_sample.clamp(-1.0, 1.0);
                         }
                         None => {}
                     }
@@ -872,14 +869,23 @@ impl Plugin for NodeSound {
             block_end = (block_start + MAX_BLOCK_SIZE).min(num_samples);
         }
 
-        self.current_idx += num_samples;
+        let mut voice_sound_buffers = match self.voice_sound_buffers.lock() {
+            Ok(x) => x,
+            Err(_x) => {
+                return ProcessStatus::KeepAlive;
+            }
+        };
+
+        for buffer in voice_sound_buffers.iter_mut() {
+            buffer.1 += num_samples;
+        }
 
         ProcessStatus::Normal
     }
 }
 
 impl ClapPlugin for NodeSound {
-    const CLAP_ID: &'static str = "com.lubba64-plugins-egui.node-sound-egui";
+    const CLAP_ID: &'static str = "com.lubba64-plugins-egui.node-sound-egui-2";
     const CLAP_DESCRIPTION: Option<&'static str> = Some("A node graph waveform synth");
     const CLAP_MANUAL_URL: Option<&'static str> = Some(Self::URL);
     const CLAP_SUPPORT_URL: Option<&'static str> = None;

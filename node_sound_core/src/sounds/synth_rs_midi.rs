@@ -1,113 +1,66 @@
 use crate::{
     constants::{DEFAULT_SAMPLE_RATE, MIDDLE_C_FREQ},
-    sound_map::SetSpeed,
+    sound_map::DawSource,
+    sounds::wave_table::WaveTableOscillator,
 };
-use rodio::{Source, source::UniformSourceIterator};
-use std::time::Duration;
 use synthrs::{midi::MidiSong, synthesizer::make_samples_from_midi, wave};
 
 #[derive(Clone)]
-pub struct MidiRenderer {
-    midi_samples: Vec<f64>,
-    num_sample: usize,
-    speed: f32,
-    uses_speed: bool,
-    samples: Vec<f64>,
+pub struct MidiRenderer<S: DawSource> {
+    wavetable: WaveTableOscillator,
     song: MidiSong,
+    source: S,
 }
 
-impl MidiRenderer {
+impl<S: DawSource> MidiRenderer<S> {
     #[inline]
-    pub fn new<I: Source<Item = f32>>(source: I, song: MidiSong, uses_speed: bool) -> Self {
-        let mut source = UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE);
-        let length = source
-            .current_frame_len()
-            .unwrap_or(DEFAULT_SAMPLE_RATE as usize) as f64
-            / DEFAULT_SAMPLE_RATE as f64;
-        let num_samples = (DEFAULT_SAMPLE_RATE as f64 * length).floor() as usize;
-        let mut samples: Vec<f64> = Vec::with_capacity(num_samples);
-        for _ in 0usize..num_samples {
-            samples.push(source.next().unwrap_or(0.0) as f64);
+    pub fn new(source: S, song: MidiSong, uses_speed: bool) -> Self {
+        let sample_rate = DEFAULT_SAMPLE_RATE as f32;
+        let mut osc = WaveTableOscillator::new_stereo(sample_rate, 1.0);
+        osc.set_uses_speed(uses_speed);
+        Self {
+            wavetable: osc,
+            song,
+            source,
+        }
+    }
+
+    fn render_midi_samples(&mut self, song: &MidiSong, sample_rate: f32, speed: f32) {
+        self.source.note_speed(speed, sample_rate);
+        let mut source_samples: Vec<f64> = Vec::with_capacity(sample_rate as usize);
+        for i in 0..sample_rate as usize {
+            let sample = self.source.next(i as f32, 0).unwrap_or(0.0);
+            source_samples.push(sample.into());
         }
         let sampler = |frequency: f64| {
             wave::sampler(
-                frequency,
-                &samples,
-                samples.len(),
+                frequency * speed as f64,
+                &source_samples,
+                source_samples.len(),
                 MIDDLE_C_FREQ as f64,
-                DEFAULT_SAMPLE_RATE as usize,
+                sample_rate as usize,
             )
         };
         let midi_samples =
-            make_samples_from_midi(sampler, DEFAULT_SAMPLE_RATE as usize, true, song.clone())
+            make_samples_from_midi(sampler, sample_rate as usize, true, song.clone())
                 .expect("midi play failed");
-        Self {
-            midi_samples,
-            num_sample: 0,
-            speed: 1.0,
-            uses_speed,
-            samples,
-            song,
-        }
+        let left: Vec<_> = midi_samples.iter().map(|&x| x as f32).collect();
+        self.wavetable.note_speed(speed, sample_rate);
+        self.wavetable
+            .rebuild_table(sample_rate, left.clone(), left);
     }
 }
 
-impl Iterator for MidiRenderer {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        self.num_sample = self.num_sample.wrapping_add(1);
-        if self.num_sample >= self.midi_samples.len() {
-            self.num_sample = 0;
-        }
-        Some(self.midi_samples[self.num_sample] as f32)
-    }
-}
-
-impl Source for MidiRenderer {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+impl<S: DawSource + Clone> DawSource for MidiRenderer<S> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.wavetable.next(index, channel)
     }
 
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.render_midi_samples(&self.song.clone(), rate, speed);
     }
 
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl SetSpeed<f32> for MidiRenderer {
-    fn set_speed(&mut self, speed: f32) {
-        if !self.uses_speed {
-            return;
-        }
-        self.speed = speed;
-        let sampler = |frequency: f64| {
-            wave::sampler(
-                frequency / self.speed as f64,
-                &self.samples,
-                self.samples.len(),
-                MIDDLE_C_FREQ as f64,
-                DEFAULT_SAMPLE_RATE as usize,
-            )
-        };
-        self.midi_samples = make_samples_from_midi(
-            sampler,
-            DEFAULT_SAMPLE_RATE as usize,
-            false,
-            self.song.clone(),
-        )
-        .expect("midi play failed");
+    fn size_hint(&self) -> Option<f32> {
+        self.wavetable.size_hint()
     }
 }

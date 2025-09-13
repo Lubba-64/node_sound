@@ -4,7 +4,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::ConstWave;
+use crate::sounds::const_wave::ConstWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 

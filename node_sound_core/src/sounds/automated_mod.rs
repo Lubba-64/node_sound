@@ -1,59 +1,35 @@
-use rodio::Source;
-
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::SetSpeed};
-use rodio::source::UniformSourceIterator;
-use std::time::Duration;
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
-pub struct AutomatedMod<I: Source<Item = f32>, I2: Source<Item = f32>> {
-    source: UniformSourceIterator<I, I::Item>,
-    mod_by: UniformSourceIterator<I2, I2::Item>,
+pub struct AutomatedMod<I1: DawSource, I2: DawSource> {
+    source: I1,
+    mod_by: I2,
 }
 
-impl<I: Source<Item = f32>, I2: Source<Item = f32>> AutomatedMod<I, I2> {
+impl<I1: DawSource, I2: DawSource> AutomatedMod<I1, I2> {
     #[inline]
-    pub fn new(source: I, mod_by: I2) -> Self {
-        Self {
-            source: UniformSourceIterator::new(source, 2, DEFAULT_SAMPLE_RATE),
-            mod_by: UniformSourceIterator::new(mod_by, 2, DEFAULT_SAMPLE_RATE),
-        }
+    pub fn new(source: I1, mod_by: I2) -> Self {
+        Self { source, mod_by }
     }
 }
 
-impl<I: Source<Item = f32>, I2: Source<Item = f32>> Iterator for AutomatedMod<I, I2> {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        match (self.source.next(), self.mod_by.next()) {
+impl<I1: DawSource + Clone, I2: DawSource + Clone> DawSource for AutomatedMod<I1, I2> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        match (
+            self.source.next(index, channel),
+            self.mod_by.next(index, channel),
+        ) {
             (Some(x), Some(mod_by)) => Some(x - (x % mod_by)),
             _ => None,
         }
     }
-}
-
-impl<I: Source<Item = f32>, I2: Source<Item = f32>> Source for AutomatedMod<I, I2> {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.mod_by.note_speed(speed, rate);
+        self.source.note_speed(speed, rate);
     }
-
-    #[inline]
-    fn channels(&self) -> u16 {
-        2
+    fn size_hint(&self) -> Option<f32> {
+        let mod_by = self.mod_by.size_hint()?;
+        let source = self.source.size_hint()?;
+        Some(mod_by.max(source))
     }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl<I: Source<Item = f32>, I2: Source<Item = f32>> SetSpeed<f32> for AutomatedMod<I, I2> {
-    fn set_speed(&mut self, _speed: f32) {}
 }

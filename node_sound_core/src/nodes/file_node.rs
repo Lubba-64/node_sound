@@ -3,7 +3,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::CloneableDecoder;
+use crate::sounds::cloneable_decoder::CloneableDecoder;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 

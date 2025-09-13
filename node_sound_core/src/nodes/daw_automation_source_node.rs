@@ -2,7 +2,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::DawAutomationChannel;
+use crate::sounds::daw_automation_source::DawAutomationChannel;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 

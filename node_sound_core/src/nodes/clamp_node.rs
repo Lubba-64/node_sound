@@ -2,7 +2,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::Clamp;
+use crate::sounds::clamp::Clamp;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
@@ -64,8 +64,8 @@ pub fn clamp_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         ValueType::AudioSource {
             value: props.push_sound(Box::new(Clamp::new(
                 cloned,
-                Some(props.get_float("min")?),
-                Some(props.get_float("max")?),
+                props.get_float("min")?,
+                props.get_float("max")?,
             ))),
         },
     )]))

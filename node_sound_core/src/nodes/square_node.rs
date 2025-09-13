@@ -3,7 +3,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::SquareWave;
+use crate::sounds::square::SquareWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 

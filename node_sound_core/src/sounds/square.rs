@@ -1,68 +1,44 @@
-use crate::constants::DEFAULT_SAMPLE_RATE;
-use crate::sound_map::SetSpeed;
-use rodio::Source;
 use std::f32::consts::PI;
-use std::time::Duration;
 
-#[derive(Clone, Debug)]
+use crate::constants::DEFAULT_SAMPLE_RATE;
+use crate::sound_map::DawSource;
+
+#[derive(Clone)]
 pub struct SquareWave {
-    freq: f32,
-    num_sample: usize,
+    frequency: f32,
     speed: f32,
+    sample_rate: f32,
     uses_speed: bool,
 }
 
 impl SquareWave {
     #[inline]
-    pub fn new(freq: f32, uses_speed: bool) -> Self {
+    pub fn new(frequency: f32, uses_speed: bool) -> Self {
         Self {
-            freq,
-            num_sample: 0,
+            frequency,
             speed: 1.0,
+            sample_rate: DEFAULT_SAMPLE_RATE as f32,
             uses_speed,
         }
     }
 }
 
-impl Iterator for SquareWave {
-    type Item = f32;
-
-    #[inline]
-    fn next(&mut self) -> Option<f32> {
-        self.num_sample = self.num_sample.wrapping_add(1);
-        let value =
-            2.0 * PI * self.freq / self.speed * self.num_sample as f32 / DEFAULT_SAMPLE_RATE as f32;
-        Some(value.sin().signum())
-    }
-}
-
-impl Source for SquareWave {
-    #[inline]
-    fn current_frame_len(&self) -> Option<usize> {
-        None
+impl DawSource for SquareWave {
+    fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
+        let phase_increment = (2.0 * PI) * self.frequency / self.sample_rate / self.speed;
+        let phase = (phase_increment * index) % (2.0 * PI);
+        Some(if phase < PI { 1.0 } else { -1.0 })
     }
 
-    #[inline]
-    fn channels(&self) -> u16 {
-        1
-    }
-
-    #[inline]
-    fn sample_rate(&self) -> u32 {
-        DEFAULT_SAMPLE_RATE
-    }
-
-    #[inline]
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
-impl SetSpeed<f32> for SquareWave {
-    fn set_speed(&mut self, speed: f32) {
+    fn note_speed(&mut self, speed: f32, rate: f32) {
+        self.sample_rate = rate;
         if !self.uses_speed {
             return;
         }
         self.speed = speed;
+    }
+
+    fn size_hint(&self) -> Option<f32> {
+        None
     }
 }

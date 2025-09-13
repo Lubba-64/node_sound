@@ -2,7 +2,7 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::MidiRenderer;
+use crate::sounds::synth_rs_midi::MidiRenderer;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
