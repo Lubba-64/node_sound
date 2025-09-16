@@ -6,7 +6,6 @@ pub struct RepeatRefSource<I: DawSource> {
     source: I,
     repeat_count: Option<u32>,
     sample_rate: f32,
-    speed: f32,
     ind_min: f32,
 }
 
@@ -17,7 +16,6 @@ impl<I: DawSource + Clone> RepeatRefSource<I> {
             source,
             repeat_count,
             sample_rate: DEFAULT_SAMPLE_RATE as f32,
-            speed: 1.0,
             ind_min: 0.0,
         }
     }
@@ -56,7 +54,6 @@ impl<I: DawSource + Clone> DawSource for RepeatRefSource<I> {
     fn note_speed(&mut self, speed: f32, rate: f32) {
         self.source.note_speed(speed, rate);
         self.sample_rate = rate;
-        self.speed = speed;
     }
     fn size_hint(&self) -> Option<f32> {
         match self.repeat_count {

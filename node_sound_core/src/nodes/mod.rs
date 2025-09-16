@@ -39,6 +39,7 @@ pub mod mod_raw_node;
 pub mod no_op_node;
 pub mod noise_node;
 pub mod output_node;
+pub mod random_duration_node;
 pub mod repeat_infinite;
 pub mod repeat_n_node;
 pub mod reverb_node;
@@ -298,6 +299,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             vertical_wave_shaper_node::vertical_wave_shaper_node(),
             Box::new(vertical_wave_shaper_node::vertical_wave_shaper_logic),
+        ),
+        (
+            random_duration_node::random_duration_node(),
+            Box::new(random_duration_node::random_duration_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(
