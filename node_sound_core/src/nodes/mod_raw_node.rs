@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn mod_raw_node() -> SoundNode {
     SoundNode {
         name: "Mod Raw".to_string(),
+        tooltip: r#"Takes the remainder of the wave and this value."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "mod".to_string(),

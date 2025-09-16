@@ -11,6 +11,8 @@ use std::collections::BTreeMap;
 pub fn duration_node() -> SoundNode {
     SoundNode {
         name: "Take Duration".to_string(),
+        tooltip: r#"Takes a snapshot of the waveform for the amount of time you input."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "duration".to_string(),

@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn reverse_node() -> SoundNode {
     SoundNode {
         name: "Reverse".to_string(),
+        tooltip: r#"Reverses a waveform over a certain duration."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),

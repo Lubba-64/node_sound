@@ -12,6 +12,9 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn translate_node() -> SoundNode {
     SoundNode {
         name: "Translate Wave".to_string(),
+        tooltip: r#"Takes a wave going from start min and start max and
+morphs its position to be within the range of end min and end max."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "start_min".to_string(),

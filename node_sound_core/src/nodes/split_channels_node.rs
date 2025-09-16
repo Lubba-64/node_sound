@@ -10,6 +10,8 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn split_channels_node() -> SoundNode {
     SoundNode {
         name: "Split Channels".to_string(),
+        tooltip: r#"Takes only the left or right channel and puts it on both channels."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),

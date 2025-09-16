@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn mod_node() -> SoundNode {
     SoundNode {
         name: "Mod".to_string(),
+        tooltip: r#"Stairsteps a given wave by a given value."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "mod".to_string(),

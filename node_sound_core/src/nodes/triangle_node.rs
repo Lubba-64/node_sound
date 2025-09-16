@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn triangle_node() -> SoundNode {
     SoundNode {
         name: "Triangle Wave".to_string(),
+        tooltip: r#"Triangle waveform generator."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "frequency".to_string(),

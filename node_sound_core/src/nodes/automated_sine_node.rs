@@ -11,6 +11,11 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn automated_sine_node() -> SoundNode {
     SoundNode {
         name: "Automated Sine Wave".to_string(),
+        tooltip: r#"Automated version of the Sine node.
+Automates the frequency with a given waveform.
+Use TranslateWave to set the frequency values of the automation,
+by setting the end min and end max to your desired frequency values."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "freq".to_string(),

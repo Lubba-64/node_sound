@@ -11,6 +11,9 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn wrapper_node() -> SoundNode {
     SoundNode {
         name: "Wrapper".to_string(),
+        tooltip: r#"Takes the last value and adds the current value to it.
+wraps this value around to the other side if it exceeds -1.0 to 1.0."#
+            .to_string(),
         inputs: BTreeMap::from([(
             "audio 1".to_string(),
             InputParameter {

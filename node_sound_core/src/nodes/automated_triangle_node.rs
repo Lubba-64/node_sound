@@ -11,6 +11,11 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn automated_triangle_node() -> SoundNode {
     SoundNode {
         name: "Automated Triangle Wave".to_string(),
+        tooltip: r#"Automated version of the Triangle node.
+Automates the frequency with a given waveform.
+Use TranslateWave to set the frequency values of the automation,
+by setting the end min and end max to your desired frequency values."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "freq".to_string(),

@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn repeat_n_node() -> SoundNode {
     SoundNode {
         name: "Repeat N".to_string(),
+        tooltip: r#"Repeats a given waveform a certain number of times."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),

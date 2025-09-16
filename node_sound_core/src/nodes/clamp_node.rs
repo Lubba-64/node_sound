@@ -11,6 +11,9 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn clamp_node() -> SoundNode {
     SoundNode {
         name: "Clamp".to_string(),
+        tooltip: r#"Clamps the given waveform between a min and max value,
+making sure no values go above or below the given min or max."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "min".to_string(),

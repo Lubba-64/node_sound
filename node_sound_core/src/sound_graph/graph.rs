@@ -8,12 +8,10 @@ use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_map::SoundQueue;
 use eframe::egui::{self, DragValue, Vec2, Widget};
 use eframe::egui::{Checkbox, Pos2, WidgetText};
-use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
 pub use egui_node_graph_2::*;
 use futures::executor;
 pub use rodio::source::Zero;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::fs;
 use std::sync::{Arc, Mutex};
@@ -53,6 +51,8 @@ pub struct SoundGraphUserState {
     pub wave_shaper_graph_id: usize,
     #[serde(skip)]
     pub files: Arc<Mutex<FileManager>>,
+    #[serde(skip)]
+    ctx: egui::Context,
 }
 
 impl DataTypeTrait<SoundGraphUserState> for DataType {
@@ -65,7 +65,6 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::None => egui::Color32::from_rgb(100, 100, 255),
             DataType::MidiFile => egui::Color32::from_rgb(150, 100, 255),
             DataType::Graph => egui::Color32::from_rgb(150, 100, 100),
-            DataType::Code => egui::Color32::from_rgb(150, 100, 150),
             DataType::Bool => egui::Color32::from_rgb(150, 150, 150),
         }
     }
@@ -79,7 +78,6 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::None => Cow::Borrowed("None"),
             DataType::MidiFile => Cow::Borrowed("Midi"),
             DataType::Graph => Cow::Borrowed("Graph"),
-            DataType::Code => Cow::Borrowed("Code"),
             DataType::Bool => Cow::Borrowed("Bool"),
         }
     }
@@ -94,6 +92,10 @@ impl NodeTemplateTrait for NodeDefinitionUi {
     type ValueType = ValueType;
     type UserState = SoundGraphUserState;
     type CategoryType = ();
+
+    fn tooltip(&self) -> Option<String> {
+        Some(self.0.tooltip.clone())
+    }
 
     fn node_finder_label(&self, _user_state: &mut Self::UserState) -> Cow<'_, str> {
         Cow::Owned(self.0.name.clone())
@@ -122,9 +124,6 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                 input.0.clone(),
                 input.1.data_type,
                 match &input.1.value {
-                    InputValueConfig::Code { value } => ValueType::Code {
-                        value: value.clone(),
-                    },
                     InputValueConfig::AudioSource {} => ValueType::AudioSource { value: 0 },
                     InputValueConfig::Float { value, min, max } => ValueType::Float {
                         value: *value,
@@ -158,36 +157,17 @@ impl NodeTemplateTrait for NodeDefinitionUi {
     }
 }
 
-pub struct NodeDefinitionsUi<'a>(&'a NodeDefinitions, &'a SoundNodeGraphState);
+pub struct NodeDefinitionsUi<'a>(&'a NodeDefinitions);
 impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
     type Item = NodeDefinitionUi;
 
     fn all_kinds(&self) -> Vec<Self::Item> {
-        let mut contains: HashSet<String> = HashSet::new();
-        for node_id in self.1.editor_state.graph.iter_nodes() {
-            contains.insert(
-                self.1.editor_state.graph.nodes[node_id]
-                    .user_data
-                    .name
-                    .to_string(),
-            );
-        }
         self.0
             .0
             .values()
             .cloned()
             .map(|x| x.0)
             .map(NodeDefinitionUi)
-            .filter(|x| {
-                for node in vec!["Output", "DAW Automation"].iter() {
-                    if contains.contains(&node.to_string())
-                        && x.0.name.to_string() == node.to_string()
-                    {
-                        return false;
-                    }
-                }
-                true
-            })
             .collect()
     }
 }
@@ -208,16 +188,6 @@ impl WidgetValueTrait for ValueType {
             ValueType::Bool { value } => {
                 Checkbox::new(value, WidgetText::from(param_name)).ui(ui);
             }
-            ValueType::Code { value } => egui::Resize::default().show(ui, |ui| {
-                CodeEditor::default()
-                    .id_source("code editor")
-                    .with_rows(24)
-                    .with_fontsize(14.0)
-                    .with_theme(ColorTheme::GRUVBOX)
-                    .with_syntax(Syntax::rust())
-                    .with_numlines(true)
-                    .show(ui, value);
-            }),
             ValueType::Graph { value, id } => wave_table_graph(value, ui, *id),
             ValueType::Float {
                 value,
@@ -424,6 +394,7 @@ impl SoundNodeGraph {
     }
 
     pub fn update_root(&mut self, ctx: &egui::Context) {
+        self.state.user_state.ctx = ctx.clone();
         self.update_output_node();
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -463,10 +434,7 @@ impl SoundNodeGraph {
             .show(ctx, |ui| {
                 self.state.editor_state.draw_graph_editor(
                     ui,
-                    NodeDefinitionsUi(
-                        &self.state._unserializeable_state.node_definitions,
-                        &self.state.clone(),
-                    ),
+                    NodeDefinitionsUi(&self.state._unserializeable_state.node_definitions),
                     &mut self.state.user_state,
                     Vec::default(),
                 )

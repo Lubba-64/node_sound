@@ -10,6 +10,9 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn merge_channels_node() -> SoundNode {
     SoundNode {
         name: "Merge Channels".to_string(),
+        tooltip:
+            r#"Merges the left audio of the two sources into a left and right singular source."#
+                .to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),

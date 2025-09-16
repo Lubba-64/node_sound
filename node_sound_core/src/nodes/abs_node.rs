@@ -11,6 +11,9 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn abs_node() -> SoundNode {
     SoundNode {
         name: "Abs".to_string(),
+        tooltip: r#"Applies absolute value to the waveform,
+bringing everything on the bottom of the waveform to the top."#
+            .to_string(),
         inputs: BTreeMap::from([(
             "audio 1".to_string(),
             InputParameter {

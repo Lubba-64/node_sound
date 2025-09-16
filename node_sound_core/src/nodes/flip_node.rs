@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn flip_node() -> SoundNode {
     SoundNode {
         name: "Flip".to_string(),
+        tooltip: r#"Flips the waveform vertically."#.to_string(),
         inputs: BTreeMap::from([(
             "audio 1".to_string(),
             InputParameter {

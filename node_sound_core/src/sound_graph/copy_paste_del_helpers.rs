@@ -114,6 +114,7 @@ pub async fn paste(
         let mut _id = Default::default();
         state.graph.add_node(
             node.user_data.name.clone(),
+            node.tooltip.clone(),
             node.user_data.clone(),
             |_graph, id| {
                 state.node_order.push(id);

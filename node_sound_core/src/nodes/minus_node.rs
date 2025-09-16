@@ -10,6 +10,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn minus_node() -> SoundNode {
     SoundNode {
         name: "Minus".to_string(),
+        tooltip: r#"Subtracts audio 1 from audio 2 (destructive interference)"#.to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),

@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn noise_node() -> SoundNode {
     SoundNode {
         name: "Noise".to_string(),
+        tooltip: r#"Random noise waveform."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "min".to_string(),

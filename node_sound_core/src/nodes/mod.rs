@@ -1,9 +1,3 @@
-use std::{collections::BTreeMap, time::Duration};
-
-use eframe::egui::ahash::HashMap;
-use serde::{Deserialize, Serialize};
-use synthrs::midi::MidiSong;
-
 use crate::{
     sound_graph::{
         graph::UnserializeableGraphState,
@@ -11,7 +5,10 @@ use crate::{
     },
     sound_map::{DawSource, GenericSource},
 };
-
+use eframe::egui::ahash::HashMap;
+use serde::{Deserialize, Serialize};
+use std::{collections::BTreeMap, time::Duration};
+use synthrs::midi::MidiSong;
 pub mod abs_node;
 pub mod amplify_node;
 pub mod automated_clamp_node;
@@ -39,6 +36,7 @@ pub mod minus_node;
 pub mod mix_node;
 pub mod mod_node;
 pub mod mod_raw_node;
+pub mod no_op_node;
 pub mod noise_node;
 pub mod output_node;
 pub mod repeat_infinite;
@@ -46,6 +44,7 @@ pub mod repeat_n_node;
 pub mod reverb_node;
 pub mod reverse_node;
 pub mod sawtooth_node;
+pub mod signum_node;
 pub mod sine_node;
 pub mod skip_node;
 pub mod speed_node;
@@ -55,6 +54,7 @@ pub mod translate_node;
 pub mod triangle_node;
 pub mod wave_shaper_node;
 pub mod wave_table_node;
+pub mod weird_node;
 pub mod wrapper_node;
 
 pub struct SoundNodeProps<'a> {
@@ -138,6 +138,7 @@ impl<'a> SoundNodeProps<'a> {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SoundNode {
     pub name: String,
+    pub tooltip: String,
     pub inputs: BTreeMap<String, InputParameter>,
     pub outputs: BTreeMap<String, Output>,
 }
@@ -286,6 +287,12 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             automated_wave_table_node::automated_wave_table_node(),
             Box::new(automated_wave_table_node::automated_wave_table_logic),
+        ),
+        (weird_node::weird_node(), Box::new(weird_node::weird_logic)),
+        (no_op_node::no_op_node(), Box::new(no_op_node::no_op_logic)),
+        (
+            signum_node::signum_node(),
+            Box::new(signum_node::signum_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

@@ -10,6 +10,8 @@ use std::collections::BTreeMap;
 pub fn file_node() -> SoundNode {
     SoundNode {
         name: "Audio File".to_string(),
+        tooltip: r#"Imports a wav, flac, or mp3 file as a waveform. Mono audio preferred."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "file".to_string(),

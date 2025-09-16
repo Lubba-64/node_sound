@@ -10,6 +10,8 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn lfo_node() -> SoundNode {
     SoundNode {
         name: "Lfo".to_string(),
+        tooltip: r#"Multiplies two waveforms together, works as a low frequency oscillator (LFO)."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),

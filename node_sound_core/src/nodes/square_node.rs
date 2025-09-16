@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn square_node() -> SoundNode {
     SoundNode {
         name: "Square Wave".to_string(),
+        tooltip: r#"Square waveform generator."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "frequency".to_string(),

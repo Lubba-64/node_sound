@@ -11,6 +11,10 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn automated_mod_raw_node() -> SoundNode {
     SoundNode {
         name: "Automated Mod Raw".to_string(),
+        tooltip: r#"Automated version of the Mod Raw node.
+The mod amount is controlled by a waveform going from -1.0 to 1.0.
+Mod Raw uses the division remainder operator (mod) on a given wave."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "mod".to_string(),

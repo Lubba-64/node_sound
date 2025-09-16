@@ -10,6 +10,7 @@ use std::collections::BTreeMap;
 pub fn bit_crush_node() -> SoundNode {
     SoundNode {
         name: "Bit Crusher".to_string(),
+        tooltip: r#"Bit chrushes the given waveform."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "reduction".to_string(),

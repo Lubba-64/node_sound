@@ -514,7 +514,6 @@ impl Plugin for NodeSound {
                         return;
                     }
                 };
-
                 graph.update_root(egui_ctx);
                 // refreshes the graph state to fix bugs with DAW automations that if not refreshed will be null secretly...
                 if !state.4 {

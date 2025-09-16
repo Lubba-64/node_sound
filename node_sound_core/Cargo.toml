@@ -1,13 +1,13 @@
 [package]
 name = "node_sound_core"
-version = "3.1.0"
+version = "4.0.0"
 authors = ["Lubba64"]
 edition = "2024"
 
 [dependencies]
 rodio = { version = "0.19", features = ["wasm-bindgen"] }
 eframe = { version = "0.31", features = ["ron", "serde"] }
-egui_node_graph_2 = { version = "0.4.1", git = "https://github.com/Lubba-64/egui_node_graph_2.git", features = [
+egui_node_graph_2 = { version = "0.5.1", git = "https://github.com/Lubba-64/egui_node_graph_2.git", features = [
   "persistence",
 ] }
 dyn-clone = "1.0.20"
@@ -33,4 +33,3 @@ egui_extras_xt = { version = "*", git = "https://github.com/xTibor/egui_extras_x
 ] }
 arboard = "3.6.0"
 egui_plot = "0.31"
-egui_code_editor = "^0.2.13"

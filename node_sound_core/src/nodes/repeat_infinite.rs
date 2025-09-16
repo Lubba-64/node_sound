@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn repeat_infinite_node() -> SoundNode {
     SoundNode {
         name: "Repeat Infinite".to_string(),
+        tooltip: r#"Repeats a given waveform infinitely if it stops."#.to_string(),
         inputs: BTreeMap::from([(
             "audio 1".to_string(),
             InputParameter {

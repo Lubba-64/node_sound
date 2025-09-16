@@ -10,6 +10,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn daw_automations_node() -> SoundNode {
     SoundNode {
         name: "Daw Automations".to_string(),
+        tooltip: r#"Daw automation parameters 1-18 can be accessed through this node."#.to_string(),
         inputs: BTreeMap::from([(
             "channel".to_string(),
             InputParameter {

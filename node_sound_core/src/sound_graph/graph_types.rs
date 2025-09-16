@@ -16,15 +16,11 @@ pub enum DataType {
     AudioFile,
     MidiFile,
     Graph,
-    Code,
     Bool,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub enum ValueType {
-    Code {
-        value: String,
-    },
     #[default]
     None,
     AudioSource {
@@ -68,7 +64,6 @@ pub enum InputValueConfig {
     AudioFile {},
     MidiFile {},
     Graph { value: Vec<f32> },
-    Code { value: String },
     Bool { value: bool },
 }
 
@@ -98,10 +93,7 @@ impl Debug for ValueType {
                 .debug_struct("Graph")
                 .field("value", &"Anonymous Graph")
                 .finish(),
-            Self::Code { value: _ } => f
-                .debug_struct("Code")
-                .field("value", &"Anonymous Code")
-                .finish(),
+
             Self::Bool { value } => {
                 if *value {
                     f.debug_struct("true").finish()
@@ -164,12 +156,6 @@ impl ValueType {
     pub fn try_to_graph(self) -> Result<Option<Vec<f32>>, String> {
         match self {
             ValueType::Graph { value, id: _ } => Ok(value),
-            _ => Err("invalid cast".to_string()),
-        }
-    }
-    pub fn try_to_code(self) -> Result<String, String> {
-        match self {
-            ValueType::Code { value } => Ok(value),
             _ => Err("invalid cast".to_string()),
         }
     }

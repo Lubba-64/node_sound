@@ -11,6 +11,7 @@ use std::collections::BTreeMap;
 pub fn const_node() -> SoundNode {
     SoundNode {
         name: "Const".to_string(),
+        tooltip: r#"A waveform that just sits at a given value forever."#.to_string(),
         inputs: BTreeMap::from([(
             "amplitude".to_string(),
             InputParameter {

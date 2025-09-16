@@ -12,6 +12,11 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn automated_wave_shaper_node() -> SoundNode {
     SoundNode {
         name: "Automated Wave Shaper".to_string(),
+        tooltip: r#"Automated version of the Wave Shaper node.
+Automates the frequency with a given waveform.
+Use TranslateWave to set the frequency values of the automation,
+by setting the end min and end max to your desired frequency values."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "graph".to_string(),

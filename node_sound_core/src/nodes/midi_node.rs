@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn midi_node() -> SoundNode {
     SoundNode {
         name: "Midi File".to_string(),
+        tooltip: r#"Imports and plays a midi file with the given waveform."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "file".to_string(),

@@ -12,6 +12,8 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn wave_table_node() -> SoundNode {
     SoundNode {
         name: "Wave Table".to_string(),
+        tooltip: r#"Takes a waveform and stores it in a table, interpolating values. can change frequency too."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),

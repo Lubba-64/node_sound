@@ -13,6 +13,8 @@ use std::collections::BTreeMap;
 pub fn reverb_node() -> SoundNode {
     SoundNode {
         name: "Reverb".to_string(),
+        tooltip: r#"More like a delay, this is just a mix node, delay node, and amplify node under the hood."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "duration".to_string(),

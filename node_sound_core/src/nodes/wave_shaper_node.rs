@@ -12,6 +12,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn wave_shaper_node() -> SoundNode {
     SoundNode {
         name: "Wave Shaper".to_string(),
+        tooltip: r#"Shape a waveform manually."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "graph".to_string(),

@@ -12,6 +12,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn sawtooth_node() -> SoundNode {
     SoundNode {
         name: "Sawtooth Wave".to_string(),
+        tooltip: r#"Sawtooth waveform generator."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "frequency".to_string(),

@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn sine_node() -> SoundNode {
     SoundNode {
         name: "Sine Wave".to_string(),
+        tooltip: r#"Sine waveform generator."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "frequency".to_string(),

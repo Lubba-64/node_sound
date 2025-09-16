@@ -10,6 +10,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn output_node() -> SoundNode {
     SoundNode {
         name: "Output".to_string(),
+        tooltip: r#"Finalized output audio to the DAW."#.to_string(),
         inputs: BTreeMap::from([(
             "audio 1".to_string(),
             InputParameter {

@@ -11,6 +11,9 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn automated_translate_node() -> SoundNode {
     SoundNode {
         name: "Automated Translate Wave".to_string(),
+        tooltip: r#"Automated version of the Translate node.
+All parameters from the previous node are automated."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),

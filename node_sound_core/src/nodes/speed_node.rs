@@ -12,6 +12,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn speed_node() -> SoundNode {
     SoundNode {
         name: "Speed".to_string(),
+        tooltip: r#"Changes the speed of the input waveform."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "speed".to_string(),

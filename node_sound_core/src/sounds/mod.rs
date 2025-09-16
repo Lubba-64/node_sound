@@ -36,4 +36,5 @@ pub mod synth_rs_midi;
 pub mod translate;
 pub mod triangle;
 pub mod wave_table;
+pub mod weird;
 pub mod wrapper;

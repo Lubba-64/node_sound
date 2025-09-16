@@ -10,6 +10,7 @@ use std::collections::BTreeMap;
 pub fn delay_node() -> SoundNode {
     SoundNode {
         name: "Delay".to_string(),
+        tooltip: r#"Delays the given waveform by an amount of time."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "delay".to_string(),

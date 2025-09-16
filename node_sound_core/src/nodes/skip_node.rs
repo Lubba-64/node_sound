@@ -11,6 +11,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn skip_node() -> SoundNode {
     SoundNode {
         name: "Skip".to_string(),
+        tooltip: r#"Skips samples in the source for a given duration."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),

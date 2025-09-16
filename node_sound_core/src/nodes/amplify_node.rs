@@ -12,6 +12,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn amplify_node() -> SoundNode {
     SoundNode {
         name: "Amplify".to_string(),
+        tooltip: r#"Amplifies the waveform making sounds louder."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "amplification".to_string(),

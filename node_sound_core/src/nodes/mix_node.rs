@@ -10,6 +10,7 @@ use super::{SoundNodeProps, SoundNodeResult};
 pub fn mix_node() -> SoundNode {
     SoundNode {
         name: "Mix".to_string(),
+        tooltip: r#"Mixes two waveforms together."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
