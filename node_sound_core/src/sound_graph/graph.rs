@@ -136,11 +136,17 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                     },
                     InputValueConfig::AudioFile {} => ValueType::AudioFile { value: None },
                     InputValueConfig::MidiFile {} => ValueType::MidiFile { value: None },
-                    InputValueConfig::Graph { value } => {
+                    InputValueConfig::Graph {
+                        value,
+                        width,
+                        height,
+                    } => {
                         user_state.wave_shaper_graph_id += 1;
                         ValueType::Graph {
                             value: Some(value.clone()),
                             id: user_state.wave_shaper_graph_id,
+                            width: *width,
+                            height: *height,
                         }
                     }
                     InputValueConfig::Bool { value } => ValueType::Bool {
@@ -188,7 +194,12 @@ impl WidgetValueTrait for ValueType {
             ValueType::Bool { value } => {
                 Checkbox::new(value, WidgetText::from(param_name)).ui(ui);
             }
-            ValueType::Graph { value, id } => wave_table_graph(value, ui, *id),
+            ValueType::Graph {
+                value,
+                id,
+                height,
+                width,
+            } => wave_table_graph(value, ui, *id, *height, *width),
             ValueType::Float {
                 value,
                 min,
@@ -199,7 +210,7 @@ impl WidgetValueTrait for ValueType {
                 ui.horizontal(|ui| {
                     ui.label(param_name);
                     let mut secs_f32 = value.as_secs_f32();
-                    ui.add(DragValue::new(&mut secs_f32).speed(0.01));
+                    ui.add(DragValue::new(&mut secs_f32).speed(0.001));
                     *value = Duration::from_secs_f32(secs_f32.max(0.0));
                 });
             }

@@ -26,6 +26,8 @@ by setting the end min and end max to your desired frequency values."#
                     name: "graph".to_string(),
                     value: InputValueConfig::Graph {
                         value: vec![0.0; WAVE_TABLE_SIZE],
+                        height: 100.0,
+                        width: 500.0,
                     },
                 },
             ),

@@ -43,6 +43,8 @@ pub enum ValueType {
     },
     Graph {
         value: Option<Vec<f32>>,
+        width: f32,
+        height: f32,
         id: usize,
     },
     Bool {
@@ -59,12 +61,24 @@ impl Default for &ValueType {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum InputValueConfig {
     AudioSource {},
-    Float { value: f32, min: f32, max: f32 },
-    Duration { value: f32 },
+    Float {
+        value: f32,
+        min: f32,
+        max: f32,
+    },
+    Duration {
+        value: f32,
+    },
     AudioFile {},
     MidiFile {},
-    Graph { value: Vec<f32> },
-    Bool { value: bool },
+    Graph {
+        value: Vec<f32>,
+        width: f32,
+        height: f32,
+    },
+    Bool {
+        value: bool,
+    },
 }
 
 impl Debug for ValueType {
@@ -89,7 +103,12 @@ impl Debug for ValueType {
                 .debug_struct("Midi")
                 .field("value", &"Anonymous MidiFile")
                 .finish(),
-            Self::Graph { value: _, id: _ } => f
+            Self::Graph {
+                value: _,
+                id: _,
+                width: _,
+                height: _,
+            } => f
                 .debug_struct("Graph")
                 .field("value", &"Anonymous Graph")
                 .finish(),
@@ -155,7 +174,12 @@ impl ValueType {
     }
     pub fn try_to_graph(self) -> Result<Option<Vec<f32>>, String> {
         match self {
-            ValueType::Graph { value, id: _ } => Ok(value),
+            ValueType::Graph {
+                value,
+                id: _,
+                width: _,
+                height: _,
+            } => Ok(value),
             _ => Err("invalid cast".to_string()),
         }
     }
