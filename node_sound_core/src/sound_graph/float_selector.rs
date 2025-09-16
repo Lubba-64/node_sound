@@ -16,10 +16,11 @@ pub fn float_selector(
         ui.add(
             AudioKnob::new(value)
                 .range(*min..=*max)
-                .drag_length(50.0)
+                .drag_length(200.0)
                 .diameter(20.0),
         );
-        ui.add(DragValue::new(value).speed(0.01).range(*min..=*max));
+
+        ui.add(DragValue::new(value).speed(0.001).range(*min..=*max));
 
         let octave_res = ComboBox::new(format!("octave_{}", param_name), "")
             .selected_text(note.0.to_string())
