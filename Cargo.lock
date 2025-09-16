@@ -4154,6 +4154,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "tests"
+version = "4.0.0"
+dependencies = [
+ "node_sound_core",
+ "rand 0.8.5",
+]
+
+[[package]]
 name = "thiserror"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"

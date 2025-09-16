@@ -52,6 +52,7 @@ pub mod split_channels_node;
 pub mod square_node;
 pub mod translate_node;
 pub mod triangle_node;
+pub mod vertical_wave_shaper_node;
 pub mod wave_shaper_node;
 pub mod wave_table_node;
 pub mod weird_node;
@@ -293,6 +294,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             signum_node::signum_node(),
             Box::new(signum_node::signum_logic),
+        ),
+        (
+            vertical_wave_shaper_node::vertical_wave_shaper_node(),
+            Box::new(vertical_wave_shaper_node::vertical_wave_shaper_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

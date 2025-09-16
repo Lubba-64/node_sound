@@ -35,6 +35,7 @@ pub mod square;
 pub mod synth_rs_midi;
 pub mod translate;
 pub mod triangle;
+pub mod vertical_wave_shaper;
 pub mod wave_table;
 pub mod weird;
 pub mod wrapper;
