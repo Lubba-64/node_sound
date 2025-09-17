@@ -1,4 +1,4 @@
-use crate::sound_map::DawSource;
+use crate::{constants::MIDDLE_C_FREQ, sound_map::DawSource};
 
 #[derive(Clone)]
 pub struct AutomatedSourceWavetableOscillator<S: DawSource, F: DawSource> {
@@ -108,7 +108,7 @@ impl<S: DawSource, F: DawSource> AutomatedSourceWavetableOscillator<S, F> {
             sample_rate: sample_rate as f32,
             speed: 1.0,
             frequency,
-            base_frequency: 1.0,
+            base_frequency: MIDDLE_C_FREQ,
             uses_speed,
             duration_seconds,
             source,
