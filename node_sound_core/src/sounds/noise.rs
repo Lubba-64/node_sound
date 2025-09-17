@@ -26,6 +26,9 @@ impl Noise {
 
 impl DawSource for Noise {
     fn next(&mut self, _index: f32, _channel: u8) -> Option<f32> {
+        if self.min == self.max {
+            return Some(self.min);
+        }
         Some(thread_rng().gen_range(self.min..self.max))
     }
     fn note_speed(&mut self, _speed: f32, _rate: f32) {}
