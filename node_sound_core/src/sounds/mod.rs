@@ -9,6 +9,7 @@ pub mod automated_square;
 pub mod automated_translate;
 pub mod automated_triangle;
 pub mod automated_wave_table;
+pub mod avg;
 pub mod bit_crush;
 pub mod clamp;
 pub mod cloneable_decoder;

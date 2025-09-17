@@ -21,6 +21,7 @@ pub mod automated_translate_node;
 pub mod automated_triangle_node;
 pub mod automated_wave_shaper_node;
 pub mod automated_wave_table_node;
+pub mod avg_node;
 pub mod bit_crush_node;
 pub mod clamp_node;
 pub mod const_node;
@@ -304,6 +305,7 @@ pub fn get_nodes() -> NodeDefinitions {
             random_duration_node::random_duration_node(),
             Box::new(random_duration_node::random_duration_logic),
         ),
+        (avg_node::avg_node(), Box::new(avg_node::avg_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
