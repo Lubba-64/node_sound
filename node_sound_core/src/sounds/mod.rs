@@ -18,6 +18,7 @@ pub mod daw_automation_source;
 pub mod delay;
 pub mod duration;
 pub mod flip;
+pub mod input;
 pub mod lfo;
 pub mod merge_channels;
 pub mod minus;

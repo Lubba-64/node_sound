@@ -78,7 +78,8 @@ impl SoundQueue {
     }
 
     pub fn clear(&mut self) {
-        self.queue.clear()
+        self.queue.clear();
+        self.push_sound(Box::new(ConstWave::new(0.0)));
     }
 
     pub fn note_speed(&mut self, speed: f32, sample_rate: f32) {

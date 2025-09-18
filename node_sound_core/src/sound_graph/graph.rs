@@ -356,10 +356,14 @@ pub struct UnserializeableGraphState {
     pub is_done_showing_recording_dialogue: bool,
     pub queue: SoundQueue,
     pub automations: DAWAutomations,
+    pub input: DAWInput,
 }
 
 #[derive(Default, Clone)]
 pub struct DAWAutomations(pub [Arc<Mutex<f32>>; 18]);
+
+#[derive(Default, Clone)]
+pub struct DAWInput(pub Arc<Mutex<(f32, f32)>>);
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct SoundNodeGraph {

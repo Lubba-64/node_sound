@@ -623,6 +623,7 @@ impl Plugin for NodeSound {
         .state
         .clone();
         let automations = state._unserializeable_state.automations.0.clone();
+        let input = state._unserializeable_state.input.0.clone();
 
         match state.user_state.files.lock() {
             Ok(x) => {
@@ -784,9 +785,6 @@ impl Plugin for NodeSound {
                 }
             }
 
-            output[0][block_start..block_end].fill(0.0);
-            output[1][block_start..block_end].fill(0.0);
-
             let sound_buffers = match self.source_sound_buffers.lock() {
                 Ok(x) => x,
                 Err(_x) => {
@@ -811,6 +809,13 @@ impl Plugin for NodeSound {
                 .len() as f32;
 
             for sample_idx in block_start..block_end {
+                match input.lock() {
+                    Ok(mut x) => {
+                        x.0 = output[0][sample_idx];
+                        x.1 = output[1][sample_idx];
+                    }
+                    _ => {}
+                }
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                     let buffer = &mut voice_sound_buffers[voice.note as usize];
                     let amp = voice.amp_envelope.next();

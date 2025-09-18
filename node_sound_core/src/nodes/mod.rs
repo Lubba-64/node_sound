@@ -30,6 +30,7 @@ pub mod delay_node;
 pub mod duration_node;
 pub mod file_node;
 pub mod flip_node;
+pub mod input_node;
 pub mod lfo_node;
 pub mod merge_channels_node;
 pub mod midi_node;
@@ -306,6 +307,7 @@ pub fn get_nodes() -> NodeDefinitions {
             Box::new(random_duration_node::random_duration_logic),
         ),
         (avg_node::avg_node(), Box::new(avg_node::avg_logic)),
+        (input_node::input_node(), Box::new(input_node::input_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

@@ -1,9 +1,0 @@
-[package]
-name = "tests"
-version = "4.0.0"
-edition = "2024"
-authors = ["Lubba64"]
-
-[dependencies]
-node_sound_core = { version = "*", path = "../node_sound_core"}
-rand = "0.8.5"
