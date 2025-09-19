@@ -42,6 +42,7 @@ pub mod no_op_node;
 pub mod noise_node;
 pub mod output_node;
 pub mod random_duration_node;
+pub mod ref_node;
 pub mod repeat_infinite;
 pub mod repeat_n_node;
 pub mod reverb_node;
@@ -308,6 +309,7 @@ pub fn get_nodes() -> NodeDefinitions {
         ),
         (avg_node::avg_node(), Box::new(avg_node::avg_logic)),
         (input_node::input_node(), Box::new(input_node::input_logic)),
+        (ref_node::ref_node(), Box::new(ref_node::ref_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
