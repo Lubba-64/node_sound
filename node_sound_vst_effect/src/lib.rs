@@ -272,6 +272,7 @@ impl Plugin for NodeSound {
                                 ._unserializeable_state
                                 .queue
                                 .set_sample_rate(**sample_rate);
+                            graph.state.user_state.wavetables.clear();
                             graph.state._unserializeable_state.queue.set_note_speed(1.0);
                             match evaluate_node(
                                 &graph.state.editor_state.graph.clone(),
