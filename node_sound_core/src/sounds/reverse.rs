@@ -1,36 +1,51 @@
 use crate::{
-    constants::DEFAULT_SAMPLE_RATE,
     sound_map::DawSource,
-    sounds::wave_table::{SourceWavetableOscillator, WaveTableTrait},
+    sounds::wave_table::{WaveTableManager, WaveTableOscillator},
 };
 
 #[derive(Clone)]
-pub struct ReverseSource<S: DawSource> {
-    wavetable: SourceWavetableOscillator<S>,
+pub struct ReverseSource {
+    wavetable: WaveTableOscillator,
 }
 
-impl<S: DawSource> ReverseSource<S> {
+impl ReverseSource {
     #[inline]
-    pub fn new(source: S, duration: f32) -> Self {
-        let sample_rate = DEFAULT_SAMPLE_RATE;
-        let table =
-            SourceWavetableOscillator::from_source(source, sample_rate, duration, 1.0, false);
-
-        Self { wavetable: table }
+    pub fn new<S: DawSource>(
+        source: S,
+        duration: f32,
+        sample_rate: f32,
+        manager: &mut WaveTableManager,
+    ) -> Self {
+        Self {
+            wavetable: manager.make_wavetable(
+                sample_rate,
+                1.0,
+                source,
+                duration,
+                1.0,
+                false,
+                1.0,
+                Box::new(|source, total_samples| {
+                    let mut left = Vec::with_capacity(total_samples);
+                    let mut right = Vec::with_capacity(total_samples);
+                    for i in 0..total_samples {
+                        let index = i as f32;
+                        left.push(source.next(index, 0).unwrap_or(0.0));
+                        right.push(source.next(index, 1).unwrap_or(0.0));
+                    }
+                    left.reverse();
+                    right.reverse();
+                    (left, right)
+                }),
+            ),
+        }
     }
 }
 
-impl<S: DawSource + Clone> DawSource for ReverseSource<S> {
+impl DawSource for ReverseSource {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.wavetable.get_sample(index, channel)
     }
-
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.wavetable.note_speed(speed, rate);
-        self.wavetable.left_table.reverse();
-        self.wavetable.right_table.reverse();
-    }
-
     fn size_hint(&self) -> Option<f32> {
         self.wavetable.size_hint()
     }

@@ -55,6 +55,8 @@ pub fn skip_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         props.get_duration("duration")?.as_secs_f32(),
         props.clone_sound(props.get_source("audio 1")?)?,
         props.get_bool("note independant")?,
+        props.sample_rate(),
+        props.note_speed(),
     );
     Ok(BTreeMap::from([(
         "out".to_string(),

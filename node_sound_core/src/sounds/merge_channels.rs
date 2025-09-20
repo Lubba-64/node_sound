@@ -23,10 +23,6 @@ impl<I1: DawSource + Clone, I2: DawSource + Clone> DawSource for MergeChannels<I
             None
         }
     }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.source1.note_speed(speed, rate);
-        self.source2.note_speed(speed, rate);
-    }
     fn size_hint(&self) -> Option<f32> {
         let s1 = self.source1.size_hint()?;
         let s2 = self.source2.size_hint()?;

@@ -2,16 +2,21 @@ use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::repeat_n::RepeatRefSource;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn repeat_infinite_node() -> SoundNode {
+pub fn ref_node() -> SoundNode {
     SoundNode {
-        name: "Repeat Infinite".to_string(),
-        tooltip: r#"Repeats a given waveform infinitely if it stops."#.to_string(),
+        name: "Ref".to_string(),
+        tooltip: r#"Does nothing to the sound itself,
+Copies the result of a sound and caches it for each sample the graph produces (this is good for performance).
+This will not crash anything if you do something wrong, but it will sound weird.
+unless you've merged everything back up and x is applied to all nodes, do not use the node x to get a clean sound.
+Do not use this with speed, skip, take duration, delay, wavetable.
+"#
+            .to_string(),
         inputs: BTreeMap::from([(
             "audio 1".to_string(),
             InputParameter {
@@ -31,16 +36,16 @@ pub fn repeat_infinite_node() -> SoundNode {
     }
 }
 
-pub fn repeat_infinite_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = RepeatRefSource::new(
-        props.clone_sound(props.get_source("audio 1")?)?,
-        None,
-        props.sample_rate(),
-    );
+pub fn ref_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let arc_cloned = props
+        .state
+        ._unserializeable_state
+        .queue
+        .arc_clone_sound(props.get_source("audio 1")?)?;
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(cloned)),
+            value: props.push_sound(Box::new(arc_cloned)),
         },
     )]))
 }

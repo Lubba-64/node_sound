@@ -6,6 +6,7 @@ use crate::nodes::{NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_map::SoundQueue;
+use crate::sounds::wave_table::WaveTableManager;
 use eframe::egui::{self, DragValue, Vec2, Widget};
 use eframe::egui::{Checkbox, Pos2, WidgetText};
 pub use egui_node_graph_2::*;
@@ -40,7 +41,7 @@ impl ActiveNodeState {
     }
 }
 
-#[derive(Default, Serialize, Deserialize, Clone)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct SoundGraphUserState {
     pub active_node: ActiveNodeState,
     pub active_modified: bool,
@@ -52,7 +53,7 @@ pub struct SoundGraphUserState {
     #[serde(skip)]
     pub files: Arc<Mutex<FileManager>>,
     #[serde(skip)]
-    ctx: egui::Context,
+    pub wavetables: WaveTableManager,
 }
 
 impl DataTypeTrait<SoundGraphUserState> for DataType {
@@ -334,7 +335,7 @@ type MyGraph = Graph<NodeData, DataType, ValueType>;
 pub type SoundGraphEditorState =
     GraphEditorState<NodeData, DataType, ValueType, NodeDefinitionUi, SoundGraphUserState>;
 
-#[derive(Serialize, Deserialize, Default, Clone)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct SoundNodeGraphState {
     pub user_state: SoundGraphUserState,
     pub editor_state: SoundGraphEditorState,
@@ -350,7 +351,7 @@ pub struct FileManager {
     pub wav_file_path: Option<(String, NodeId)>,
 }
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct UnserializeableGraphState {
     pub node_definitions: NodeDefinitions,
     pub is_done_showing_recording_dialogue: bool,
@@ -409,7 +410,6 @@ impl SoundNodeGraph {
     }
 
     pub fn update_root(&mut self, ctx: &egui::Context) {
-        self.state.user_state.ctx = ctx.clone();
         self.update_output_node();
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -523,7 +523,7 @@ pub fn evaluate_node<'a>(
 
     let res = (node.1)(SoundNodeProps {
         inputs: input_to_name,
-        state: &mut state._unserializeable_state,
+        state: state,
     })?;
 
     for (name, value) in &res {

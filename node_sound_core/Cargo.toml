@@ -1,6 +1,6 @@
 [package]
 name = "node_sound_core"
-version = "4.1.0"
+version = "5.0.0"
 authors = ["Lubba64"]
 edition = "2024"
 
@@ -20,14 +20,11 @@ hound = "3.5.1"
 realfft = "3.3.0"
 itertools = "0.13.0"
 futures = "0.3.30"
-getrandom = { version = "0.2.15", features = ["js"] }
 tokio = { version = "1.38.0", features = ["time"] }
 open = { version = "5.1.4"}
 synthrs = { version = "0.1.0", git = "https://github.com/Lubba-64/synthrs.git", features = [
   "ser",
 ] }
-weblog = "0.3.0"
-pitch_shift = "1.0.0"
 egui_extras_xt = { version = "*", git = "https://github.com/xTibor/egui_extras_xt.git", features = [
   "knobs",
 ] }

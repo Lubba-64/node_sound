@@ -16,7 +16,6 @@ impl DawSource for ConstWave {
     fn next(&mut self, _index: f32, _channel: u8) -> Option<f32> {
         Some(self.val)
     }
-    fn note_speed(&mut self, _speed: f32, _rate: f32) {}
     fn size_hint(&self) -> Option<f32> {
         None
     }

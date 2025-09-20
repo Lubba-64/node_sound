@@ -28,9 +28,6 @@ impl<I: DawSource + Clone> DawSource for Clamp<I> {
             .next(index, channel)
             .map(|val| val.clamp(self.min, self.max));
     }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.source.note_speed(speed, rate);
-    }
     fn size_hint(&self) -> Option<f32> {
         self.source.size_hint()
     }

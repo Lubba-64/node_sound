@@ -54,6 +54,8 @@ pub fn automated_square_logic(mut props: SoundNodeProps) -> SoundNodeResult {
             value: props.push_sound(Box::new(AutomatedSquareWave::new(
                 cloned,
                 props.get_bool("note independant")?,
+                props.note_speed(),
+                props.sample_rate(),
             ))),
         },
     )]))

@@ -32,11 +32,6 @@ impl<I1: DawSource + Clone, I2: DawSource + Clone, I3: DawSource + Clone> DawSou
             _ => None,
         }
     }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.min.note_speed(speed, rate);
-        self.max.note_speed(speed, rate);
-        self.source.note_speed(speed, rate);
-    }
     fn size_hint(&self) -> Option<f32> {
         let max = self.max.size_hint()?;
         let min = self.min.size_hint()?;

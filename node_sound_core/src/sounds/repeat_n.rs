@@ -1,4 +1,4 @@
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::DawSource};
+use crate::sound_map::DawSource;
 use std::u32;
 
 #[derive(Clone)]
@@ -11,11 +11,11 @@ pub struct RepeatRefSource<I: DawSource> {
 
 impl<I: DawSource + Clone> RepeatRefSource<I> {
     #[inline]
-    pub fn new(source: I, repeat_count: Option<u32>) -> Self {
+    pub fn new(source: I, repeat_count: Option<u32>, sample_rate: f32) -> Self {
         Self {
             source,
             repeat_count,
-            sample_rate: DEFAULT_SAMPLE_RATE as f32,
+            sample_rate,
             ind_min: 0.0,
         }
     }
@@ -50,10 +50,6 @@ impl<I: DawSource + Clone> DawSource for RepeatRefSource<I> {
                 self.source.next(index, channel)
             }
         }
-    }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.source.note_speed(speed, rate);
-        self.sample_rate = rate;
     }
     fn size_hint(&self) -> Option<f32> {
         match self.repeat_count {

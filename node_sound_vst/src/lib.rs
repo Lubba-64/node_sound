@@ -398,6 +398,13 @@ macro_rules! mkparamgetter {
     };
 }
 
+fn to_semitones(f1: f32, f2: f32) -> f32 {
+    12.0 * f32::log2(f2 / f1)
+}
+fn from_semitones(f2: f32, n: f32) -> f32 {
+    f2 / 2.0_f32.powf(n / 12.0)
+}
+
 pub enum BackgroundTasks {
     MidiFileOpen(Arc<Mutex<FileManager>>),
     WavFileOpen(Arc<Mutex<FileManager>>),
@@ -527,46 +534,49 @@ impl Plugin for NodeSound {
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
                     match graph.state.user_state.vst_output_node_id {
                         Some(outputid) => {
-                            graph.state._unserializeable_state.queue.clear();
-                            match evaluate_node(
-                                &graph.state.editor_state.graph.clone(),
-                                outputid,
-                                &mut HashMap::new(),
-                                &get_nodes(),
-                                &mut graph.state,
-                            ) {
-                                Ok(val) => {
-                                    let source_id = match val {
-                                        ValueType::AudioSource { value } => value,
-                                        _ => {
-                                            return;
-                                        }
-                                    };
-                                    **sound_result_id = Some(source_id);
-                                    let queue = &graph.state._unserializeable_state.queue;
-
-                                    fn to_semitones(f1: f32, f2: f32) -> f32 {
-                                        12.0 * f32::log2(f2 / f1)
-                                    }
-                                    fn from_semitones(f2: f32, n: f32) -> f32 {
-                                        f2 / 2.0_f32.powf(n / 12.0)
-                                    }
-
-                                    for vidx in 0..MIDI_NOTES_LEN as usize {
-                                        let speed = from_semitones(
-                                            MIDDLE_C_FREQ,
-                                            to_semitones(
-                                                midi_note_to_freq(vidx as u8),
-                                                MIDDLE_C_FREQ,
-                                            ) + 10.5
-                                                + 1.8
-                                                - 0.5
-                                                + 0.2
-                                                + 0.1,
-                                        ) / MIDDLE_C_FREQ;
-                                        let mut queue = queue.clone();
-                                        queue.note_speed(speed, **sample_rate);
-                                        let sound = match queue.clone_sound(source_id.clone()) {
+                            graph.state.user_state.wavetables.clear();
+                            for vidx in 0..MIDI_NOTES_LEN as usize {
+                                let speed = from_semitones(
+                                    MIDDLE_C_FREQ,
+                                    to_semitones(midi_note_to_freq(vidx as u8), MIDDLE_C_FREQ)
+                                        + 10.5
+                                        + 1.8
+                                        - 0.5
+                                        + 0.2
+                                        + 0.1,
+                                ) / MIDDLE_C_FREQ;
+                                graph.state._unserializeable_state.queue.clear();
+                                graph
+                                    .state
+                                    ._unserializeable_state
+                                    .queue
+                                    .set_note_speed(speed);
+                                graph
+                                    .state
+                                    ._unserializeable_state
+                                    .queue
+                                    .set_sample_rate(**sample_rate);
+                                match evaluate_node(
+                                    &graph.state.editor_state.graph.clone(),
+                                    outputid,
+                                    &mut HashMap::new(),
+                                    &get_nodes(),
+                                    &mut graph.state,
+                                ) {
+                                    Ok(val) => {
+                                        let source_id = match val {
+                                            ValueType::AudioSource { value } => value,
+                                            _ => {
+                                                return;
+                                            }
+                                        };
+                                        **sound_result_id = Some(source_id);
+                                        let sound = match graph
+                                            .state
+                                            ._unserializeable_state
+                                            .queue
+                                            .clone_sound(source_id.clone())
+                                        {
                                             Err(_err) => {
                                                 GenericSource::new(Box::new(ConstWave::new(0.0)))
                                             }
@@ -576,11 +586,11 @@ impl Plugin for NodeSound {
                                             Speed::new(sound, speed),
                                         )));
                                     }
-                                }
-                                Err(_err) => {
-                                    clear = true;
-                                }
-                            };
+                                    Err(_err) => {
+                                        clear = true;
+                                    }
+                                };
+                            }
                         }
                         None => {
                             clear = true;
@@ -614,32 +624,35 @@ impl Plugin for NodeSound {
         context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
         let num_samples = buffer.samples();
-        let state = match self.params.plugin_state.graph.lock() {
-            Ok(x) => x,
-            Err(_x) => {
-                return ProcessStatus::KeepAlive;
+        let automations;
+        let input;
+        {
+            let state = &match self.params.plugin_state.graph.lock() {
+                Ok(x) => x,
+                Err(_x) => {
+                    return ProcessStatus::KeepAlive;
+                }
             }
-        }
-        .state
-        .clone();
-        let automations = state._unserializeable_state.automations.0.clone();
-        let input = state._unserializeable_state.input.0.clone();
+            .state;
+            automations = state._unserializeable_state.automations.0.clone();
+            input = state._unserializeable_state.input.0.clone();
 
-        match state.user_state.files.lock() {
-            Ok(x) => {
-                if x.midi_active.is_some() {
-                    context.execute_background(BackgroundTasks::MidiFileOpen(
-                        state.user_state.files.clone(),
-                    ));
+            match state.user_state.files.lock() {
+                Ok(x) => {
+                    if x.midi_active.is_some() {
+                        context.execute_background(BackgroundTasks::MidiFileOpen(
+                            state.user_state.files.clone(),
+                        ));
+                    }
+                    if x.wav_active.is_some() {
+                        context.execute_background(BackgroundTasks::WavFileOpen(
+                            state.user_state.files.clone(),
+                        ));
+                    }
                 }
-                if x.wav_active.is_some() {
-                    context.execute_background(BackgroundTasks::WavFileOpen(
-                        state.user_state.files.clone(),
-                    ));
+                Err(_x) => {
+                    return ProcessStatus::KeepAlive;
                 }
-            }
-            Err(_x) => {
-                return ProcessStatus::KeepAlive;
             }
         }
 

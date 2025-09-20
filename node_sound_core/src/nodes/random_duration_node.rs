@@ -71,6 +71,8 @@ pub fn random_duration_logic(mut props: SoundNodeProps) -> SoundNodeResult {
                 props.get_duration("min duration")?.as_secs_f32(),
                 props.get_duration("max duration")?.as_secs_f32(),
                 props.get_bool("note independant")?,
+                props.sample_rate(),
+                props.note_speed(),
             ))),
         },
     )]))

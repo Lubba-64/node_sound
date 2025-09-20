@@ -53,6 +53,8 @@ pub fn automated_sawtooth_logic(mut props: SoundNodeProps) -> SoundNodeResult {
             value: props.push_sound(Box::new(AutomatedSawtoothWave::new(
                 cloned,
                 props.get_bool("note independant")?,
+                props.note_speed(),
+                props.sample_rate(),
             ))),
         },
     )]))

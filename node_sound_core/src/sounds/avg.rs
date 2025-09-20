@@ -27,9 +27,6 @@ impl<I: DawSource + Clone> DawSource for Avg<I> {
         }
         Some(self.table.iter().map(|f| *f).sum::<f32>() / self.table.len() as f32)
     }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.source.note_speed(speed, rate);
-    }
     fn size_hint(&self) -> Option<f32> {
         None
     }

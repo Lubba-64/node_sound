@@ -68,13 +68,6 @@ impl<
             _ => None,
         }
     }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.end_max.note_speed(speed, rate);
-        self.end_min.note_speed(speed, rate);
-        self.start_max.note_speed(speed, rate);
-        self.start_min.note_speed(speed, rate);
-        self.source.note_speed(speed, rate);
-    }
     fn size_hint(&self) -> Option<f32> {
         let end_max = self.end_max.size_hint()?;
         let end_min = self.end_min.size_hint()?;

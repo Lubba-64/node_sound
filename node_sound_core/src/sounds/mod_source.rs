@@ -20,9 +20,6 @@ impl<I: DawSource + Clone> DawSource for Mod<I> {
             None => None,
         }
     }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.source.note_speed(speed, rate);
-    }
     fn size_hint(&self) -> Option<f32> {
         self.source.size_hint()
     }

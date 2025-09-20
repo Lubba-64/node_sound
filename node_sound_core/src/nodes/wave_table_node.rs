@@ -1,9 +1,8 @@
-use crate::constants::{DEFAULT_SAMPLE_RATE, MAX_FREQ, MIDDLE_C_FREQ};
+use crate::constants::{MAX_FREQ, MIDDLE_C_FREQ};
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::wave_table::SourceWavetableOscillator;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
@@ -67,18 +66,21 @@ pub fn wave_table_node() -> SoundNode {
 }
 
 pub fn wave_table_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let mut audio = SourceWavetableOscillator::from_source(
-        props.clone_sound(props.get_source("audio 1")?)?,
-        DEFAULT_SAMPLE_RATE,
-        props.get_duration("duration")?.as_secs_f32(),
+    props.update_wavetables_node_idx();
+    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+    let wavetable = props.state.user_state.wavetables.make_wavetable_generic(
+        props.sample_rate(),
         MIDDLE_C_FREQ,
+        cloned,
+        props.get_duration("duration")?.as_secs_f32(),
+        props.get_float("frequency")?,
         props.get_bool("note independant")?,
+        props.note_speed(),
     );
-    audio.set_frequency(props.get_float("frequency")?);
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(audio)),
+            value: props.push_sound(Box::new(wavetable)),
         },
     )]))
 }

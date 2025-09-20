@@ -267,6 +267,12 @@ impl Plugin for NodeSound {
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
                     match graph.state.user_state.vst_output_node_id {
                         Some(x) => {
+                            graph
+                                .state
+                                ._unserializeable_state
+                                .queue
+                                .set_sample_rate(**sample_rate);
+                            graph.state._unserializeable_state.queue.set_note_speed(1.0);
                             match evaluate_node(
                                 &graph.state.editor_state.graph.clone(),
                                 x,
@@ -279,11 +285,12 @@ impl Plugin for NodeSound {
                                         .try_to_source()
                                         .expect("expected valid audio source")
                                         .clone();
-
-                                    let mut queue =
-                                        graph.state._unserializeable_state.queue.clone();
-                                    queue.note_speed(1.0, **sample_rate);
-                                    let sound = match queue.clone_sound(source_id.clone()) {
+                                    let sound = match graph
+                                        .state
+                                        ._unserializeable_state
+                                        .queue
+                                        .clone_sound(source_id.clone())
+                                    {
                                         Err(_err) => {
                                             return;
                                         }
@@ -292,13 +299,13 @@ impl Plugin for NodeSound {
                                     **sound_result = Some(sound);
                                 }
                                 Err(_err) => {
-                                    graph.state._unserializeable_state.queue.clone().clear();
+                                    graph.state._unserializeable_state.queue.clear();
                                     **sound_result = None
                                 }
                             };
                         }
                         None => {
-                            graph.state._unserializeable_state.queue.clone().clear();
+                            graph.state._unserializeable_state.queue.clear();
                             **sound_result = None
                         }
                     }
@@ -323,14 +330,13 @@ impl Plugin for NodeSound {
         context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
         *self.sample_rate.lock().expect("expect lock") = context.transport().sample_rate;
-        let state = match self.params.plugin_state.graph.lock() {
+        let state = &match self.params.plugin_state.graph.lock() {
             Ok(x) => x,
             Err(_x) => {
                 return ProcessStatus::KeepAlive;
             }
         }
-        .state
-        .clone();
+        .state;
         match state.user_state.files.lock() {
             Ok(x) => {
                 if x.midi_active.is_some() {

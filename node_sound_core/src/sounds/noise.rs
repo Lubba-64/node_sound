@@ -31,7 +31,6 @@ impl DawSource for Noise {
         }
         Some(thread_rng().gen_range(self.min..self.max))
     }
-    fn note_speed(&mut self, _speed: f32, _rate: f32) {}
     fn size_hint(&self) -> Option<f32> {
         None
     }
