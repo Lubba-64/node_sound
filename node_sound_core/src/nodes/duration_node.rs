@@ -53,14 +53,17 @@ pub fn duration_node() -> SoundNode {
 
 pub fn duration_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+    let duration = Duration::new(
+        props.get_duration("duration")?.as_secs_f32(),
+        cloned,
+        props.get_bool("note independant")?,
+        props.note_speed(),
+        props.sample_rate(),
+    );
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(Duration::new(
-                cloned,
-                props.get_duration("duration")?.as_secs_f32(),
-                props.get_bool("note independant")?,
-            ))),
+            value: props.push_sound(Box::new(duration)),
         },
     )]))
 }

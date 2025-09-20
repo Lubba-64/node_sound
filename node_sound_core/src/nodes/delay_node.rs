@@ -55,6 +55,8 @@ pub fn delay_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         props.get_duration("delay")?.as_secs_f32(),
         props.clone_sound(props.get_source("audio 1")?)?,
         props.get_bool("note independant")?,
+        props.note_speed(),
+        props.sample_rate(),
     );
     Ok(BTreeMap::from([(
         "out".to_string(),

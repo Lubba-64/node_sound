@@ -17,9 +17,6 @@ impl<I: DawSource + Clone> DawSource for SplitChannels<I> {
     fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
         self.source.next(index, self.channel)
     }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.source.note_speed(speed, rate);
-    }
     fn size_hint(&self) -> Option<f32> {
         self.source.size_hint()
     }

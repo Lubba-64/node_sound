@@ -21,7 +21,6 @@ impl DawSource for InputChannel {
             Ok(x) => Some(if channel == 0 { x.0 } else { x.1 }),
         }
     }
-    fn note_speed(&mut self, _speed: f32, _rate: f32) {}
     fn size_hint(&self) -> Option<f32> {
         None
     }

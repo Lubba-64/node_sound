@@ -43,6 +43,7 @@ pub fn file_node() -> SoundNode {
 }
 
 pub fn file_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    props.update_wavetables_node_idx();
     let file = match props.get_file("file")? {
         None => {
             return Ok(BTreeMap::from([(
@@ -52,14 +53,17 @@ pub fn file_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         }
         Some(x) => x,
     };
-
+    let decoder = CloneableDecoder::new(
+        file.1.clone(),
+        props.get_bool("note independant")?,
+        props.sample_rate() as u32,
+        props.note_speed(),
+        &mut props.state.user_state.wavetables,
+    );
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(CloneableDecoder::new(
-                file.1.clone(),
-                props.get_bool("note independant")?,
-            ))),
+            value: props.push_sound(Box::new(decoder)),
         },
     )]))
 }

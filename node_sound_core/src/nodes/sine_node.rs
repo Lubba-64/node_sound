@@ -53,6 +53,8 @@ pub fn sine_logic(mut props: SoundNodeProps) -> SoundNodeResult {
             value: props.push_sound(Box::new(SineWave::new(
                 props.get_float("frequency")?,
                 props.get_bool("note independant")?,
+                props.sample_rate(),
+                props.note_speed(),
             ))),
         },
     )]))

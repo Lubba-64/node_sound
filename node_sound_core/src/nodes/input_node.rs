@@ -23,7 +23,9 @@ pub fn input_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(InputChannel::new(props.state.input.0.clone()))),
+            value: props.push_sound(Box::new(InputChannel::new(
+                props.state._unserializeable_state.input.0.clone(),
+            ))),
         },
     )]))
 }

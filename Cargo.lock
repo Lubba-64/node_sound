@@ -1757,10 +1757,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "335ff9f135e4384c8150d6f27c6daed433577f86b4750418338c01a1a2528592"
 dependencies = [
  "cfg-if",
- "js-sys",
  "libc",
  "wasi 0.11.1+wasi-snapshot-preview1",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -2632,11 +2630,9 @@ dependencies = [
  "egui_node_graph_2",
  "egui_plot",
  "futures",
- "getrandom 0.2.16",
  "hound",
  "itertools 0.13.0",
  "open",
- "pitch_shift",
  "rand 0.8.5",
  "realfft",
  "rfd",
@@ -2646,7 +2642,6 @@ dependencies = [
  "serde",
  "synthrs",
  "tokio",
- "weblog",
 ]
 
 [[package]]
@@ -3301,16 +3296,6 @@ dependencies = [
  "atomic-waker",
  "fastrand",
  "futures-io",
-]
-
-[[package]]
-name = "pitch_shift"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc3567157c760c60b1bce23b9341a081cbd0b1c89f1d8ca1b8701fec70ecb20b"
-dependencies = [
- "realfft",
- "rustfft",
 ]
 
 [[package]]
@@ -4810,28 +4795,6 @@ dependencies = [
  "objc2-foundation 0.3.1",
  "url",
  "web-sys",
-]
-
-[[package]]
-name = "weblog"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6eec0958e0181982bc8b4577b1363f21300a670603615c58643f172c92c47357"
-dependencies = [
- "wasm-bindgen",
- "web-sys",
- "weblog-proc-macro",
-]
-
-[[package]]
-name = "weblog-proc-macro"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d9abb8ee84ede5408a346721d72fb216a27f53a539ff3c83ed1bf7625af7104"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]

@@ -39,6 +39,7 @@ Do not use this with speed, skip, take duration, delay, wavetable.
 pub fn ref_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let arc_cloned = props
         .state
+        ._unserializeable_state
         .queue
         .arc_clone_sound(props.get_source("audio 1")?)?;
     Ok(BTreeMap::from([(

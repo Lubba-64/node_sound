@@ -39,7 +39,7 @@ pub fn daw_automations_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         "out".to_string(),
         ValueType::AudioSource {
             value: props.push_sound(Box::new(DawAutomationChannel::new(
-                props.state.automations.0
+                props.state._unserializeable_state.automations.0
                     [(props.get_float("channel")?.round() as usize).clamp(0, 17)]
                 .clone(),
             ))),

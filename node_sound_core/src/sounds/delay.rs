@@ -1,22 +1,20 @@
-use crate::{constants::DEFAULT_SAMPLE_RATE, sound_map::DawSource};
+use crate::sound_map::DawSource;
 
 #[derive(Clone)]
 pub struct Delay<S: DawSource> {
     duration: f32,
     source: S,
     sample_rate: f32,
-    uses_speed: bool,
     speed: f32,
 }
 
 impl<S: DawSource> Delay<S> {
-    pub fn new(duration: f32, source: S, uses_speed: bool) -> Self {
+    pub fn new(duration: f32, source: S, uses_speed: bool, speed: f32, sample_rate: f32) -> Self {
         Self {
             duration,
             source,
-            speed: 1.0,
-            sample_rate: DEFAULT_SAMPLE_RATE as f32,
-            uses_speed,
+            speed: if uses_speed { speed } else { 1.0 },
+            sample_rate,
         }
     }
 }
@@ -28,13 +26,6 @@ impl<S: DawSource + Clone> DawSource for Delay<S> {
         } else {
             Some(0.0)
         }
-    }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.sample_rate = rate;
-        if self.uses_speed {
-            self.speed = speed;
-        }
-        self.source.note_speed(speed, rate);
     }
     fn size_hint(&self) -> Option<f32> {
         self.source

@@ -75,6 +75,8 @@ pub fn reverb_logic(mut props: SoundNodeProps) -> SoundNodeResult {
             props.get_float("amplification")?,
         ),
         props.get_bool("note independant")?,
+        props.sample_rate(),
+        props.note_speed(),
     );
     let mixed = Mix::new(props.clone_sound(props.get_source("audio 1")?)?, cloned);
     Ok(BTreeMap::from([(

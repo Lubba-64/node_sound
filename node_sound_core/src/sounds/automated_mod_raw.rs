@@ -23,10 +23,6 @@ impl<I1: DawSource + Clone, I2: DawSource + Clone> DawSource for AutomatedModRaw
             _ => None,
         }
     }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.mod_by.note_speed(speed, rate);
-        self.source.note_speed(speed, rate);
-    }
     fn size_hint(&self) -> Option<f32> {
         let mod_by = self.mod_by.size_hint()?;
         let source = self.source.size_hint()?;

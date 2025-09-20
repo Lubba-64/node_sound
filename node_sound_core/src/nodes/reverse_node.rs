@@ -42,14 +42,18 @@ pub fn reverse_node() -> SoundNode {
     }
 }
 pub fn reverse_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    props.update_wavetables_node_idx();
     let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+    let source = ReverseSource::new(
+        cloned,
+        props.get_duration("duration")?.as_secs_f32(),
+        props.sample_rate(),
+        &mut props.state.user_state.wavetables,
+    );
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(ReverseSource::new(
-                cloned,
-                props.get_duration("duration")?.as_secs_f32(),
-            ))),
+            value: props.push_sound(Box::new(source)),
         },
     )]))
 }

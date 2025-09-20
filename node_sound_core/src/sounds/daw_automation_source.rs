@@ -21,7 +21,6 @@ impl DawSource for DawAutomationChannel {
             Ok(x) => Some(*x),
         }
     }
-    fn note_speed(&mut self, _speed: f32, _rate: f32) {}
     fn size_hint(&self) -> Option<f32> {
         None
     }

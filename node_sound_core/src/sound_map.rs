@@ -6,15 +6,8 @@ use std::{
 
 use crate::sounds::const_wave::ConstWave;
 
-pub trait RefClone: Sized + Clone {
-    fn clone_soft(&self) -> Self {
-        self.clone()
-    }
-}
-
 pub trait DawSource: DynClone {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32>;
-    fn note_speed(&mut self, speed: f32, rate: f32);
     fn size_hint(&self) -> Option<f32>;
 }
 
@@ -41,16 +34,13 @@ impl DawSource for GenericSource {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.sound.next(index, channel)
     }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        self.sound.note_speed(speed, rate);
-    }
     fn size_hint(&self) -> Option<f32> {
         self.sound.size_hint()
     }
 }
 
 pub struct RefSource {
-    sound: Arc<Mutex<Box<dyn DawSource>>>,
+    sound: Arc<Mutex<dyn DawSource>>,
     val: Arc<Mutex<Option<f32>>>,
     size: Arc<Mutex<usize>>,
     count: Arc<Mutex<usize>>,
@@ -59,33 +49,6 @@ pub struct RefSource {
 
 impl Clone for RefSource {
     fn clone(&self) -> Self {
-        *self.size.lock().expect("expected refsource lock for size") += 1;
-        Self {
-            sound: Arc::new(Mutex::new(dyn_clone::clone_box(
-                &**self.sound.lock().expect("expected ok"),
-            ))),
-            size: Arc::new(Mutex::new(1)),
-            val: Arc::new(Mutex::new(Some(0.0))),
-            count: Arc::new(Mutex::new(0)),
-            id: self.id + 1,
-        }
-    }
-}
-
-unsafe impl Send for RefSource {}
-
-impl RefSource {
-    pub fn new(sound: Arc<Mutex<Box<dyn DawSource>>>) -> Self {
-        Self {
-            sound: sound,
-            size: Arc::new(Mutex::new(1)),
-            val: Arc::new(Mutex::new(Some(0.0))),
-            count: Arc::new(Mutex::new(0)),
-            id: 0,
-        }
-    }
-
-    pub fn soft_clone(&self) -> Self {
         *self.size.lock().expect("expected refsource lock for size") += 1;
         Self {
             sound: self.sound.clone(),
@@ -97,9 +60,17 @@ impl RefSource {
     }
 }
 
-impl RefClone for RefSource {
-    fn clone_soft(&self) -> Self {
-        self.soft_clone()
+unsafe impl Send for RefSource {}
+
+impl RefSource {
+    pub fn new(sound: Arc<Mutex<dyn DawSource>>) -> Self {
+        Self {
+            sound: sound,
+            size: Arc::new(Mutex::new(1)),
+            val: Arc::new(Mutex::new(Some(0.0))),
+            count: Arc::new(Mutex::new(0)),
+            id: 0,
+        }
     }
 }
 
@@ -120,33 +91,30 @@ impl DawSource for RefSource {
         }
         *self.val.lock().expect("expected lock for refsource")
     }
-    fn note_speed(&mut self, speed: f32, rate: f32) {
-        if self.id == 0 {
-            self.sound
-                .lock()
-                .expect("source id is zero, should never fail")
-                .note_speed(speed, rate);
-        }
-    }
     fn size_hint(&self) -> Option<f32> {
         None
     }
 }
 
-#[derive(Clone)]
 pub struct SoundQueue {
     queue: Vec<GenericSource>,
+    sample_rate: f32,
+    speed: f32,
 }
 
 impl Default for SoundQueue {
     fn default() -> Self {
-        SoundQueue::new()
+        SoundQueue::new(48000.0)
     }
 }
 
 impl SoundQueue {
-    pub fn new() -> Self {
-        let mut queue = SoundQueue { queue: vec![] };
+    pub fn new(sample_rate: f32) -> Self {
+        let mut queue = SoundQueue {
+            queue: vec![],
+            speed: 1.0,
+            sample_rate: sample_rate,
+        };
         queue.push_sound(Box::new(ConstWave::new(0.0)));
         return queue;
     }
@@ -158,7 +126,7 @@ impl SoundQueue {
                 "Sound queue accessed an out of bounds element",
             )));
         }
-        return Ok(self.queue[idx].clone_soft());
+        return Ok(self.queue[idx].clone());
     }
 
     pub fn arc_clone_sound(&mut self, idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> {
@@ -168,9 +136,9 @@ impl SoundQueue {
                 "Sound queue accessed an out of bounds element",
             )));
         }
-        return Ok(RefSource::new(Arc::new(Mutex::new(Box::new(
+        return Ok(RefSource::new(Arc::new(Mutex::new(
             self.queue[idx].clone(),
-        )))));
+        ))));
     }
 
     pub fn push_sound(&mut self, sound: Box<dyn DawSource>) -> usize {
@@ -178,7 +146,7 @@ impl SoundQueue {
         return self.queue.len() - 1;
     }
 
-    pub fn sound_queue_len(&mut self) -> usize {
+    pub fn sound_queue_len(&self) -> usize {
         self.queue.len()
     }
 
@@ -187,11 +155,19 @@ impl SoundQueue {
         self.push_sound(Box::new(ConstWave::new(0.0)));
     }
 
-    pub fn note_speed(&mut self, speed: f32, sample_rate: f32) {
-        if self.queue.len() == 0 {
-            return;
-        }
-        let last = self.queue.len() - 1;
-        self.queue[last].sound.note_speed(speed, sample_rate);
+    pub fn set_sample_rate(&mut self, sample_rate: f32) {
+        self.sample_rate = sample_rate;
+    }
+
+    pub fn get_sample_rate(&self) -> f32 {
+        self.sample_rate
+    }
+
+    pub fn set_note_speed(&mut self, speed: f32) {
+        self.speed = speed;
+    }
+
+    pub fn get_note_speed(&self) -> f32 {
+        self.speed
     }
 }
