@@ -4,9 +4,8 @@ use std::f32::consts::PI;
 #[derive(Clone)]
 pub struct SawtoothWave {
     frequency: f32,
-    speed: f32,
     sample_rate: f32,
-    uses_speed: bool,
+    speed: f32,
 }
 
 impl SawtoothWave {
@@ -16,14 +15,13 @@ impl SawtoothWave {
             frequency,
             speed: if uses_speed { speed } else { 1.0 },
             sample_rate,
-            uses_speed,
         }
     }
 }
 
 impl DawSource for SawtoothWave {
     fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
-        let phase_increment = 2.0 * PI * self.frequency / self.sample_rate;
+        let phase_increment = 2.0 * PI * self.frequency / self.sample_rate / self.speed;
         let phase = (phase_increment * index) % (2.0 * PI);
         Some((phase / PI) - 1.0)
     }

@@ -5,7 +5,6 @@ pub struct Skip<S: DawSource> {
     duration: f32,
     source: S,
     sample_rate: f32,
-    uses_speed: bool,
     speed: f32,
 }
 
@@ -16,7 +15,6 @@ impl<S: DawSource> Skip<S> {
             source,
             speed: if uses_speed { speed } else { 1.0 },
             sample_rate,
-            uses_speed,
         }
     }
 }

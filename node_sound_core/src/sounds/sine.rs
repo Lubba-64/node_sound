@@ -7,7 +7,6 @@ pub struct SineWave {
     frequency: f32,
     speed: f32,
     sample_rate: f32,
-    uses_speed: bool,
 }
 
 impl SineWave {
@@ -17,7 +16,6 @@ impl SineWave {
             frequency,
             speed: if uses_speed { speed } else { 1.0 },
             sample_rate,
-            uses_speed,
         }
     }
 }

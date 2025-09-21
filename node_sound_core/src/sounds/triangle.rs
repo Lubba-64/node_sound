@@ -6,7 +6,6 @@ pub struct TriangleWave {
     frequency: f32,
     speed: f32,
     sample_rate: f32,
-    uses_speed: bool,
 }
 
 impl TriangleWave {
@@ -16,7 +15,6 @@ impl TriangleWave {
             frequency,
             speed: if uses_speed { speed } else { 1.0 },
             sample_rate,
-            uses_speed,
         }
     }
 }
