@@ -60,7 +60,7 @@ pub fn wave_shaper_node() -> SoundNode {
 }
 pub fn wave_shaper_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     props.update_wavetables_node_idx();
-    let table = props
+    let table: Vec<f32> = props
         .get_graph("graph")?
         .unwrap_or(vec![0.01; WAVE_TABLE_SIZE]);
     let wavetable = props.state.user_state.wavetables.make_wavetable_samples(

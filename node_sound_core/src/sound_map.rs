@@ -100,6 +100,7 @@ pub struct SoundQueue {
     queue: Vec<GenericSource>,
     sample_rate: f32,
     speed: f32,
+    bpm: f32,
 }
 
 impl Default for SoundQueue {
@@ -114,6 +115,7 @@ impl SoundQueue {
             queue: vec![],
             speed: 1.0,
             sample_rate: sample_rate,
+            bpm: 120.0,
         };
         queue.push_sound(Box::new(ConstWave::new(0.0)));
         return queue;
@@ -169,5 +171,12 @@ impl SoundQueue {
 
     pub fn get_note_speed(&self) -> f32 {
         self.speed
+    }
+
+    pub fn get_bpm(&self) -> f32 {
+        self.bpm
+    }
+    pub fn set_bpm(&mut self, bpm: f32) {
+        self.bpm = bpm
     }
 }
