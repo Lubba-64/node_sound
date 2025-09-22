@@ -100,7 +100,7 @@ pub struct SoundQueue {
     queue: Vec<GenericSource>,
     sample_rate: f32,
     speed: f32,
-    bpm: f32,
+    bpm: Arc<Mutex<f32>>,
 }
 
 impl Default for SoundQueue {
@@ -115,7 +115,7 @@ impl SoundQueue {
             queue: vec![],
             speed: 1.0,
             sample_rate: sample_rate,
-            bpm: 120.0,
+            bpm: Arc::new(Mutex::new(120.0)),
         };
         queue.push_sound(Box::new(ConstWave::new(0.0)));
         return queue;
@@ -173,10 +173,10 @@ impl SoundQueue {
         self.speed
     }
 
-    pub fn get_bpm(&self) -> f32 {
-        self.bpm
+    pub fn get_bpm(&self) -> Arc<Mutex<f32>> {
+        self.bpm.clone()
     }
-    pub fn set_bpm(&mut self, bpm: f32) {
+    pub fn set_bpm(&mut self, bpm: Arc<Mutex<f32>>) {
         self.bpm = bpm
     }
 }

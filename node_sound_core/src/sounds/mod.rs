@@ -10,6 +10,7 @@ pub mod automated_translate;
 pub mod automated_triangle;
 pub mod avg;
 pub mod bit_crush;
+pub mod bpm_sync;
 pub mod clamp;
 pub mod cloneable_decoder;
 pub mod const_wave;

@@ -7,7 +7,7 @@ use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_map::SoundQueue;
 use crate::sounds::wave_table::WaveTableManager;
-use eframe::egui::{self, DragValue, Vec2, Widget};
+use eframe::egui::{self, ComboBox, DragValue, Vec2, Widget};
 use eframe::egui::{Checkbox, Pos2, WidgetText};
 pub use egui_node_graph_2::*;
 use futures::executor;
@@ -67,6 +67,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::MidiFile => egui::Color32::from_rgb(150, 100, 255),
             DataType::Graph => egui::Color32::from_rgb(150, 100, 100),
             DataType::Bool => egui::Color32::from_rgb(150, 150, 150),
+            DataType::Dropdown => egui::Color32::from_rgb(0, 150, 0),
         }
     }
 
@@ -80,6 +81,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::MidiFile => Cow::Borrowed("Midi"),
             DataType::Graph => Cow::Borrowed("Graph"),
             DataType::Bool => Cow::Borrowed("Bool"),
+            DataType::Dropdown => Cow::Borrowed("Dropdown"),
         }
     }
 }
@@ -153,6 +155,10 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                     InputValueConfig::Bool { value } => ValueType::Bool {
                         value: value.clone(),
                     },
+                    InputValueConfig::Dropdown { value, values } => ValueType::Dropdown {
+                        value: value.clone(),
+                        values: values.clone(),
+                    },
                 },
                 input.1.kind,
                 true,
@@ -192,6 +198,31 @@ impl WidgetValueTrait for ValueType {
         _node_data: &Self::NodeData,
     ) -> Vec<ActiveNodeState> {
         match self {
+            ValueType::Dropdown { value, values } => {
+                ui.horizontal(|ui| {
+                    ui.label(param_name);
+                    let dropdown = ComboBox::new(format!("combobox_{}", param_name), "")
+                        .selected_text(value.clone())
+                        .width(100.0)
+                        .show_ui(ui, |ui| -> Result<String, ()> {
+                            for value in values {
+                                if ui
+                                    .add(eframe::egui::Button::new(value.to_string()))
+                                    .clicked()
+                                {
+                                    return Ok(value.to_string());
+                                }
+                            }
+                            return Err(());
+                        })
+                        .inner
+                        .unwrap_or(Err(()));
+                    match dropdown {
+                        Err(_x) => {}
+                        Ok(x) => *value = x,
+                    }
+                });
+            }
             ValueType::Bool { value } => {
                 Checkbox::new(value, WidgetText::from(param_name)).ui(ui);
             }

@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize, Default, PartialEq, Eq, Hash)]
@@ -211,6 +213,146 @@ impl NoteValue {
             NoteValue(Octave::O8, Note::A) => 7040.0,
             NoteValue(Octave::O8, Note::AS) => 7458.62,
             NoteValue(Octave::O8, Note::B) => 7902.13,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub enum NoteSpeed {
+    WholeTriplet,
+    Whole,
+    WholeDotted,
+    HalfTriplet,
+    Half,
+    HalfDotted,
+    Quarter,
+    QuarterTriplet,
+    QuarterDotted,
+    Eighth,
+    EighthTriplet,
+    EighthDotted,
+    SixteenthTriplet,
+    Sixteenth,
+    SixteenthDotted,
+    ThirtySecondTriplet,
+    ThirtySecond,
+    ThirtySecondDotted,
+    SixtyFourthTriplet,
+    SixtyFourth,
+    SixtyFourthDotted,
+}
+
+impl ToString for NoteSpeed {
+    fn to_string(&self) -> String {
+        match self {
+            NoteSpeed::WholeTriplet => "1 triplet".to_string(),
+            NoteSpeed::Whole => "1".to_string(),
+            NoteSpeed::WholeDotted => "1.".to_string(),
+            NoteSpeed::HalfTriplet => "1/2 triplet".to_string(),
+            NoteSpeed::Half => "1/2".to_string(),
+            NoteSpeed::HalfDotted => "1/2.".to_string(),
+            NoteSpeed::QuarterTriplet => "1/4 triplet".to_string(),
+            NoteSpeed::Quarter => "1/4".to_string(),
+            NoteSpeed::QuarterDotted => "1/4.".to_string(),
+            NoteSpeed::EighthTriplet => "1/8 triplet".to_string(),
+            NoteSpeed::Eighth => "1/8".to_string(),
+            NoteSpeed::EighthDotted => "1/8.".to_string(),
+            NoteSpeed::SixteenthTriplet => "1/16 triplet".to_string(),
+            NoteSpeed::Sixteenth => "1/16".to_string(),
+            NoteSpeed::SixteenthDotted => "1/16.".to_string(),
+            NoteSpeed::ThirtySecondTriplet => "1/32 triplet".to_string(),
+            NoteSpeed::ThirtySecond => "1/32".to_string(),
+            NoteSpeed::ThirtySecondDotted => "1/32.".to_string(),
+            NoteSpeed::SixtyFourthTriplet => "1/64 triplet".to_string(),
+            NoteSpeed::SixtyFourth => "1/64".to_string(),
+            NoteSpeed::SixtyFourthDotted => "1/64.".to_string(),
+        }
+    }
+}
+
+impl FromStr for NoteSpeed {
+    type Err = std::io::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "1 triplet" => NoteSpeed::WholeTriplet,
+            "1" => NoteSpeed::Whole,
+            "1." => NoteSpeed::WholeDotted,
+            "1/2 triplet" => NoteSpeed::HalfTriplet,
+            "1/2" => NoteSpeed::Half,
+            "1/2." => NoteSpeed::HalfDotted,
+            "1/4 triplet" => NoteSpeed::QuarterTriplet,
+            "1/4" => NoteSpeed::Quarter,
+            "1/4." => NoteSpeed::QuarterDotted,
+            "1/8 triplet" => NoteSpeed::EighthTriplet,
+            "1/8" => NoteSpeed::Eighth,
+            "1/8." => NoteSpeed::EighthDotted,
+            "1/16 triplet" => NoteSpeed::SixteenthTriplet,
+            "1/16" => NoteSpeed::Sixteenth,
+            "1/16." => NoteSpeed::SixteenthDotted,
+            "1/32 triplet" => NoteSpeed::ThirtySecondTriplet,
+            "1/32" => NoteSpeed::ThirtySecond,
+            "1/32." => NoteSpeed::ThirtySecondDotted,
+            "1/64 triplet" => NoteSpeed::SixtyFourthTriplet,
+            "1/64" => NoteSpeed::SixtyFourth,
+            "1/64." => NoteSpeed::SixtyFourthDotted,
+            _ => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Incorrect from_str value",
+                ));
+            }
+        })
+    }
+}
+
+impl NoteSpeed {
+    pub const ALL: [NoteSpeed; 21] = [
+        NoteSpeed::WholeTriplet,
+        NoteSpeed::Whole,
+        NoteSpeed::WholeDotted,
+        NoteSpeed::HalfTriplet,
+        NoteSpeed::Half,
+        NoteSpeed::HalfDotted,
+        NoteSpeed::QuarterTriplet,
+        NoteSpeed::Quarter,
+        NoteSpeed::QuarterDotted,
+        NoteSpeed::EighthTriplet,
+        NoteSpeed::Eighth,
+        NoteSpeed::EighthDotted,
+        NoteSpeed::SixteenthTriplet,
+        NoteSpeed::Sixteenth,
+        NoteSpeed::SixteenthDotted,
+        NoteSpeed::ThirtySecondTriplet,
+        NoteSpeed::ThirtySecond,
+        NoteSpeed::ThirtySecondDotted,
+        NoteSpeed::SixtyFourthTriplet,
+        NoteSpeed::SixtyFourth,
+        NoteSpeed::SixtyFourthDotted,
+    ];
+
+    pub fn get_beats(&self) -> f32 {
+        match self {
+            NoteSpeed::WholeTriplet => 8.0 / 3.0,
+            NoteSpeed::Whole => 4.0,
+            NoteSpeed::WholeDotted => 6.0,
+            NoteSpeed::HalfTriplet => 4.0 / 3.0,
+            NoteSpeed::Half => 2.0,
+            NoteSpeed::HalfDotted => 3.0,
+            NoteSpeed::QuarterTriplet => 2.0 / 3.0,
+            NoteSpeed::Quarter => 1.0,
+            NoteSpeed::QuarterDotted => 1.5,
+            NoteSpeed::EighthTriplet => 1.0 / 3.0,
+            NoteSpeed::Eighth => 0.5,
+            NoteSpeed::EighthDotted => 0.75,
+            NoteSpeed::SixteenthTriplet => 0.5 / 3.0,
+            NoteSpeed::Sixteenth => 0.25,
+            NoteSpeed::SixteenthDotted => 0.375,
+            NoteSpeed::ThirtySecondTriplet => 0.25 / 3.0,
+            NoteSpeed::ThirtySecond => 0.125,
+            NoteSpeed::ThirtySecondDotted => 0.1875,
+            NoteSpeed::SixtyFourthTriplet => 0.125 / 3.0,
+            NoteSpeed::SixtyFourth => 0.0625,
+            NoteSpeed::SixtyFourthDotted => 0.09375,
         }
     }
 }

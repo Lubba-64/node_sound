@@ -8,7 +8,11 @@ use crate::{
 };
 use eframe::egui::ahash::HashMap;
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, time::Duration};
+use std::{
+    collections::BTreeMap,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 use synthrs::midi::MidiSong;
 pub mod abs_node;
 pub mod amplify_node;
@@ -24,6 +28,7 @@ pub mod automated_wave_shaper_node;
 pub mod automated_wave_table_node;
 pub mod avg_node;
 pub mod bit_crush_node;
+pub mod bpm_sync_node;
 pub mod clamp_node;
 pub mod const_node;
 pub mod daw_automation_source_node;
@@ -98,6 +103,10 @@ impl<'a> SoundNodeProps<'a> {
         self.state._unserializeable_state.queue.get_note_speed()
     }
 
+    fn bpm(&self) -> Arc<Mutex<f32>> {
+        self.state._unserializeable_state.queue.get_bpm()
+    }
+
     fn get_float(&self, name: &str) -> Result<f32, Box<dyn std::error::Error>> {
         Ok(self
             .inputs
@@ -159,6 +168,14 @@ impl<'a> SoundNodeProps<'a> {
             .unwrap_or_default()
             .clone()
             .try_to_graph()?)
+    }
+    fn get_dropdown(&self, name: &str) -> Result<String, Box<dyn std::error::Error>> {
+        Ok(self
+            .inputs
+            .get(name)
+            .unwrap_or_default()
+            .clone()
+            .try_to_dropdown()?)
     }
 }
 
@@ -332,6 +349,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (avg_node::avg_node(), Box::new(avg_node::avg_logic)),
         (input_node::input_node(), Box::new(input_node::input_logic)),
         (ref_node::ref_node(), Box::new(ref_node::ref_logic)),
+        (
+            bpm_sync_node::bpm_sync_node(),
+            Box::new(bpm_sync_node::bpm_sync_logic),
+        ),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

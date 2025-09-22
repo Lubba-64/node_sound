@@ -17,6 +17,7 @@ pub enum DataType {
     MidiFile,
     Graph,
     Bool,
+    Dropdown,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
@@ -50,6 +51,10 @@ pub enum ValueType {
     Bool {
         value: bool,
     },
+    Dropdown {
+        value: String,
+        values: Vec<String>,
+    },
 }
 
 impl Default for &ValueType {
@@ -78,6 +83,10 @@ pub enum InputValueConfig {
     },
     Bool {
         value: bool,
+    },
+    Dropdown {
+        value: String,
+        values: Vec<String>,
     },
 }
 
@@ -112,7 +121,6 @@ impl Debug for ValueType {
                 .debug_struct("Graph")
                 .field("value", &"Anonymous Graph")
                 .finish(),
-
             Self::Bool { value } => {
                 if *value {
                     f.debug_struct("true").finish()
@@ -120,6 +128,13 @@ impl Debug for ValueType {
                     f.debug_struct("false").finish()
                 }
             }
+            Self::Dropdown {
+                value: _,
+                values: _,
+            } => f
+                .debug_struct("Dropdown")
+                .field("value", &"Anonymous Dropdown")
+                .finish(),
         }
     }
 }
@@ -180,6 +195,13 @@ impl ValueType {
                 width: _,
                 height: _,
             } => Ok(value),
+            _ => Err("invalid cast".to_string()),
+        }
+    }
+
+    pub fn try_to_dropdown(self) -> Result<String, String> {
+        match self {
+            ValueType::Dropdown { value, values: _ } => Ok(value),
             _ => Err("invalid cast".to_string()),
         }
     }

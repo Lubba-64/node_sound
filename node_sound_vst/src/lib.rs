@@ -42,7 +42,7 @@ struct Voice {
     /// voice. This is used to steal the last voice in case all 16 voices are in use.
     internal_voice_id: u64,
     /// The square root of the note's velocity. This is used as a gain multiplier.
-    velocity_sqrt: f32,
+    _velocity_sqrt: f32,
     /// Whether the key has been released and the voice is in its release stage. The voice will be
     /// terminated when the amplitude envelope hits 0 while the note is releasing.
     releasing: bool,
@@ -294,7 +294,7 @@ impl NodeSound {
             internal_voice_id: self.next_internal_voice_id,
             channel,
             note,
-            velocity_sqrt: velocity.sqrt(),
+            _velocity_sqrt: velocity.sqrt(),
             releasing: false,
             amp_envelope,
             voice_gain: None,
@@ -517,6 +517,7 @@ impl Plugin for NodeSound {
                 self.sample_rate.clone(),
                 self.params.root_sound_id.clone(),
                 false,
+                self.bpm.clone(),
             ),
             |_, _| {},
             move |egui_ctx, _setter, state| {
@@ -557,6 +558,11 @@ impl Plugin for NodeSound {
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
                     match graph.state.user_state.vst_output_node_id {
                         Some(outputid) => {
+                            graph
+                                .state
+                                ._unserializeable_state
+                                .queue
+                                .set_bpm(state.5.clone());
                             graph.state.user_state.wavetables.clear();
                             for vidx in 0..MIDI_NOTES_LEN as usize {
                                 let speed = from_semitones(
