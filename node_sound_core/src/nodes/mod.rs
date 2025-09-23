@@ -34,6 +34,7 @@ pub mod const_node;
 pub mod daw_automation_source_node;
 pub mod delay_node;
 pub mod duration_node;
+pub mod eq_node;
 pub mod file_node;
 pub mod flip_node;
 pub mod input_node;
@@ -353,6 +354,7 @@ pub fn get_nodes() -> NodeDefinitions {
             bpm_sync_node::bpm_sync_node(),
             Box::new(bpm_sync_node::bpm_sync_logic),
         ),
+        (eq_node::eq_node(), Box::new(eq_node::eq_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

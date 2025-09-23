@@ -17,6 +17,7 @@ pub mod const_wave;
 pub mod daw_automation_source;
 pub mod delay;
 pub mod duration;
+pub mod eq;
 pub mod flip;
 pub mod input;
 pub mod lfo;
