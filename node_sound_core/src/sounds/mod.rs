@@ -40,6 +40,7 @@ pub mod split_channels;
 pub mod square;
 pub mod translate;
 pub mod triangle;
+pub mod unison;
 pub mod vertical_wave_shaper;
 pub mod wave_table;
 pub mod weird;

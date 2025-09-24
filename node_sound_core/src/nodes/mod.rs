@@ -63,6 +63,7 @@ pub mod split_channels_node;
 pub mod square_node;
 pub mod translate_node;
 pub mod triangle_node;
+pub mod unison_node;
 pub mod vertical_wave_shaper_node;
 pub mod wave_shaper_node;
 pub mod wave_table_node;
@@ -355,6 +356,10 @@ pub fn get_nodes() -> NodeDefinitions {
             Box::new(bpm_sync_node::bpm_sync_logic),
         ),
         (eq_node::eq_node(), Box::new(eq_node::eq_logic)),
+        (
+            unison_node::unison_node(),
+            Box::new(unison_node::unison_logic),
+        ),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
