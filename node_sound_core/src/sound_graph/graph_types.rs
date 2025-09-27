@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use synthrs::midi::MidiSong;
 
-use crate::sound_graph::note::NoteValue;
+use crate::{sound_graph::note::Pitch, sounds::tracker::TrackerNote};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum DataType {
@@ -18,6 +18,7 @@ pub enum DataType {
     Graph,
     Bool,
     Dropdown,
+    TrackerNotes,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
@@ -31,7 +32,7 @@ pub enum ValueType {
         value: f32,
         min: f32,
         max: f32,
-        note: NoteValue,
+        note: Pitch,
     },
     Duration {
         value: Duration,
@@ -54,6 +55,9 @@ pub enum ValueType {
     Dropdown {
         value: String,
         values: Vec<String>,
+    },
+    TrackerNotes {
+        notes: Vec<TrackerNote>,
     },
 }
 
@@ -87,6 +91,9 @@ pub enum InputValueConfig {
     Dropdown {
         value: String,
         values: Vec<String>,
+    },
+    TrackerNotes {
+        notes: Vec<TrackerNote>,
     },
 }
 
@@ -128,6 +135,10 @@ impl Debug for ValueType {
                     f.debug_struct("false").finish()
                 }
             }
+            Self::TrackerNotes { notes: _ } => f
+                .debug_struct("TrackerNotes")
+                .field("value", &"Anonymous TrackerNotes")
+                .finish(),
             Self::Dropdown {
                 value: _,
                 values: _,
@@ -202,6 +213,13 @@ impl ValueType {
     pub fn try_to_dropdown(self) -> Result<String, String> {
         match self {
             ValueType::Dropdown { value, values: _ } => Ok(value),
+            _ => Err("invalid cast".to_string()),
+        }
+    }
+
+    pub fn try_to_tracker(self) -> Result<Vec<TrackerNote>, String> {
+        match self {
+            ValueType::TrackerNotes { notes } => Ok(notes),
             _ => Err("invalid cast".to_string()),
         }
     }

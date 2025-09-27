@@ -4,7 +4,7 @@ use crate::{
         graph_types::{InputParameter, Output, ValueType},
     },
     sound_map::{DawSource, GenericSource},
-    sounds::wave_table::WaveTableManager,
+    sounds::{tracker::TrackerNote, wave_table::WaveTableManager},
 };
 use eframe::egui::ahash::HashMap;
 use serde::{Deserialize, Serialize};
@@ -29,6 +29,7 @@ pub mod automated_wave_table_node;
 pub mod avg_node;
 pub mod bit_crush_node;
 pub mod bpm_sync_node;
+pub mod bpm_sync_source_node;
 pub mod clamp_node;
 pub mod const_node;
 pub mod daw_automation_source_node;
@@ -61,6 +62,7 @@ pub mod skip_node;
 pub mod speed_node;
 pub mod split_channels_node;
 pub mod square_node;
+pub mod tracker_node;
 pub mod translate_node;
 pub mod triangle_node;
 pub mod unison_node;
@@ -178,6 +180,14 @@ impl<'a> SoundNodeProps<'a> {
             .unwrap_or_default()
             .clone()
             .try_to_dropdown()?)
+    }
+    fn get_tracker(&self, name: &str) -> Result<Vec<TrackerNote>, Box<dyn std::error::Error>> {
+        Ok(self
+            .inputs
+            .get(name)
+            .unwrap_or_default()
+            .clone()
+            .try_to_tracker()?)
     }
 }
 
@@ -354,6 +364,14 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             bpm_sync_node::bpm_sync_node(),
             Box::new(bpm_sync_node::bpm_sync_logic),
+        ),
+        (
+            bpm_sync_source_node::bpm_sync_source_node(),
+            Box::new(bpm_sync_source_node::bpm_sync_source_logic),
+        ),
+        (
+            tracker_node::tracker_node(),
+            Box::new(tracker_node::tracker_logic),
         ),
         (eq_node::eq_node(), Box::new(eq_node::eq_logic)),
         (

@@ -5,7 +5,9 @@ use super::wave_table_graph::wave_table_graph;
 use crate::nodes::{NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
+use crate::sound_graph::note::{Note, NoteSpeed};
 use crate::sound_map::SoundQueue;
+use crate::sounds::tracker::TrackerNote;
 use crate::sounds::wave_table::WaveTableManager;
 use eframe::egui::{self, ComboBox, DragValue, Vec2, Widget};
 use eframe::egui::{Checkbox, Pos2, WidgetText};
@@ -68,6 +70,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::Graph => egui::Color32::from_rgb(150, 100, 100),
             DataType::Bool => egui::Color32::from_rgb(150, 150, 150),
             DataType::Dropdown => egui::Color32::from_rgb(0, 150, 0),
+            DataType::TrackerNotes => egui::Color32::from_rgb(0, 0, 0),
         }
     }
 
@@ -82,6 +85,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::Graph => Cow::Borrowed("Graph"),
             DataType::Bool => Cow::Borrowed("Bool"),
             DataType::Dropdown => Cow::Borrowed("Dropdown"),
+            DataType::TrackerNotes => Cow::Borrowed("TrackerNotes"),
         }
     }
 }
@@ -127,12 +131,15 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                 input.0.clone(),
                 input.1.data_type,
                 match &input.1.value {
+                    InputValueConfig::TrackerNotes { notes } => ValueType::TrackerNotes {
+                        notes: notes.clone(),
+                    },
                     InputValueConfig::AudioSource {} => ValueType::AudioSource { value: 0 },
                     InputValueConfig::Float { value, min, max } => ValueType::Float {
                         value: *value,
                         min: *min,
                         max: *max,
-                        note: super::note::NoteValue::default(),
+                        note: super::note::Pitch::default(),
                     },
                     InputValueConfig::Duration { value } => ValueType::Duration {
                         value: Duration::from_secs_f32(*value),
@@ -198,6 +205,53 @@ impl WidgetValueTrait for ValueType {
         _node_data: &Self::NodeData,
     ) -> Vec<ActiveNodeState> {
         match self {
+            ValueType::TrackerNotes { notes } => {
+                ui.horizontal(|ui| {
+                    for (index, tracker_note) in notes.iter_mut().enumerate() {
+                        ui.vertical(|ui| {
+                            egui::ComboBox::from_id_salt(format!("speed_{}", index))
+                                .selected_text(tracker_note.speed.to_string())
+                                .width(100.0)
+                                .show_ui(ui, |ui| {
+                                    for speed_variant in NoteSpeed::ALL {
+                                        ui.selectable_value(
+                                            &mut tracker_note.speed,
+                                            speed_variant.clone(),
+                                            speed_variant.to_string(),
+                                        );
+                                    }
+                                });
+
+                            egui::ComboBox::from_id_salt(format!("note_{}", index))
+                                .selected_text(match &tracker_note.note {
+                                    Some(note) => note.to_string(),
+                                    None => "~".to_string(),
+                                })
+                                .width(20.0)
+                                .show_ui(ui, |ui| {
+                                    ui.selectable_value(&mut tracker_note.note, None, "~");
+
+                                    for note_variant in Note::ALL {
+                                        ui.selectable_value(
+                                            &mut tracker_note.note,
+                                            Some(note_variant.clone()),
+                                            note_variant.to_string(),
+                                        );
+                                    }
+                                });
+                        });
+                    }
+                    if notes.len() > 1 {
+                        if ui.button("−").clicked() {
+                            notes.remove(notes.len() - 1);
+                            return;
+                        }
+                    }
+                    if ui.button("+").clicked() {
+                        notes.push(TrackerNote::default());
+                    }
+                });
+            }
             ValueType::Dropdown { value, values } => {
                 ui.horizontal(|ui| {
                     ui.label(param_name);

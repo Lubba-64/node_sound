@@ -1,13 +1,13 @@
 use eframe::egui::{ComboBox, DragValue};
 use egui_extras_xt::knobs::AudioKnob;
 
-use super::note::{Note, NoteValue, Octave};
+use super::note::{Note, Octave, Pitch};
 
 pub fn float_selector(
     value: &mut f32,
     min: &mut f32,
     max: &mut f32,
-    note: &mut NoteValue,
+    note: &mut Pitch,
     ui: &mut eframe::egui::Ui,
     param_name: &str,
 ) {
@@ -56,15 +56,15 @@ pub fn float_selector(
             .unwrap_or(Err(()));
         match (note_res, octave_res) {
             (Ok(note_res), Err(_)) => {
-                *note = NoteValue(note.0.clone(), note_res);
+                *note = Pitch(note.0.clone(), note_res);
                 *value = note.match_freq();
             }
             (Err(_), Ok(octave_res)) => {
-                *note = NoteValue(octave_res, note.1.clone());
+                *note = Pitch(octave_res, note.1.clone());
                 *value = note.match_freq();
             }
             (Ok(note_res), Ok(octave_res)) => {
-                *note = NoteValue(octave_res, note_res);
+                *note = Pitch(octave_res, note_res);
                 *value = note.match_freq();
             }
             (Err(_), Err(_)) => {}
