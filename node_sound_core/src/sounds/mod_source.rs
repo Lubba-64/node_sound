@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Mod<I: DawSource> {
     source: I,
     mod_by: f32,

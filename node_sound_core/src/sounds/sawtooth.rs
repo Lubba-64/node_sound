@@ -1,7 +1,7 @@
 use crate::sound_map::DawSource;
 use std::f32::consts::PI;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SawtoothWave {
     frequency: f32,
     sample_rate: f32,

@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Skip<S: DawSource> {
     duration: f32,
     source: S,

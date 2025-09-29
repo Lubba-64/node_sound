@@ -52,6 +52,10 @@ struct Voice {
     /// If this voice has polyphonic gain modulation applied, then this contains the normalized
     /// offset and a smoother.
     voice_gain: Option<(f32, Smoother<f32>)>,
+
+    voice_source: GenericSource,
+
+    voice_idx: usize,
 }
 
 pub struct NodeSound {
@@ -61,7 +65,6 @@ pub struct NodeSound {
     sample_rate: Arc<Mutex<f32>>,
     bpm: Arc<Mutex<f32>>,
     source_sound_buffers: Arc<Mutex<[Option<GenericSource>; MIDI_NOTES_LEN as usize]>>,
-    voice_sound_buffers: Arc<Mutex<[(Option<GenericSource>, usize); MIDI_NOTES_LEN as usize]>>,
 }
 
 pub struct PluginPresetState {
@@ -149,9 +152,6 @@ impl Default for NodeSound {
             sample_rate: Arc::new(Mutex::new(48000.0)),
             bpm: Arc::new(Mutex::new(120.0)),
             source_sound_buffers: Arc::new(Mutex::new([0; MIDI_NOTES_LEN as usize].map(|_| None))),
-            voice_sound_buffers: Arc::new(Mutex::new(
-                [0; MIDI_NOTES_LEN as usize].map(|_| (None, 0)),
-            )),
         }
     }
 }
@@ -288,7 +288,6 @@ impl NodeSound {
         ));
         amp_envelope.reset(0.0);
         amp_envelope.set_target(sample_rate, 1.0);
-
         let new_voice = Voice {
             voice_id: voice_id.unwrap_or_else(|| compute_fallback_voice_id(note, channel)),
             internal_voice_id: self.next_internal_voice_id,
@@ -298,6 +297,13 @@ impl NodeSound {
             releasing: false,
             amp_envelope,
             voice_gain: None,
+            voice_idx: 0,
+            voice_source: self
+                .source_sound_buffers
+                .lock()
+                .expect("expected lock on source sound buffers")[note as usize]
+                .clone()
+                .unwrap_or(GenericSource::new(Box::new(ConstWave::new(0.0)))),
         };
 
         self.next_internal_voice_id = self.next_internal_voice_id.wrapping_add(1);
@@ -711,7 +717,6 @@ impl Plugin for NodeSound {
 
         while block_start < num_samples {
             let this_sample_internal_voice_id_start = self.next_internal_voice_id;
-
             let mut notes_to_reset = vec![];
             'events: loop {
                 match next_event {
@@ -862,22 +867,6 @@ impl Plugin for NodeSound {
                 }
             }
 
-            let sound_buffers = match self.source_sound_buffers.lock() {
-                Ok(x) => x,
-                Err(_x) => {
-                    return ProcessStatus::KeepAlive;
-                }
-            };
-            let mut voice_sound_buffers = match self.voice_sound_buffers.lock() {
-                Ok(x) => x,
-                Err(_x) => {
-                    return ProcessStatus::KeepAlive;
-                }
-            };
-            for note in notes_to_reset {
-                voice_sound_buffers[note as usize] = (sound_buffers[note as usize].clone(), 0);
-            }
-
             let active_voices = self
                 .voices
                 .iter()
@@ -894,7 +883,6 @@ impl Plugin for NodeSound {
                     _ => {}
                 }
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
-                    let buffer = &mut voice_sound_buffers[voice.note as usize];
                     let amp = voice.amp_envelope.next();
                     mkparamgetter!(a1, 0, self, automations);
                     mkparamgetter!(a2, 1, self, automations);
@@ -914,20 +902,15 @@ impl Plugin for NodeSound {
                     mkparamgetter!(a16, 15, self, automations);
                     mkparamgetter!(a17, 16, self, automations);
                     mkparamgetter!(a18, 17, self, automations);
-                    match &mut buffer.0 {
-                        Some(source) => {
-                            let time_index = (buffer.1 + sample_idx) as f32;
-                            let left_sample = (source.next(time_index, 0).unwrap_or_default()
-                                / active_voices.max(1.0))
-                                * amp;
-                            let right_sample = (source.next(time_index, 1).unwrap_or_default()
-                                / active_voices.max(1.0))
-                                * amp;
-                            output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
-                            output[1][sample_idx] += right_sample.clamp(-1.0, 1.0);
-                        }
-                        None => {}
-                    }
+                    let time_index = (voice.voice_idx + sample_idx) as f32;
+                    let left_sample = (voice.voice_source.next(time_index, 0).unwrap_or_default()
+                        / active_voices.max(1.0))
+                        * amp;
+                    let right_sample = (voice.voice_source.next(time_index, 1).unwrap_or_default()
+                        / active_voices.max(1.0))
+                        * amp;
+                    output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
+                    output[1][sample_idx] += right_sample.clamp(-1.0, 1.0);
                 }
             }
 
@@ -953,15 +936,13 @@ impl Plugin for NodeSound {
             block_end = (block_start + MAX_BLOCK_SIZE).min(num_samples);
         }
 
-        let mut voice_sound_buffers = match self.voice_sound_buffers.lock() {
-            Ok(x) => x,
-            Err(_x) => {
-                return ProcessStatus::KeepAlive;
+        for voice in self.voices.iter_mut() {
+            match voice {
+                Some(v) => {
+                    v.voice_idx += num_samples;
+                }
+                None => {}
             }
-        };
-
-        for buffer in voice_sound_buffers.iter_mut() {
-            buffer.1 += num_samples;
         }
 
         ProcessStatus::Normal

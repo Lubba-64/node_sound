@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Duration<I: DawSource> {
     source: I,
     duration: f32,

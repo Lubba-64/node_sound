@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Flip<I1: DawSource> {
     source: I1,
 }

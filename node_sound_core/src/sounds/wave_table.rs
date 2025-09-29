@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct WaveTableOscillator {
     pub left_table: Arc<Vec<f32>>,
     pub right_table: Arc<Vec<f32>>,
@@ -281,16 +281,7 @@ impl WaveTableManager {
     }
 }
 
-// NEW NEW NEW
-// NEW NEW NEW
-// NEW NEW NEW
-// NEW NEW NEW
-// NEW NEW NEW
-// NEW NEW NEW
-// NEW NEW NEW
-// NEW NEW NEW
-
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AutomatedWaveTableOscillator<F: DawSource> {
     pub left_table: Arc<Vec<f32>>,
     pub right_table: Arc<Vec<f32>>,

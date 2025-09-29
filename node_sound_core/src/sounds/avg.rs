@@ -1,6 +1,7 @@
 use crate::sound_map::DawSource;
 use std::collections::VecDeque;
-#[derive(Clone)]
+
+#[derive(Clone, Debug)]
 pub struct Avg<I: DawSource> {
     source: I,
     table: VecDeque<f32>,

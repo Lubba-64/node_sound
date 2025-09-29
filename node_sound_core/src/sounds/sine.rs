@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SineWave {
     frequency: f32,
     speed: f32,

@@ -7,7 +7,7 @@ use crate::{
     sound_map::DawSource,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Tracker<S: DawSource> {
     sample_rate: f32,
     source: S,

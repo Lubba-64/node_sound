@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SplitChannels<I: DawSource> {
     source: I,
     channel: u8,

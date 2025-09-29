@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct VerticalWaveShaper<I: DawSource> {
     source: I,
     table: Vec<f32>,

@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Mix<I1: DawSource, I2: DawSource> {
     source1: I1,
     source2: I2,

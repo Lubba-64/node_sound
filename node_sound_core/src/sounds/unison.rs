@@ -3,12 +3,12 @@ use crate::{
     sounds::{skip::Skip, speed::Speed},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct UnisonVoice {
     source: MixVec,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MixVec {
     vec: Vec<GenericSource>,
 }

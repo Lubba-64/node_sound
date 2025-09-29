@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BitCrusher<I: DawSource> {
     source: I,
     step_size: f32,

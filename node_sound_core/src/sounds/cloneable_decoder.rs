@@ -7,7 +7,7 @@ use crate::{
     sounds::wave_table::{WaveTableManager, WaveTableOscillator},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CloneableDecoder {
     pub wavetable: WaveTableOscillator,
 }

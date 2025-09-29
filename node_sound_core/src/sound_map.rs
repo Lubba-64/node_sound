@@ -1,16 +1,18 @@
 use dyn_clone::DynClone;
 use std::{
+    fmt::Debug,
     io::ErrorKind,
     sync::{Arc, Mutex},
 };
 
 use crate::sounds::const_wave::ConstWave;
 
-pub trait DawSource: DynClone {
+pub trait DawSource: DynClone + Debug {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32>;
     fn size_hint(&self) -> Option<f32>;
 }
 
+#[derive(Debug)]
 pub struct GenericSource {
     sound: Box<dyn DawSource>,
 }
@@ -39,6 +41,7 @@ impl DawSource for GenericSource {
     }
 }
 
+#[derive(Debug)]
 pub struct RefSource {
     sound: Arc<Mutex<dyn DawSource>>,
     val: Arc<Mutex<Option<f32>>>,

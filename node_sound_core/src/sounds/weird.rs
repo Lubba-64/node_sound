@@ -2,7 +2,7 @@ use rand::Rng;
 
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Weird<I: DawSource> {
     source: I,
     rules: Vec<fn(f32) -> f32>,

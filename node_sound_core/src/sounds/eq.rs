@@ -62,7 +62,7 @@ impl FromStr for FilterType {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SingleFilterEq<I: DawSource> {
     source: I,
     filter_type: FilterType,

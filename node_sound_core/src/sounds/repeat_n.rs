@@ -1,7 +1,7 @@
 use crate::sound_map::DawSource;
 use std::u32;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RepeatRefSource<I: DawSource> {
     source: I,
     repeat_count: Option<u32>,

@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::{sound_graph::note::NoteSpeed, sound_map::DawSource};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BPMSync<I: DawSource> {
     source: I,
     sample_rate: f32,

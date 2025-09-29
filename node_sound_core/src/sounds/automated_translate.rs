@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AutomatedTranslateWave<
     I1: DawSource,
     I2: DawSource,

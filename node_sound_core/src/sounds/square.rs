@@ -1,7 +1,7 @@
 use crate::sound_map::DawSource;
 use std::f32::consts::PI;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SquareWave {
     frequency: f32,
     speed: f32,

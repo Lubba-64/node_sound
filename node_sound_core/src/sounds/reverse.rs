@@ -3,7 +3,7 @@ use crate::{
     sounds::wave_table::{WaveTableManager, WaveTableOscillator},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ReverseSource {
     wavetable: WaveTableOscillator,
 }

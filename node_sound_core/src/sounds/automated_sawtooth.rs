@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AutomatedSawtoothWave<F: DawSource> {
     freq_source: F,
     speed: f32,

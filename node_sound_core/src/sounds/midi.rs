@@ -5,7 +5,7 @@ use crate::{
 };
 use synthrs::{midi::MidiSong, synthesizer::make_samples_from_midi, wave};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MidiRenderer {
     wavetable: WaveTableOscillator,
 }

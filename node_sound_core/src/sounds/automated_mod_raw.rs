@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AutomatedModRaw<I1: DawSource, I2: DawSource> {
     source: I1,
     mod_by: I2,

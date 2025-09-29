@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Wrapper<I: DawSource> {
     source: I,
     last: [Option<f32>; 2],

@@ -2,7 +2,7 @@ use rand::Rng;
 
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RandomDuration<I: DawSource> {
     source: I,
     duration_min: f32,

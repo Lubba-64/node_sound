@@ -1,7 +1,7 @@
 use crate::sound_map::DawSource;
 use rand::prelude::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Noise {
     min: f32,
     max: f32,

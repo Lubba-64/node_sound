@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AutomatedClamp<I1: DawSource, I2: DawSource, I3: DawSource> {
     source: I1,
     min: I2,

@@ -2,7 +2,7 @@ use crate::sound_map::DawSource;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DawAutomationChannel {
     channel: Arc<Mutex<f32>>,
 }

@@ -1,6 +1,6 @@
 use crate::sound_map::DawSource;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TranslateWave<I: DawSource> {
     source: I,
     start_min: f32,
