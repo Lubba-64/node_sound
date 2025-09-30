@@ -42,7 +42,7 @@ struct Voice {
     /// voice. This is used to steal the last voice in case all 16 voices are in use.
     internal_voice_id: u64,
     /// The square root of the note's velocity. This is used as a gain multiplier.
-    _velocity_sqrt: f32,
+    velocity_sqrt: f32,
     /// Whether the key has been released and the voice is in its release stage. The voice will be
     /// terminated when the amplitude envelope hits 0 while the note is releasing.
     releasing: bool,
@@ -293,7 +293,7 @@ impl NodeSound {
             internal_voice_id: self.next_internal_voice_id,
             channel,
             note,
-            _velocity_sqrt: velocity.sqrt(),
+            velocity_sqrt: velocity.sqrt(),
             releasing: false,
             amp_envelope,
             voice_gain: None,
@@ -866,14 +866,12 @@ impl Plugin for NodeSound {
                     _ => break 'events,
                 }
             }
-
             let active_voices = self
                 .voices
                 .iter()
                 .filter(|voice| voice.is_some())
                 .collect::<Vec<_>>()
                 .len() as f32;
-
             for sample_idx in block_start..block_end {
                 match input.lock() {
                     Ok(mut x) => {
@@ -883,7 +881,11 @@ impl Plugin for NodeSound {
                     _ => {}
                 }
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
-                    let amp = voice.amp_envelope.next();
+                    let gain = match &voice.voice_gain {
+                        Some((_, smoother)) => smoother.next(),
+                        None => 1.0,
+                    };
+                    let amp = voice.amp_envelope.next() * voice.velocity_sqrt * gain;
                     mkparamgetter!(a1, 0, self, automations);
                     mkparamgetter!(a2, 1, self, automations);
                     mkparamgetter!(a3, 2, self, automations);
@@ -903,12 +905,12 @@ impl Plugin for NodeSound {
                     mkparamgetter!(a17, 16, self, automations);
                     mkparamgetter!(a18, 17, self, automations);
                     let time_index = (voice.voice_idx + sample_idx) as f32;
-                    let left_sample = (voice.voice_source.next(time_index, 0).unwrap_or_default()
-                        / active_voices.max(1.0))
-                        * amp;
-                    let right_sample = (voice.voice_source.next(time_index, 1).unwrap_or_default()
-                        / active_voices.max(1.0))
-                        * amp;
+                    let mut left_sample =
+                        voice.voice_source.next(time_index, 0).unwrap_or_default() * amp;
+                    let mut right_sample =
+                        voice.voice_source.next(time_index, 1).unwrap_or_default() * amp;
+                    left_sample /= active_voices;
+                    right_sample /= active_voices;
                     output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
                     output[1][sample_idx] += right_sample.clamp(-1.0, 1.0);
                 }
