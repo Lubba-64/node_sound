@@ -620,6 +620,7 @@ impl Plugin for NodeSound {
                                         sound_buffers[vidx] = Some(GenericSource::new(Box::new(
                                             Speed::new(sound, speed),
                                         )));
+                                        graph.state._unserializeable_state.queue.clear();
                                     }
                                     Err(_err) => {
                                         clear = true;

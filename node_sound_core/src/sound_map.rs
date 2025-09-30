@@ -1,6 +1,7 @@
+use crate::sounds::const_wave::ConstWave;
 use dyn_clone::DynClone;
 use eframe::egui::ahash::{HashMap, HashMapExt};
-use itertools::Itertools;
+use ordered_float::OrderedFloat;
 use std::{
     cell::{Cell, RefCell},
     fmt::Debug,
@@ -8,8 +9,6 @@ use std::{
     rc::Rc,
     sync::{Arc, Mutex},
 };
-
-use crate::sounds::const_wave::ConstWave;
 
 pub trait DawSource: DynClone + Debug {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32>;
@@ -48,10 +47,9 @@ impl DawSource for GenericSource {
 #[derive(Debug)]
 pub struct RefSource {
     sound: Rc<RefCell<dyn DawSource>>,
-    val: Rc<RefCell<HashMap<usize, Option<f32>>>>,
+    val: Rc<RefCell<HashMap<OrderedFloat<f32>, Option<f32>>>>,
     size: Rc<Cell<usize>>,
     count: Rc<Cell<usize>>,
-    id: usize,
 }
 
 impl Clone for RefSource {
@@ -62,7 +60,6 @@ impl Clone for RefSource {
             val: self.val.clone(),
             size: self.size.clone(),
             count: self.count.clone(),
-            id: self.id + 1,
         }
     }
 }
@@ -73,11 +70,16 @@ impl RefSource {
     pub fn new(sound: Rc<RefCell<dyn DawSource>>) -> Self {
         Self {
             sound: sound,
-            size: Rc::new(Cell::new(1)),
+            size: Rc::new(Cell::new(0)),
             val: Rc::new(RefCell::new(HashMap::new())),
             count: Rc::new(Cell::new(0)),
-            id: 0,
         }
+    }
+}
+
+impl Drop for RefSource {
+    fn drop(&mut self) {
+        self.size.set(self.size.get() - 1);
     }
 }
 
@@ -85,17 +87,20 @@ impl DawSource for RefSource {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         let count = self.count.get();
         let size = self.size.get();
-        let mut z = self.val.borrow_mut();
+        let mut val = self.val.borrow_mut();
         if count + 1 >= size {
-            z.clear();
+            val.clear();
             self.count.set(0);
         } else {
             self.count.set(count + 1);
         }
-        if !z.contains_key(&(index as usize)) {
-            z.insert(index as usize, self.sound.borrow_mut().next(index, channel));
+        if !val.contains_key(&OrderedFloat(index)) {
+            val.insert(
+                OrderedFloat(index),
+                self.sound.borrow_mut().next(index, channel),
+            );
         }
-        z[&(index as usize)]
+        val[&OrderedFloat(index)]
     }
     fn size_hint(&self) -> Option<f32> {
         None
