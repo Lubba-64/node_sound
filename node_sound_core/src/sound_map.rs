@@ -1,7 +1,11 @@
 use dyn_clone::DynClone;
+use eframe::egui::ahash::{HashMap, HashMapExt};
+use itertools::Itertools;
 use std::{
+    cell::{Cell, RefCell},
     fmt::Debug,
     io::ErrorKind,
+    rc::Rc,
     sync::{Arc, Mutex},
 };
 
@@ -43,16 +47,16 @@ impl DawSource for GenericSource {
 
 #[derive(Debug)]
 pub struct RefSource {
-    sound: Arc<Mutex<dyn DawSource>>,
-    val: Arc<Mutex<Option<f32>>>,
-    size: Arc<Mutex<usize>>,
-    count: Arc<Mutex<usize>>,
+    sound: Rc<RefCell<dyn DawSource>>,
+    val: Rc<RefCell<HashMap<usize, Option<f32>>>>,
+    size: Rc<Cell<usize>>,
+    count: Rc<Cell<usize>>,
     id: usize,
 }
 
 impl Clone for RefSource {
     fn clone(&self) -> Self {
-        *self.size.lock().expect("expected refsource lock for size") += 1;
+        self.size.set(self.size.get() + 1);
         Self {
             sound: self.sound.clone(),
             val: self.val.clone(),
@@ -66,12 +70,12 @@ impl Clone for RefSource {
 unsafe impl Send for RefSource {}
 
 impl RefSource {
-    pub fn new(sound: Arc<Mutex<dyn DawSource>>) -> Self {
+    pub fn new(sound: Rc<RefCell<dyn DawSource>>) -> Self {
         Self {
             sound: sound,
-            size: Arc::new(Mutex::new(1)),
-            val: Arc::new(Mutex::new(Some(0.0))),
-            count: Arc::new(Mutex::new(0)),
+            size: Rc::new(Cell::new(1)),
+            val: Rc::new(RefCell::new(HashMap::new())),
+            count: Rc::new(Cell::new(0)),
             id: 0,
         }
     }
@@ -79,20 +83,19 @@ impl RefSource {
 
 impl DawSource for RefSource {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
-        let mut count = self.count.lock().expect("expected lock on refsource");
-        let size = self.size.lock().expect("expected size lock");
-        *count += 1;
-        if *count >= *size {
-            *count = 0;
-            let val = self
-                .sound
-                .lock()
-                .expect("source id is zero, should never fail")
-                .next(index, channel);
-            *self.val.lock().expect("expected lock for refsource") = val;
-            return val;
+        let count = self.count.get();
+        let size = self.size.get();
+        let mut z = self.val.borrow_mut();
+        if count + 1 >= size {
+            z.clear();
+            self.count.set(0);
+        } else {
+            self.count.set(count + 1);
         }
-        *self.val.lock().expect("expected lock for refsource")
+        if !z.contains_key(&(index as usize)) {
+            z.insert(index as usize, self.sound.borrow_mut().next(index, channel));
+        }
+        z[&(index as usize)]
     }
     fn size_hint(&self) -> Option<f32> {
         None
@@ -141,7 +144,7 @@ impl SoundQueue {
                 "Sound queue accessed an out of bounds element",
             )));
         }
-        return Ok(RefSource::new(Arc::new(Mutex::new(
+        return Ok(RefSource::new(Rc::new(RefCell::new(
             self.queue[idx].clone(),
         ))));
     }
