@@ -32,6 +32,7 @@ pub mod bpm_sync_node;
 pub mod bpm_sync_source_node;
 pub mod clamp_node;
 pub mod const_node;
+pub mod daw_automation_mix_node;
 pub mod daw_automation_source_node;
 pub mod delay_node;
 pub mod duration_node;
@@ -307,8 +308,8 @@ pub fn get_nodes() -> NodeDefinitions {
             Box::new(mod_raw_node::mod_raw_logic),
         ),
         (
-            daw_automation_source_node::daw_automations_node(),
-            Box::new(daw_automation_source_node::daw_automations_logic),
+            daw_automation_source_node::daw_automation_source_node(),
+            Box::new(daw_automation_source_node::daw_automation_source_logic),
         ),
         (clamp_node::clamp_node(), Box::new(clamp_node::clamp_logic)),
         (abs_node::abs_node(), Box::new(abs_node::abs_logic)),
@@ -377,6 +378,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             unison_node::unison_node(),
             Box::new(unison_node::unison_logic),
+        ),
+        (
+            daw_automation_mix_node::daw_automation_mix_node(),
+            Box::new(daw_automation_mix_node::daw_automation_mix_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

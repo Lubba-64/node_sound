@@ -15,6 +15,7 @@ pub mod bpm_sync_source;
 pub mod clamp;
 pub mod cloneable_decoder;
 pub mod const_wave;
+pub mod daw_automation_mix;
 pub mod daw_automation_source;
 pub mod delay;
 pub mod duration;

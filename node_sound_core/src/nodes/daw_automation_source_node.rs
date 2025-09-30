@@ -7,7 +7,7 @@ use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
-pub fn daw_automations_node() -> SoundNode {
+pub fn daw_automation_source_node() -> SoundNode {
     SoundNode {
         name: "Daw Automations".to_string(),
         tooltip: r#"Daw automation parameters 1-18 can be accessed through this node."#.to_string(),
@@ -34,7 +34,7 @@ pub fn daw_automations_node() -> SoundNode {
     }
 }
 
-pub fn daw_automations_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+pub fn daw_automation_source_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
