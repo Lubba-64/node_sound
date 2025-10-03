@@ -1,27 +1,30 @@
+use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNode;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::daw_automation_mix::DawAutomationMix;
+use crate::sounds::automated_speed::AutomatedSpeed;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
-pub fn daw_automation_mix_node() -> SoundNode {
+
+pub fn automated_speed_node() -> SoundNode {
     SoundNode {
-        name: "Daw Automations Mix".to_string(),
-        tooltip: r#"Mixes between audio 1 and audio 2 based on the daw parameter."#.to_string(),
+        name: "Automated Speed".to_string(),
+        tooltip: r#"Changes the speed of the input waveform based off of the base frequency to the automation value."#
+            .to_string(),
         inputs: BTreeMap::from([
             (
-                "channel".to_string(),
+                "base frequency".to_string(),
                 InputParameter {
                     data_type: DataType::Float,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "channel".to_string(),
+                    kind: InputParamKind::ConnectionOrConstant,
+                    name: "base frequency".to_string(),
                     value: InputValueConfig::Float {
-                        value: 0.0,
+                        value: 1.0,
                         min: 0.0,
-                        max: 17.0,
+                        max: MAX_FREQ,
                     },
                 },
             ),
@@ -30,16 +33,16 @@ pub fn daw_automation_mix_node() -> SoundNode {
                 InputParameter {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
-                    name: "audio source 1".to_string(),
+                    name: "audio 1".to_string(),
                     value: InputValueConfig::AudioSource {},
                 },
             ),
             (
-                "audio 2".to_string(),
+                "frequency".to_string(),
                 InputParameter {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
-                    name: "audio source 2".to_string(),
+                    name: "frequency".to_string(),
                     value: InputValueConfig::AudioSource {},
                 },
             ),
@@ -54,19 +57,16 @@ pub fn daw_automation_mix_node() -> SoundNode {
     }
 }
 
-pub fn daw_automation_mix_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned1 = props.clone_sound(props.get_source("audio 2")?)?;
-    let cloned2 = props.clone_sound(props.get_source("audio 1")?)?;
+pub fn automated_speed_logic(mut props: SoundNodeProps) -> SoundNodeResult {
+    let cloned = AutomatedSpeed::new(
+        props.clone_sound(props.get_source("audio 1")?)?,
+        props.get_float("base frequency")?,
+        props.clone_sound(props.get_source("frequency")?)?,
+    );
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(DawAutomationMix::new(
-                props.state._unserializeable_state.automations.0
-                    [(props.get_float("channel")?.round() as usize).clamp(0, 17)]
-                .clone(),
-                cloned1,
-                cloned2,
-            ))),
+            value: props.push_sound(Box::new(cloned)),
         },
     )]))
 }

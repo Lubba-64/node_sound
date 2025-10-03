@@ -867,12 +867,13 @@ impl Plugin for NodeSound {
                     _ => break 'events,
                 }
             }
-            let active_voices = self
+            let active_voices = (self
                 .voices
                 .iter()
                 .filter(|voice| voice.is_some())
                 .collect::<Vec<_>>()
-                .len() as f32;
+                .len() as f32)
+                .sqrt();
             for sample_idx in block_start..block_end {
                 match input.lock() {
                     Ok(mut x) => {

@@ -21,6 +21,7 @@ pub mod automated_mod_node;
 pub mod automated_mod_raw_node;
 pub mod automated_sawtooth_node;
 pub mod automated_sine_node;
+pub mod automated_speed_node;
 pub mod automated_square_node;
 pub mod automated_translate_node;
 pub mod automated_triangle_node;
@@ -382,6 +383,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             daw_automation_mix_node::daw_automation_mix_node(),
             Box::new(daw_automation_mix_node::daw_automation_mix_logic),
+        ),
+        (
+            automated_speed_node::automated_speed_node(),
+            Box::new(automated_speed_node::automated_speed_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

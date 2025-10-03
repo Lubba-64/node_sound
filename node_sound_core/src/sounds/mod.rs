@@ -5,6 +5,7 @@ pub mod automated_mod;
 pub mod automated_mod_raw;
 pub mod automated_sawtooth;
 pub mod automated_sine;
+pub mod automated_speed;
 pub mod automated_square;
 pub mod automated_translate;
 pub mod automated_triangle;
