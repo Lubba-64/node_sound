@@ -85,15 +85,7 @@ impl DawSource for WaveTableOscillator {
     }
 
     fn size_hint(&self) -> Option<f32> {
-        if self.duration_seconds == 0.0 {
-            return None;
-        } else {
-            if self.uses_speed {
-                Some(self.duration_seconds * self.speed)
-            } else {
-                Some(self.duration_seconds / self.playback_rate())
-            }
-        }
+        None
     }
 }
 
