@@ -11,11 +11,7 @@ pub fn ref_node() -> SoundNode {
     SoundNode {
         name: "Ref".to_string(),
         tooltip: r#"Does nothing to the sound itself,
-Copies the result of a sound and caches it for each sample the graph produces (this is good for performance).
-This will not crash anything if you do something wrong, but it will sound weird.
-unless you've merged everything back up and x is applied to all nodes, do not use the node x to get a clean sound.
-Do not use this with speed, skip, take duration, delay, wavetable.
-"#
+Copies the result of a sound and caches it for each sample the graph produces (this is good for performance)."#
             .to_string(),
         inputs: BTreeMap::from([(
             "audio 1".to_string(),
