@@ -15,6 +15,7 @@ use std::{
 };
 use synthrs::midi::MidiSong;
 pub mod abs_node;
+pub mod after_node;
 pub mod amplify_node;
 pub mod automated_clamp_node;
 pub mod automated_mod_node;
@@ -388,6 +389,7 @@ pub fn get_nodes() -> NodeDefinitions {
             automated_speed_node::automated_speed_node(),
             Box::new(automated_speed_node::automated_speed_logic),
         ),
+        (after_node::after_node(), Box::new(after_node::after_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),
