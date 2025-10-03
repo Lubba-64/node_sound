@@ -50,16 +50,17 @@ pub struct RefSource {
     val: Rc<RefCell<HashMap<OrderedFloat<f32>, Option<f32>>>>,
     size: Rc<Cell<usize>>,
     count: Rc<Cell<usize>>,
+    last_index: f32,
 }
 
 impl Clone for RefSource {
     fn clone(&self) -> Self {
-        self.size.set(self.size.get() + 1);
         Self {
             sound: self.sound.clone(),
             val: self.val.clone(),
             size: self.size.clone(),
             count: self.count.clone(),
+            last_index: self.last_index,
         }
     }
 }
@@ -73,27 +74,18 @@ impl RefSource {
             size: Rc::new(Cell::new(0)),
             val: Rc::new(RefCell::new(HashMap::new())),
             count: Rc::new(Cell::new(0)),
+            last_index: 0.0,
         }
-    }
-}
-
-impl Drop for RefSource {
-    fn drop(&mut self) {
-        self.size.set(self.size.get() - 1);
     }
 }
 
 impl DawSource for RefSource {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
-        let count = self.count.get();
-        let size = self.size.get();
         let mut val = self.val.borrow_mut();
-        if count + 1 >= size {
+        if self.last_index > index {
             val.clear();
-            self.count.set(0);
-        } else {
-            self.count.set(count + 1);
         }
+        self.last_index = index;
         if !val.contains_key(&OrderedFloat(index)) {
             val.insert(
                 OrderedFloat(index),
