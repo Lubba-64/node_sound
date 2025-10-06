@@ -62,6 +62,7 @@ pub fn automated_speed_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         props.clone_sound(props.get_source("audio 1")?)?,
         props.get_float("base frequency")?,
         props.clone_sound(props.get_source("frequency")?)?,
+        props.sample_rate(),
     );
     Ok(BTreeMap::from([(
         "out".to_string(),
