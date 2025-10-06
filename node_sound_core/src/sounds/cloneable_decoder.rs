@@ -49,7 +49,4 @@ impl DawSource for CloneableDecoder {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.wavetable.next(index, channel)
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.wavetable.size_hint()
-    }
 }

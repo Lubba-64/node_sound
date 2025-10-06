@@ -34,8 +34,4 @@ impl<I: DawSource + Clone, I2: DawSource + Clone> DawSource for AutomatedSpeed<I
         self.last_index = index;
         self.source.next(self.adjusted_index, channel)
     }
-
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

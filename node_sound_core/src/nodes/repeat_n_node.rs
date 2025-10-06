@@ -50,7 +50,6 @@ pub fn repeat_n_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let repeated_source = RepeatRefSource::new(
         props.clone_sound(props.get_source("audio 1")?)?,
         Some(props.get_float("n")?.floor() as u32),
-        props.sample_rate(),
     );
     Ok(BTreeMap::from([(
         "out".to_string(),

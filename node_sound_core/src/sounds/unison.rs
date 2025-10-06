@@ -27,9 +27,6 @@ impl DawSource for MixVec {
         }
         Some(samples.iter().sum::<f32>() / (self.vec.len() as f32).sqrt())
     }
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }
 
 impl UnisonVoice {
@@ -92,9 +89,5 @@ impl UnisonVoice {
 impl DawSource for UnisonVoice {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.source.next(index, channel)
-    }
-
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
     }
 }

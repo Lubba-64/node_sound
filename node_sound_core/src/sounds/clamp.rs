@@ -28,7 +28,4 @@ impl<I: DawSource + Clone> DawSource for Clamp<I> {
             .next(index, channel)
             .map(|val| val.clamp(self.min, self.max));
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
-    }
 }

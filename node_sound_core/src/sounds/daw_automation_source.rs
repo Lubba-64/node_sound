@@ -21,7 +21,4 @@ impl DawSource for DawAutomationChannel {
             Ok(x) => Some(*x),
         }
     }
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

@@ -49,7 +49,4 @@ impl<I: DawSource + Clone> DawSource for TranslateWave<I> {
             _ => None,
         };
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
-    }
 }

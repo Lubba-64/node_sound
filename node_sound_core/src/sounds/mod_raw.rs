@@ -20,7 +20,4 @@ impl<I: DawSource + Clone> DawSource for RawMod<I> {
             None => None,
         }
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
-    }
 }

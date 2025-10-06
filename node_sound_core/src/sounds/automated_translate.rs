@@ -68,12 +68,4 @@ impl<
             _ => None,
         }
     }
-    fn size_hint(&self) -> Option<f32> {
-        let end_max = self.end_max.size_hint()?;
-        let end_min = self.end_min.size_hint()?;
-        let start_max = self.start_max.size_hint()?;
-        let start_min = self.start_min.size_hint()?;
-        let source = self.source.size_hint()?;
-        Some(end_max.max(end_min.max(start_max.max(start_min.max(source)))))
-    }
 }

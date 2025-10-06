@@ -202,7 +202,4 @@ impl<I: DawSource + Clone> DawSource for SingleFilterEq<I> {
             None
         }
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
-    }
 }

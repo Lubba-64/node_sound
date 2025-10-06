@@ -29,7 +29,4 @@ impl<I: DawSource + Clone> DawSource for VerticalWaveShaper<I> {
             (initial + second) * x.signum()
         })
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
-    }
 }

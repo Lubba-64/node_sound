@@ -37,7 +37,4 @@ impl<I: DawSource + Clone> DawSource for Wrapper<I> {
         };
         self.last[channel as usize]
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
-    }
 }

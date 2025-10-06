@@ -31,7 +31,4 @@ impl DawSource for Noise {
         }
         Some(thread_rng().gen_range(self.min..self.max))
     }
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

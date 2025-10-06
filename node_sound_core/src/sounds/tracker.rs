@@ -105,8 +105,4 @@ impl<S: DawSource + Clone> DawSource for Tracker<S> {
                 f * (first + second)
             })
     }
-
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

@@ -12,7 +12,6 @@ use std::{
 
 pub trait DawSource: DynClone + Debug {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32>;
-    fn size_hint(&self) -> Option<f32>;
 }
 
 #[derive(Debug)]
@@ -38,9 +37,6 @@ impl GenericSource {
 impl DawSource for GenericSource {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.sound.next(index, channel)
-    }
-    fn size_hint(&self) -> Option<f32> {
-        self.sound.size_hint()
     }
 }
 
@@ -93,9 +89,6 @@ impl DawSource for RefSource {
             );
         }
         val[&OrderedFloat(index)]
-    }
-    fn size_hint(&self) -> Option<f32> {
-        None
     }
 }
 

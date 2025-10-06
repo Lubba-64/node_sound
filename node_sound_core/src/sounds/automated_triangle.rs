@@ -34,7 +34,4 @@ impl<F: DawSource + Clone> DawSource for AutomatedTriangleWave<F> {
             3.0 - (2.0 * self.phase / PI)
         })
     }
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

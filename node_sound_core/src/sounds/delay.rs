@@ -27,9 +27,4 @@ impl<S: DawSource + Clone> DawSource for Delay<S> {
             Some(0.0)
         }
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source
-            .size_hint()
-            .map(|x| x + self.duration * self.speed)
-    }
 }

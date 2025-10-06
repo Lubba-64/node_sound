@@ -57,7 +57,4 @@ impl<I: DawSource + Clone> DawSource for RandomDuration<I> {
             self.source.next(index, channel)
         }
     }
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

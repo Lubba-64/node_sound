@@ -25,8 +25,4 @@ impl DawSource for SquareWave {
         let phase = (phase_increment * index) % (2.0 * PI);
         Some(if phase < PI { 1.0 } else { -1.0 })
     }
-
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

@@ -26,8 +26,4 @@ impl DawSource for SineWave {
         let phase = (phase_increment * index) % (2.0 * PI);
         Some(phase.sin())
     }
-
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

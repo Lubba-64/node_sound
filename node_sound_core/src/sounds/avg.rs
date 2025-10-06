@@ -28,7 +28,4 @@ impl<I: DawSource + Clone> DawSource for Avg<I> {
         }
         Some(self.table.iter().map(|f| *f).sum::<f32>() / self.table.len() as f32)
     }
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

@@ -29,7 +29,4 @@ impl<F: DawSource + Clone> DawSource for AutomatedSineWave<F> {
         self.phase = (self.phase + phase_increment * (index % (2.0 * PI))) % (2.0 * PI);
         Some(self.phase.sin())
     }
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

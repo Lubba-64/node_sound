@@ -83,10 +83,6 @@ impl DawSource for WaveTableOscillator {
         index /= self.speed;
         self.get_sample(index, channel)
     }
-
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }
 
 #[derive(Default, Serialize, Deserialize)]
@@ -350,8 +346,5 @@ impl<F: DawSource + Clone> DawSource for AutomatedWaveTableOscillator<F> {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
         index /= self.speed;
         self.get_sample(index, channel)
-    }
-    fn size_hint(&self) -> Option<f32> {
-        None
     }
 }

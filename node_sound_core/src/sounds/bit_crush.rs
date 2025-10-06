@@ -21,7 +21,4 @@ impl<I: DawSource + Clone> DawSource for BitCrusher<I> {
             .next(index, channel)
             .map(|sample| ((sample / self.step_size).rem_euclid(self.step_size)).clamp(-1.0, 1.0))
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
-    }
 }

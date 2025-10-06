@@ -30,8 +30,4 @@ impl DawSource for TriangleWave {
             3.0 - (2.0 * phase / PI)
         })
     }
-
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

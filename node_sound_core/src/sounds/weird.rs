@@ -42,7 +42,4 @@ impl<I: DawSource + Clone> DawSource for Weird<I> {
             None
         }
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
-    }
 }

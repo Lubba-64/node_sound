@@ -23,9 +23,4 @@ impl<I1: DawSource + Clone, I2: DawSource + Clone> DawSource for AutomatedMod<I1
             _ => None,
         }
     }
-    fn size_hint(&self) -> Option<f32> {
-        let mod_by = self.mod_by.size_hint()?;
-        let source = self.source.size_hint()?;
-        Some(mod_by.max(source))
-    }
 }

@@ -34,7 +34,4 @@ impl DawSource for DawAutomationMix {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.source.next(index, channel)
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
-    }
 }

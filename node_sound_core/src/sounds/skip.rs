@@ -24,9 +24,4 @@ impl<S: DawSource + Clone> DawSource for Skip<S> {
         index += self.duration * self.speed * self.sample_rate;
         self.source.next(index, channel)
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source
-            .size_hint()
-            .map(|x| x - self.duration * self.speed)
-    }
 }

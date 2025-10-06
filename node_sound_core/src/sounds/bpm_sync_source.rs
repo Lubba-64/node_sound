@@ -49,7 +49,4 @@ impl DawSource for BPMSyncSource {
         } * (1.0 - initial_weight);
         Some(first + second)
     }
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

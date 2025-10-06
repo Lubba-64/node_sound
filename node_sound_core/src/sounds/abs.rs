@@ -16,7 +16,4 @@ impl<I: DawSource + Clone> DawSource for Abs<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.source.next(index, channel).map(|x| x.abs())
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
-    }
 }

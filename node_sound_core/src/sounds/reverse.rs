@@ -46,7 +46,4 @@ impl DawSource for ReverseSource {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.wavetable.get_sample(index, channel)
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.wavetable.size_hint()
-    }
 }

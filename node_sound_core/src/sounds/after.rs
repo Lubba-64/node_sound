@@ -46,8 +46,4 @@ impl<T: DawSource + Clone, U: DawSource + Clone> DawSource for After<T, U> {
             AfterState::Finished => None,
         }
     }
-
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

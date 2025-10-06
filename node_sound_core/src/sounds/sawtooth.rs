@@ -25,7 +25,4 @@ impl DawSource for SawtoothWave {
         let phase = (phase_increment * index) % (2.0 * PI);
         Some((phase / PI) - 1.0)
     }
-    fn size_hint(&self) -> Option<f32> {
-        None
-    }
 }

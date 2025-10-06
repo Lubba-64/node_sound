@@ -22,7 +22,4 @@ impl<I: DawSource + Clone> DawSource for Amplify<I> {
             .next(index, channel)
             .map(|x| x * self.amplification)
     }
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint()
-    }
 }

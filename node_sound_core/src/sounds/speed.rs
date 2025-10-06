@@ -17,8 +17,4 @@ impl<I: DawSource + Clone> DawSource for Speed<I> {
         let scaled_index = index * self.speed;
         self.source.next(scaled_index, channel)
     }
-
-    fn size_hint(&self) -> Option<f32> {
-        self.source.size_hint().map(|x| x / self.speed)
-    }
 }

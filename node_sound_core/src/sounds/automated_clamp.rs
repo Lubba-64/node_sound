@@ -32,10 +32,4 @@ impl<I1: DawSource + Clone, I2: DawSource + Clone, I3: DawSource + Clone> DawSou
             _ => None,
         }
     }
-    fn size_hint(&self) -> Option<f32> {
-        let max = self.max.size_hint()?;
-        let min = self.min.size_hint()?;
-        let source = self.source.size_hint()?;
-        Some(max.max(min.max(source)))
-    }
 }
