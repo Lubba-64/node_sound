@@ -41,6 +41,7 @@ pub mod duration_node;
 pub mod eq_node;
 pub mod file_node;
 pub mod flip_node;
+pub mod hold_node;
 pub mod input_node;
 pub mod lfo_node;
 pub mod merge_channels_node;
@@ -390,6 +391,7 @@ pub fn get_nodes() -> NodeDefinitions {
             Box::new(automated_speed_node::automated_speed_logic),
         ),
         (after_node::after_node(), Box::new(after_node::after_logic)),
+        (hold_node::hold_node(), Box::new(hold_node::hold_logic)),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

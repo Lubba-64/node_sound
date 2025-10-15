@@ -258,9 +258,24 @@ impl Plugin for NodeSound {
             ),
             |_, _| {},
             move |egui_ctx, _setter, state| {
-                let sound_result = &mut state.1.lock().expect("expected lock");
-                let sample_rate = &mut state.2.lock().expect("expected lock");
-                let graph = &mut state.0.lock().expect("expected lock");
+                let sound_result = &mut match state.1.lock() {
+                    Ok(x) => x,
+                    Err(_x) => {
+                        return;
+                    }
+                };
+                let sample_rate = &mut match state.2.lock() {
+                    Ok(x) => x,
+                    Err(_x) => {
+                        return;
+                    }
+                };
+                let graph = &mut match state.0.lock() {
+                    Ok(x) => x,
+                    Err(_x) => {
+                        return;
+                    }
+                };
 
                 graph.update_root(egui_ctx);
                 if sound_result.is_none() || graph.state.user_state.active_node.is_playing() {
@@ -282,10 +297,11 @@ impl Plugin for NodeSound {
                                 &mut graph.state,
                             ) {
                                 Ok(val) => {
-                                    let source_id = val
-                                        .try_to_source()
-                                        .expect("expected valid audio source")
-                                        .clone();
+                                    let source_id = match val.try_to_source() {
+                                        Err(_x) => return,
+                                        Ok(x) => x,
+                                    }
+                                    .clone();
                                     let sound = match graph
                                         .state
                                         ._unserializeable_state
@@ -330,7 +346,10 @@ impl Plugin for NodeSound {
         _aux: &mut AuxiliaryBuffers,
         context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        *self.sample_rate.lock().expect("expect lock") = context.transport().sample_rate;
+        match self.sample_rate.lock() {
+            Ok(mut x) => *x = context.transport().sample_rate,
+            Err(_x) => return ProcessStatus::KeepAlive,
+        };
         let state = &match self.params.plugin_state.graph.lock() {
             Ok(x) => x,
             Err(_x) => {

@@ -23,6 +23,7 @@ pub mod delay;
 pub mod duration;
 pub mod eq;
 pub mod flip;
+pub mod hold;
 pub mod input;
 pub mod lfo;
 pub mod merge_channels;
