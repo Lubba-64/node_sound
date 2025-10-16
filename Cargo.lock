@@ -2621,7 +2621,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_core"
-version = "5.1.0"
+version = "5.2.0"
 dependencies = [
  "arboard",
  "dyn-clone",
@@ -2647,7 +2647,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_vst"
-version = "5.1.0"
+version = "5.2.0"
 dependencies = [
  "crossbeam",
  "ezing",
@@ -2663,7 +2663,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_vst_effect"
-version = "5.1.0"
+version = "5.2.0"
 dependencies = [
  "crossbeam",
  "ezing",
