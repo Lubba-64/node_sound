@@ -66,6 +66,7 @@ pub mod skip_node;
 pub mod speed_node;
 pub mod split_channels_node;
 pub mod square_node;
+pub mod switch_node;
 pub mod tracker_node;
 pub mod translate_node;
 pub mod triangle_node;
@@ -392,6 +393,10 @@ pub fn get_nodes() -> NodeDefinitions {
         ),
         (after_node::after_node(), Box::new(after_node::after_logic)),
         (hold_node::hold_node(), Box::new(hold_node::hold_logic)),
+        (
+            switch_node::switch_node(),
+            Box::new(switch_node::switch_logic),
+        ),
     ];
     NodeDefinitions(BTreeMap::from_iter(
         nodes.iter().map(|n| (n.0.name.clone(), n.clone())),

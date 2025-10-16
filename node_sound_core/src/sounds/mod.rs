@@ -43,6 +43,7 @@ pub mod skip;
 pub mod speed;
 pub mod split_channels;
 pub mod square;
+pub mod switch;
 pub mod tracker;
 pub mod translate;
 pub mod triangle;
