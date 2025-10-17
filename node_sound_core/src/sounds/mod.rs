@@ -2,6 +2,7 @@ pub mod abs;
 pub mod after;
 pub mod amplify;
 pub mod automated_clamp;
+pub mod automated_hold;
 pub mod automated_mod;
 pub mod automated_mod_raw;
 pub mod automated_sawtooth;

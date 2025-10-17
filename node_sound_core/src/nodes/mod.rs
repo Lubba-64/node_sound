@@ -18,6 +18,7 @@ pub mod abs_node;
 pub mod after_node;
 pub mod amplify_node;
 pub mod automated_clamp_node;
+pub mod automated_hold_node;
 pub mod automated_mod_node;
 pub mod automated_mod_raw_node;
 pub mod automated_sawtooth_node;
@@ -396,6 +397,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             switch_node::switch_node(),
             Box::new(switch_node::switch_logic),
+        ),
+        (
+            automated_hold_node::automated_hold_node(),
+            Box::new(automated_hold_node::automated_hold_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(
