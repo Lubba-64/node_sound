@@ -346,7 +346,7 @@ impl Plugin for NodeSound {
         _aux: &mut AuxiliaryBuffers,
         context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        match self.sample_rate.lock() {
+        match self.sample_rate.try_lock() {
             Ok(mut x) => *x = context.transport().sample_rate,
             Err(_x) => return ProcessStatus::KeepAlive,
         };
@@ -357,7 +357,7 @@ impl Plugin for NodeSound {
             }
         }
         .state;
-        match state.user_state.files.lock() {
+        match state.user_state.files.try_lock() {
             Ok(x) => {
                 if x.midi_active.is_some() {
                     context.execute_background(BackgroundTasks::MidiFileOpen(
@@ -378,7 +378,7 @@ impl Plugin for NodeSound {
         let input = state._unserializeable_state.input.0.clone();
         let size = buffer.samples();
         let output = buffer.as_slice();
-        let mut res = match self.sound_result.lock() {
+        let mut res = match self.sound_result.try_lock() {
             Ok(x) => x,
             Err(_x) => {
                 return ProcessStatus::KeepAlive;
@@ -386,7 +386,7 @@ impl Plugin for NodeSound {
         }
         .clone();
         for sample_idx in 0..size {
-            match input.lock() {
+            match input.try_lock() {
                 Ok(mut x) => {
                     x.0 = output[0][sample_idx];
                     x.1 = output[1][sample_idx];
