@@ -60,6 +60,7 @@ pub mod repeat_infinite;
 pub mod repeat_n_node;
 pub mod reverb_node;
 pub mod reverse_node;
+pub mod reverse_wrapper_node;
 pub mod sawtooth_node;
 pub mod signum_node;
 pub mod sine_node;
@@ -401,6 +402,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             automated_hold_node::automated_hold_node(),
             Box::new(automated_hold_node::automated_hold_logic),
+        ),
+        (
+            reverse_wrapper_node::reverse_wrapper_node(),
+            Box::new(reverse_wrapper_node::reverse_wrapper_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

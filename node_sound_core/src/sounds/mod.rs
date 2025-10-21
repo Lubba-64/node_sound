@@ -37,6 +37,7 @@ pub mod noise;
 pub mod random_duration;
 pub mod repeat_n;
 pub mod reverse;
+pub mod reverse_wrapper;
 pub mod sawtooth;
 pub mod signum;
 pub mod sine;
