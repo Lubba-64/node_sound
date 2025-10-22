@@ -18,7 +18,9 @@ use std::{
 pub struct NodeSound {
     params: Arc<NodeSoundParams>,
     sample_rate: Arc<Mutex<f32>>,
+    bpm: Arc<Mutex<f32>>,
     sound_result: Arc<Mutex<Option<GenericSource>>>,
+    total_idx: usize,
 }
 
 pub struct PluginPresetState {
@@ -89,7 +91,9 @@ impl Default for NodeSound {
         Self {
             params: Arc::new(params),
             sample_rate: Arc::new(Mutex::new(48000.0)),
+            bpm: Arc::new(Mutex::new(120.0)),
             sound_result: Arc::new(Mutex::new(None)),
+            total_idx: 0,
         }
     }
 }
@@ -255,6 +259,7 @@ impl Plugin for NodeSound {
                 self.params.plugin_state.graph.clone(),
                 self.sound_result.clone(),
                 self.sample_rate.clone(),
+                self.bpm.clone(),
             ),
             |_, _| {},
             move |egui_ctx, _setter, state| {
@@ -276,7 +281,6 @@ impl Plugin for NodeSound {
                         return;
                     }
                 };
-
                 graph.update_root(egui_ctx);
                 if sound_result.is_none() || graph.state.user_state.active_node.is_playing() {
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
@@ -289,6 +293,11 @@ impl Plugin for NodeSound {
                                 .set_sample_rate(**sample_rate);
                             graph.state.user_state.wavetables.clear();
                             graph.state._unserializeable_state.queue.set_note_speed(1.0);
+                            graph
+                                .state
+                                ._unserializeable_state
+                                .queue
+                                .set_bpm(state.3.clone());
                             match evaluate_node(
                                 &graph.state.editor_state.graph.clone(),
                                 x,
@@ -357,6 +366,15 @@ impl Plugin for NodeSound {
             }
         }
         .state;
+        match self.bpm.try_lock() {
+            Ok(mut x) => {
+                *x = context.transport().tempo.unwrap_or(120.0) as f32;
+                *x
+            }
+            Err(_x) => {
+                return ProcessStatus::KeepAlive;
+            }
+        };
         match state.user_state.files.try_lock() {
             Ok(x) => {
                 if x.midi_active.is_some() {
@@ -416,7 +434,7 @@ impl Plugin for NodeSound {
             mkparamgetter!(a18, 17, self, automations);
             match &mut res {
                 Some(source) => {
-                    let time_index = sample_idx as f32;
+                    let time_index = (sample_idx + self.total_idx) as f32;
                     let left_sample = source.next(time_index, 0).unwrap_or_default();
                     let right_sample = source.next(time_index, 1).unwrap_or_default();
                     output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
@@ -425,6 +443,7 @@ impl Plugin for NodeSound {
                 None => {}
             }
         }
+        self.total_idx = self.total_idx.wrapping_add(size);
 
         ProcessStatus::Normal
     }

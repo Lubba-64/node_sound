@@ -661,7 +661,6 @@ impl Plugin for NodeSound {
     ) -> ProcessStatus {
         let num_samples = buffer.samples();
         let automations;
-        let input;
         {
             let state = &match self.params.plugin_state.graph.try_lock() {
                 Ok(x) => x,
@@ -671,7 +670,6 @@ impl Plugin for NodeSound {
             }
             .state;
             automations = state._unserializeable_state.automations.0.clone();
-            input = state._unserializeable_state.input.0.clone();
 
             match state.user_state.files.try_lock() {
                 Ok(x) => {
@@ -875,13 +873,6 @@ impl Plugin for NodeSound {
                 .len() as f32)
                 .sqrt();
             for sample_idx in block_start..block_end {
-                match input.try_lock() {
-                    Ok(mut x) => {
-                        x.0 = output[0][sample_idx];
-                        x.1 = output[1][sample_idx];
-                    }
-                    _ => {}
-                }
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
                     let gain = match &voice.voice_gain {
                         Some((_, smoother)) => smoother.next(),
