@@ -662,7 +662,7 @@ impl Plugin for NodeSound {
         let num_samples = buffer.samples();
         let automations;
         {
-            let state = &match self.params.plugin_state.graph.try_lock() {
+            let state = &match self.params.plugin_state.graph.lock() {
                 Ok(x) => x,
                 Err(_x) => {
                     return ProcessStatus::KeepAlive;
@@ -671,7 +671,7 @@ impl Plugin for NodeSound {
             .state;
             automations = state._unserializeable_state.automations.0.clone();
 
-            match state.user_state.files.try_lock() {
+            match state.user_state.files.lock() {
                 Ok(x) => {
                     if x.midi_active.is_some() {
                         context.execute_background(BackgroundTasks::MidiFileOpen(
@@ -690,7 +690,7 @@ impl Plugin for NodeSound {
             }
         }
 
-        let sample_rate = match self.sample_rate.try_lock() {
+        let sample_rate = match self.sample_rate.lock() {
             Ok(mut x) => {
                 *x = context.transport().sample_rate;
                 *x
@@ -699,7 +699,7 @@ impl Plugin for NodeSound {
                 return ProcessStatus::KeepAlive;
             }
         };
-        match self.bpm.try_lock() {
+        match self.bpm.lock() {
             Ok(mut x) => {
                 *x = context.transport().tempo.unwrap_or(120.0) as f32;
                 *x
