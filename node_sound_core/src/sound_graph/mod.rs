@@ -3,4 +3,5 @@ mod float_selector;
 pub mod graph;
 pub mod graph_types;
 pub mod note;
+pub mod themes;
 pub mod wave_table_graph;

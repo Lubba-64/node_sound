@@ -6,6 +6,7 @@ use crate::nodes::{NodeDefinitions, SoundNode, SoundNodeProps};
 use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::note::{Note, NoteSpeed};
+use crate::sound_graph::themes::AppTheme;
 use crate::sound_map::SoundQueue;
 use crate::sounds::tracker::TrackerNote;
 use crate::sounds::wave_table::WaveTableManager;
@@ -52,6 +53,8 @@ pub struct SoundGraphUserState {
     pub is_saved: bool,
     pub vst_output_node_id: Option<NodeId>,
     pub wave_shaper_graph_id: usize,
+    #[serde(default)]
+    pub current_theme: AppTheme,
     #[serde(skip)]
     pub files: Arc<Mutex<FileManager>>,
     #[serde(skip)]
@@ -496,9 +499,23 @@ impl SoundNodeGraph {
 
     pub fn update_root(&mut self, ctx: &egui::Context) {
         self.update_output_node();
+        self.state.user_state.current_theme.apply_theme(ctx);
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                egui::widgets::global_theme_preference_switch(ui);
+                ui.menu_button("Theme", |ui| {
+                    for theme in AppTheme::all() {
+                        if ui
+                            .selectable_value(
+                                &mut self.state.user_state.current_theme,
+                                theme,
+                                theme.name(),
+                            )
+                            .clicked()
+                        {
+                            ui.close_menu();
+                        }
+                    }
+                });
                 ui.add(egui::Label::new(env!("CARGO_PKG_VERSION")));
                 ui.add(egui::Label::new("|"));
                 if ui.add(egui::Button::new("copy")).clicked() {

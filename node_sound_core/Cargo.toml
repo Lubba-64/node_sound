@@ -7,7 +7,7 @@ edition = "2024"
 [dependencies]
 rodio = { version = "0.19", features = ["wasm-bindgen"] }
 eframe = { version = "0.31", features = ["ron", "serde"] }
-egui_node_graph_2 = { version = "0.5.1", git = "https://github.com/Lubba-64/egui_node_graph_2.git", features = [
+egui_node_graph_2 = { version = "0.5.2", git = "https://github.com/Lubba-64/egui_node_graph_2.git", features = [
   "persistence",
 ] }
 dyn-clone = "1.0.20"

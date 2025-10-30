@@ -1348,8 +1348,8 @@ dependencies = [
 
 [[package]]
 name = "egui_node_graph_2"
-version = "0.5.1"
-source = "git+https://github.com/Lubba-64/egui_node_graph_2.git#69cc63feef871d1cfad900c562993f325999e548"
+version = "0.5.2"
+source = "git+https://github.com/Lubba-64/egui_node_graph_2.git#ecf2cee417bb9c768551012f0eda2906a4a269f3"
 dependencies = [
  "egui",
  "serde",
