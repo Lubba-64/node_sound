@@ -28,11 +28,12 @@ impl<I: DawSource> Hold<I> {
 
 impl<I: DawSource + Clone> DawSource for Hold<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        let next = self.source.next(index, channel)?;
         let ch = channel as usize;
         self.counter += 1;
         if self.counter >= self.hold_length {
             self.counter = 0;
-            self.held_value[ch] = self.source.next(index, channel)?;
+            self.held_value[ch] = next;
         }
         Some(self.held_value[ch])
     }

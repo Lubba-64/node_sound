@@ -25,6 +25,7 @@ impl<I: DawSource, I2: DawSource> AutomatedHold<I, I2> {
 
 impl<I: DawSource + Clone, I2: DawSource + Clone> DawSource for AutomatedHold<I, I2> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        let next = self.source.next(index, channel)?;
         let ch = channel as usize;
         self.counter += 1;
         if self.counter
@@ -34,7 +35,7 @@ impl<I: DawSource + Clone, I2: DawSource + Clone> DawSource for AutomatedHold<I,
                 .round() as u32
         {
             self.counter = 0;
-            self.held_value[ch] = self.source.next(index, channel)?;
+            self.held_value[ch] = next;
         }
         Some(self.held_value[ch])
     }

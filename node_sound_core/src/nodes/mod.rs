@@ -38,6 +38,7 @@ pub mod const_node;
 pub mod daw_automation_mix_node;
 pub mod daw_automation_source_node;
 pub mod delay_node;
+pub mod delay_repeat_node;
 pub mod duration_node;
 pub mod eq_node;
 pub mod file_node;
@@ -401,6 +402,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             automated_hold_node::automated_hold_node(),
             Box::new(automated_hold_node::automated_hold_logic),
+        ),
+        (
+            delay_repeat_node::delay_repeat_node(),
+            Box::new(delay_repeat_node::delay_repeat_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

@@ -21,6 +21,7 @@ pub mod const_wave;
 pub mod daw_automation_mix;
 pub mod daw_automation_source;
 pub mod delay;
+pub mod delay_repeat;
 pub mod duration;
 pub mod eq;
 pub mod flip;
