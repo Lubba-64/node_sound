@@ -54,14 +54,14 @@ where
 
         // Apply FM modulation - phase is in [0, 2π] range
         let carrier_freq = self.carrier.get_frequency() * time_delta;
-        let base_increment = (carrier_freq * 2.0 * PI) / self.sample_rate;
+        let base_increment = (carrier_freq * (2.0 * PI)) / self.sample_rate;
         let modulated_increment = base_increment + (self.modulation_index * modulator_output);
 
         let new_carrier_phase = (carrier_phase + modulated_increment) % (2.0 * PI);
 
         // Advance modulator phase normally
         let modulator_freq = self.modulator.get_frequency() * time_delta;
-        let modulator_increment = (modulator_freq * 2.0 * PI) / self.sample_rate;
+        let modulator_increment = (modulator_freq * (2.0 * PI)) / self.sample_rate;
         let new_modulator_phase = (modulator_phase + modulator_increment) % (2.0 * PI);
 
         // Update phases

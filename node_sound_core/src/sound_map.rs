@@ -161,11 +161,12 @@ impl SoundQueue {
             bpm: Arc::new(Mutex::new(120.0)),
         };
         queue.push_sound(Box::new(ConstWave::new(0.0)));
+        queue.push_osc(Box::new(ConstWave::new(0.0)));
         return queue;
     }
 
     pub fn clone_osc(&mut self, idx: usize) -> Result<GenericOsc, Box<dyn std::error::Error>> {
-        if idx >= self.queue.len() {
+        if idx >= self.osc_queue.len() {
             return Err(Box::new(std::io::Error::new(
                 ErrorKind::Other,
                 "Sound queue accessed an out of bounds element",
@@ -212,7 +213,9 @@ impl SoundQueue {
 
     pub fn clear(&mut self) {
         self.queue.clear();
+        self.osc_queue.clear();
         self.push_sound(Box::new(ConstWave::new(0.0)));
+        self.push_osc(Box::new(ConstWave::new(0.0)));
     }
 
     pub fn set_sample_rate(&mut self, sample_rate: f32) {

@@ -580,6 +580,7 @@ impl eframe::App for SoundNodeGraph {
 
 type OutputsCache<'a> = HashMap<OutputId, ValueType>;
 
+#[cfg(feature = "debug")]
 pub fn evaluate_node<'a>(
     graph: &MyGraph,
     node_id: NodeId,
@@ -593,7 +594,7 @@ pub fn evaluate_node<'a>(
             None => {
                 return Err(Box::new(std::io::Error::new(
                     std::io::ErrorKind::Other,
-                    "Node Deref Failed",
+                    "Node Deref Failed: Failed to get Node Data",
                 )));
             }
         }
@@ -604,7 +605,7 @@ pub fn evaluate_node<'a>(
         None => {
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                "Node Deref Failed",
+                "Node Deref Failed: Failed to get Node from all_nodes",
             )));
         }
     };
@@ -622,12 +623,26 @@ pub fn evaluate_node<'a>(
             ),
         )
     };
-    let input_to_name = HashMap::from_iter(
+    let input_to_name_res: HashMap<
+        std::string::String,
+        Result<ValueType, Box<dyn std::error::Error>>,
+    > = HashMap::from_iter(
         node.0
             .inputs
             .iter()
             .map(|(name, _input)| (closure)(name.to_string())),
     );
+    let mut input_to_name: HashMap<String, ValueType> = HashMap::new();
+
+    for (k, v) in input_to_name_res.iter() {
+        input_to_name.insert(
+            k.clone(),
+            match v {
+                Ok(x) => x.clone(),
+                Err(x) => return Err(format!("{:?}", x).into()),
+            },
+        );
+    }
 
     let res = (node.1)(SoundNodeProps {
         inputs: input_to_name,
@@ -635,7 +650,10 @@ pub fn evaluate_node<'a>(
     })?;
 
     for (name, value) in &res {
-        populate_output(graph, outputs_cache, node_id, &name, value.clone());
+        match populate_output(graph, outputs_cache, node_id, &name, value.clone()) {
+            Err(x) => return Err(x),
+            _ => {}
+        };
     }
 
     match res.get("out") {
@@ -647,26 +665,38 @@ pub fn evaluate_node<'a>(
     }
 }
 
+#[cfg(feature = "debug")]
 fn populate_output<'a>(
     graph: &'a MyGraph,
     outputs_cache: &'a mut OutputsCache,
     node_id: NodeId,
     param_name: &'a str,
     value: ValueType,
-) -> ValueType {
+) -> Result<ValueType, Box<dyn std::error::Error>> {
     let output_id = match match graph.nodes.get(node_id) {
         Some(x) => x,
-        None => return ValueType::AudioSource { value: 0 },
+        None => {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Node does not exist when getting output",
+            )));
+        }
     }
     .get_output(param_name)
     {
         Ok(x) => x,
-        Err(_x) => return ValueType::AudioSource { value: 0 },
+        Err(_x) => {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Node has no output ID",
+            )));
+        }
     };
     outputs_cache.insert(output_id, value.clone());
-    value
+    Ok(value)
 }
 
+#[cfg(feature = "debug")]
 fn evaluate_input<'a>(
     graph: &'a MyGraph,
     node_id: NodeId,
@@ -674,23 +704,29 @@ fn evaluate_input<'a>(
     outputs_cache: &'a mut OutputsCache,
     all_nodes: &'a NodeDefinitions,
     state: &'a mut SoundNodeGraphState,
-) -> ValueType {
+) -> Result<ValueType, Box<dyn std::error::Error>> {
     let input_id = match match graph.nodes.get(node_id) {
         Some(x) => x,
         None => {
-            return ValueType::AudioSource { value: 0 };
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Node does not exist when evaluating input",
+            )));
         }
     }
     .get_input(param_name)
     {
         Ok(x) => x,
         Err(_x) => {
-            return ValueType::AudioSource { value: 0 };
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Node has no input id",
+            )));
         }
     };
     if let Some(other_output_id) = graph.connection(input_id) {
         if let Some(other_value) = outputs_cache.get(&other_output_id) {
-            other_value.clone()
+            Ok(other_value.clone())
         } else {
             match evaluate_node(
                 graph,
@@ -700,19 +736,31 @@ fn evaluate_input<'a>(
                 state,
             ) {
                 Ok(x) => x,
-                Err(_x) => ValueType::AudioSource { value: 0 },
+                Err(x) => {
+                    return Err(x);
+                }
             };
-            outputs_cache
-                .get(&other_output_id)
-                .unwrap_or(&ValueType::AudioSource { value: 0 })
-                .clone()
+            match outputs_cache.get(&other_output_id) {
+                Some(x) => Ok(x.clone()),
+                None => {
+                    return Err(Box::new(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "outputs cache empty",
+                    )));
+                }
+            }
         }
     } else {
-        match graph.inputs.get(input_id) {
-            None => return ValueType::AudioSource { value: 0 },
+        Ok(match graph.inputs.get(input_id) {
+            None => {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Node has no input id",
+                )));
+            }
             Some(x) => x,
         }
         .value
-        .clone()
+        .clone())
     }
 }

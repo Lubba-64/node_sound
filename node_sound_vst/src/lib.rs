@@ -1,6 +1,6 @@
 use futures::executor;
 use nih_plug::{params::persist::PersistentField, prelude::*};
-use nih_plug_egui::{EguiState, create_egui_editor};
+use nih_plug_egui::{EguiState, create_egui_editor, egui};
 use node_sound_core::sound_map::DawSource;
 use node_sound_core::{
     constants::MIDDLE_C_FREQ,
@@ -14,6 +14,8 @@ use node_sound_core::{
     sound_map::GenericSource,
     sounds::{const_wave::ConstWave, speed::Speed},
 };
+use std::error::Error;
+use std::fmt::format;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -524,6 +526,7 @@ impl Plugin for NodeSound {
                 self.params.root_sound_id.clone(),
                 false,
                 self.bpm.clone(),
+                None,
             ),
             |_, _| {},
             move |egui_ctx, _setter, state| {
@@ -551,7 +554,17 @@ impl Plugin for NodeSound {
                         return;
                     }
                 };
+                let error: &mut Option<String> = &mut state.6;
                 graph.update_root(egui_ctx);
+                #[cfg(feature = "debug")]
+                egui::TopBottomPanel::top("top").show(egui_ctx, |ui| {
+                    egui::menu::bar(ui, |ui| match error {
+                        Some(x) => {
+                            ui.label(x.clone());
+                        }
+                        _ => {}
+                    })
+                });
                 // refreshes the graph state to fix bugs with DAW automations that if not refreshed will be null secretly...
                 if !state.4 {
                     state.4 = true;
@@ -599,6 +612,7 @@ impl Plugin for NodeSound {
                                     &mut graph.state,
                                 ) {
                                     Ok(val) => {
+                                        *error = None;
                                         let source_id = match val {
                                             ValueType::AudioSource { value } => value,
                                             _ => {
@@ -622,7 +636,8 @@ impl Plugin for NodeSound {
                                         )));
                                         graph.state._unserializeable_state.queue.clear();
                                     }
-                                    Err(_err) => {
+                                    Err(err) => {
+                                        *error = Some(format!("{:?}", err));
                                         clear = true;
                                     }
                                 };
