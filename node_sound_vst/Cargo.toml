@@ -20,5 +20,7 @@ futures = "0.3.30"
 rfd = { version = "0.14.1", features = ["file-handle-inner"] }
 
 
+
 [features]
-debug = []
+debug = ["node_sound_core/debug"]
+default = []
