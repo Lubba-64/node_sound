@@ -25,6 +25,7 @@ pub mod delay_repeat;
 pub mod duration;
 pub mod eq;
 pub mod flip;
+pub mod fm_synth;
 pub mod hold;
 pub mod input;
 pub mod lfo;

@@ -11,6 +11,7 @@ use crate::{sound_graph::note::Pitch, sounds::tracker::TrackerNote};
 pub enum DataType {
     None,
     AudioSource,
+    Oscillator,
     Float,
     Duration,
     AudioFile,
@@ -26,6 +27,9 @@ pub enum ValueType {
     #[default]
     None,
     AudioSource {
+        value: usize,
+    },
+    Oscillator {
         value: usize,
     },
     Float {
@@ -70,6 +74,7 @@ impl Default for &ValueType {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum InputValueConfig {
     AudioSource {},
+    Oscillator {},
     Float {
         value: f32,
         min: f32,
@@ -103,6 +108,10 @@ impl Debug for ValueType {
             Self::AudioSource { value: _ } => f
                 .debug_struct("Source")
                 .field("value", &"Anonymous AudioSource")
+                .finish(),
+            Self::Oscillator { value: _ } => f
+                .debug_struct("Source")
+                .field("value", &"Anonymous Oscillator")
                 .finish(),
             Self::Float {
                 value,
@@ -151,7 +160,13 @@ impl Debug for ValueType {
 }
 
 impl ValueType {
-    /// Tries to downcast this value type to a vector
+    pub fn try_to_oscillator(self) -> Result<usize, String> {
+        match self {
+            ValueType::Oscillator { value } => Ok(value),
+            _ => Err("invalid cast".to_string()),
+        }
+    }
+
     pub fn try_to_source(self) -> Result<usize, String> {
         match self {
             ValueType::AudioSource { value } => Ok(value),
@@ -159,7 +174,6 @@ impl ValueType {
         }
     }
 
-    /// Tries to downcast this value type to a scalar
     pub fn try_to_float(self) -> Result<f32, String> {
         match self {
             ValueType::Float {

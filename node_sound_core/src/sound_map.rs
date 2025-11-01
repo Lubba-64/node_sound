@@ -10,6 +10,51 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+pub trait Oscillator: DynClone + Debug {
+    fn set_phase(&mut self, phase: f32);
+    fn get_phase(&self) -> f32;
+    fn get_frequency(&self) -> f32;
+    fn set_frequency(&mut self, freq: f32);
+    fn calculate_output(&self) -> f32;
+}
+
+#[derive(Debug)]
+pub struct GenericOsc {
+    osc: Box<dyn Oscillator>,
+}
+
+impl Clone for GenericOsc {
+    fn clone(&self) -> Self {
+        Self {
+            osc: dyn_clone::clone_box(&*self.osc),
+        }
+    }
+}
+
+impl GenericOsc {
+    pub fn new(osc: Box<dyn Oscillator>) -> Self {
+        Self { osc }
+    }
+}
+
+impl Oscillator for GenericOsc {
+    fn calculate_output(&self) -> f32 {
+        self.osc.calculate_output()
+    }
+    fn get_frequency(&self) -> f32 {
+        self.osc.get_frequency()
+    }
+    fn get_phase(&self) -> f32 {
+        self.osc.get_phase()
+    }
+    fn set_frequency(&mut self, freq: f32) {
+        self.osc.set_frequency(freq);
+    }
+    fn set_phase(&mut self, phase: f32) {
+        self.osc.set_phase(phase);
+    }
+}
+
 pub trait DawSource: DynClone + Debug {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32>;
 }
@@ -93,6 +138,7 @@ impl DawSource for RefSource {
 }
 
 pub struct SoundQueue {
+    osc_queue: Vec<GenericOsc>,
     queue: Vec<GenericSource>,
     sample_rate: f32,
     speed: f32,
@@ -108,6 +154,7 @@ impl Default for SoundQueue {
 impl SoundQueue {
     pub fn new(sample_rate: f32) -> Self {
         let mut queue = SoundQueue {
+            osc_queue: vec![],
             queue: vec![],
             speed: 1.0,
             sample_rate: sample_rate,
@@ -115,6 +162,21 @@ impl SoundQueue {
         };
         queue.push_sound(Box::new(ConstWave::new(0.0)));
         return queue;
+    }
+
+    pub fn clone_osc(&mut self, idx: usize) -> Result<GenericOsc, Box<dyn std::error::Error>> {
+        if idx >= self.queue.len() {
+            return Err(Box::new(std::io::Error::new(
+                ErrorKind::Other,
+                "Sound queue accessed an out of bounds element",
+            )));
+        }
+        return Ok(self.osc_queue[idx].clone());
+    }
+
+    pub fn push_osc(&mut self, osc: Box<dyn Oscillator>) -> usize {
+        self.osc_queue.push(GenericOsc::new(osc));
+        return self.osc_queue.len() - 1;
     }
 
     pub fn clone_sound(&mut self, idx: usize) -> Result<GenericSource, Box<dyn std::error::Error>> {

@@ -3,7 +3,7 @@ use crate::{
         graph::SoundNodeGraphState,
         graph_types::{InputParameter, Output, ValueType},
     },
-    sound_map::{DawSource, GenericSource},
+    sound_map::{DawSource, GenericOsc, GenericSource, Oscillator},
     sounds::{tracker::TrackerNote, wave_table::WaveTableManager},
 };
 use eframe::egui::ahash::HashMap;
@@ -43,6 +43,7 @@ pub mod duration_node;
 pub mod eq_node;
 pub mod file_node;
 pub mod flip_node;
+pub mod fm_synth_node;
 pub mod hold_node;
 pub mod input_node;
 pub mod lfo_node;
@@ -62,16 +63,20 @@ pub mod repeat_n_node;
 pub mod reverb_node;
 pub mod reverse_node;
 pub mod sawtooth_node;
+pub mod sawtooth_oscillator_node;
 pub mod signum_node;
 pub mod sine_node;
+pub mod sine_oscillator_node;
 pub mod skip_node;
 pub mod speed_node;
 pub mod split_channels_node;
 pub mod square_node;
+pub mod square_oscillator_node;
 pub mod switch_node;
 pub mod tracker_node;
 pub mod translate_node;
 pub mod triangle_node;
+pub mod triangle_oscillator_node;
 pub mod unison_node;
 pub mod vertical_wave_shaper_node;
 pub mod wave_shaper_node;
@@ -91,6 +96,14 @@ impl<'a> SoundNodeProps<'a> {
 
     fn clone_sound(&mut self, idx: usize) -> Result<GenericSource, Box<dyn std::error::Error>> {
         self.state._unserializeable_state.queue.clone_sound(idx)
+    }
+
+    fn push_osc(&mut self, sound: Box<dyn Oscillator>) -> usize {
+        self.state._unserializeable_state.queue.push_osc(sound)
+    }
+
+    fn clone_osc(&mut self, idx: usize) -> Result<GenericOsc, Box<dyn std::error::Error>> {
+        self.state._unserializeable_state.queue.clone_osc(idx)
     }
 
     fn get_node_idx(&self) -> usize {
@@ -141,6 +154,14 @@ impl<'a> SoundNodeProps<'a> {
             .unwrap_or_default()
             .clone()
             .try_to_source()?)
+    }
+    fn get_osc(&self, name: &str) -> Result<usize, Box<dyn std::error::Error>> {
+        Ok(self
+            .inputs
+            .get(name)
+            .unwrap_or_default()
+            .clone()
+            .try_to_oscillator()?)
     }
     fn get_duration(&self, name: &str) -> Result<Duration, Box<dyn std::error::Error>> {
         Ok(self
@@ -406,6 +427,14 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             delay_repeat_node::delay_repeat_node(),
             Box::new(delay_repeat_node::delay_repeat_logic),
+        ),
+        (
+            sawtooth_oscillator_node::sawtooth_oscillator_node(),
+            Box::new(sawtooth_oscillator_node::sawtooth_oscillator_logic),
+        ),
+        (
+            fm_synth_node::fm_synth_node(),
+            Box::new(fm_synth_node::fm_synth_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

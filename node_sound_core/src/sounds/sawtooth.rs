@@ -1,11 +1,12 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::{DawSource, Oscillator};
 use std::f32::consts::PI;
 
 #[derive(Clone, Debug)]
 pub struct SawtoothWave {
     frequency: f32,
-    sample_rate: f32,
     speed: f32,
+    sample_rate: f32,
+    phase: f32,
 }
 
 impl SawtoothWave {
@@ -15,14 +16,38 @@ impl SawtoothWave {
             frequency,
             speed: if uses_speed { speed } else { 1.0 },
             sample_rate,
+            phase: 0.0,
         }
+    }
+
+    fn calculate(&self) -> f32 {
+        (self.phase / PI) - 1.0
     }
 }
 
 impl DawSource for SawtoothWave {
-    fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
-        let phase_increment = 2.0 * PI * self.frequency / self.sample_rate / self.speed;
-        let phase = (phase_increment * index) % (2.0 * PI);
-        Some((phase / PI) - 1.0)
+    fn next(&mut self, mut index: f32, _channel: u8) -> Option<f32> {
+        index /= self.speed;
+        let phase_increment = (2.0 * PI) * self.frequency / self.sample_rate;
+        self.phase = (phase_increment * index) % (2.0 * PI);
+        Some(self.calculate())
+    }
+}
+
+impl Oscillator for SawtoothWave {
+    fn set_phase(&mut self, phase: f32) {
+        self.phase = phase % (2.0 * PI);
+    }
+    fn get_phase(&self) -> f32 {
+        self.phase
+    }
+    fn get_frequency(&self) -> f32 {
+        self.frequency
+    }
+    fn set_frequency(&mut self, freq: f32) {
+        self.frequency = freq;
+    }
+    fn calculate_output(&self) -> f32 {
+        self.calculate()
     }
 }

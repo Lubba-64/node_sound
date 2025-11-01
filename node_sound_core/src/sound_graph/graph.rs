@@ -67,6 +67,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::Duration => egui::Color32::from_rgb(38, 109, 211),
             DataType::Float => egui::Color32::from_rgb(238, 207, 109),
             DataType::AudioSource => egui::Color32::from_rgb(100, 150, 100),
+            DataType::Oscillator => egui::Color32::from_rgb(100, 100, 150),
             DataType::AudioFile => egui::Color32::from_rgb(100, 100, 150),
             DataType::None => egui::Color32::from_rgb(100, 100, 255),
             DataType::MidiFile => egui::Color32::from_rgb(150, 100, 255),
@@ -82,6 +83,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
             DataType::Duration => Cow::Borrowed("Duration"),
             DataType::Float => Cow::Borrowed("Float"),
             DataType::AudioSource => Cow::Borrowed("AudioSource"),
+            DataType::Oscillator => Cow::Borrowed("Oscillator"),
             DataType::AudioFile => Cow::Borrowed("File"),
             DataType::None => Cow::Borrowed("None"),
             DataType::MidiFile => Cow::Borrowed("Midi"),
@@ -134,6 +136,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                 input.0.clone(),
                 input.1.data_type,
                 match &input.1.value {
+                    InputValueConfig::Oscillator {} => ValueType::Oscillator { value: 0 },
                     InputValueConfig::TrackerNotes { notes } => ValueType::TrackerNotes {
                         notes: notes.clone(),
                     },
@@ -304,6 +307,9 @@ impl WidgetValueTrait for ValueType {
                 });
             }
             ValueType::AudioSource { value: _ } => {
+                ui.label(param_name);
+            }
+            ValueType::Oscillator { value: _ } => {
                 ui.label(param_name);
             }
             ValueType::None => {
