@@ -56,7 +56,8 @@ where
         // Apply FM modulation - CONVERT TO RADIANS for modulation
         let carrier_freq = self.carrier.get_frequency() * time_delta;
         let base_increment = (carrier_freq * 2.0 * PI) / self.sample_rate; // Convert to radians
-        let modulated_increment = base_increment * (1.0 + self.modulation_index * modulator_output);
+        let modulated_increment =
+            base_increment * (2.0 * PI + self.modulation_index * modulator_output);
 
         let new_carrier_phase = (carrier_phase + modulated_increment) % (2.0 * PI); // Wrap at 2π
 
