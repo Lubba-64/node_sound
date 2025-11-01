@@ -6,10 +6,9 @@ use crate::{
     sound_map::{DawSource, GenericSource},
     sounds::{tracker::TrackerNote, wave_table::WaveTableManager},
 };
-use eframe::egui::ahash::HashMap;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, HashMap},
     sync::{Arc, Mutex},
     time::Duration,
 };

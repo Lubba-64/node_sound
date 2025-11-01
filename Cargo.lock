@@ -2650,6 +2650,7 @@ name = "node_sound_vst"
 version = "5.2.0"
 dependencies = [
  "crossbeam",
+ "egui",
  "ezing",
  "futures",
  "lock_api",
