@@ -35,7 +35,7 @@ where
     C: Oscillator + Clone,
     M: Oscillator + Clone,
 {
-    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+    fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
         let time_delta = if index == 0.0 {
             1.0
         } else {
