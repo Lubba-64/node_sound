@@ -73,6 +73,7 @@ pub mod translate_node;
 pub mod triangle_node;
 pub mod unison_node;
 pub mod vertical_wave_shaper_node;
+pub mod wave_folder_node;
 pub mod wave_shaper_node;
 pub mod wave_table_node;
 pub mod weird_node;
@@ -405,6 +406,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             delay_repeat_node::delay_repeat_node(),
             Box::new(delay_repeat_node::delay_repeat_logic),
+        ),
+        (
+            wave_folder_node::wave_folder_node(),
+            Box::new(wave_folder_node::wave_folder_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

@@ -27,6 +27,7 @@ impl Clone for GenericSource {
     }
 }
 unsafe impl Send for GenericSource {}
+unsafe impl Sync for GenericSource {}
 
 impl GenericSource {
     pub fn new(sound: Box<dyn DawSource>) -> Self {

@@ -16,7 +16,7 @@ pub fn float_selector(
         ui.add(
             AudioKnob::new(value)
                 .range(*min..=*max)
-                .drag_length(200.0)
+                .drag_length(100.0)
                 .diameter(20.0),
         );
 

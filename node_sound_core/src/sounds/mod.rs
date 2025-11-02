@@ -54,3 +54,4 @@ pub mod vertical_wave_shaper;
 pub mod wave_table;
 pub mod weird;
 pub mod wrapper;
+pub mod wave_folder;

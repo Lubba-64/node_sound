@@ -53,6 +53,7 @@ pub struct SoundGraphUserState {
     pub is_saved: bool,
     pub vst_output_node_id: Option<NodeId>,
     pub wave_shaper_graph_id: usize,
+    pub is_mono: bool,
     #[serde(default)]
     pub current_theme: AppTheme,
     #[serde(skip)]
@@ -574,7 +575,6 @@ impl eframe::App for SoundNodeGraph {
 
 type OutputsCache<'a> = HashMap<OutputId, ValueType>;
 
-#[cfg(feature = "debug")]
 pub fn evaluate_node<'a>(
     graph: &MyGraph,
     node_id: NodeId,
@@ -659,7 +659,6 @@ pub fn evaluate_node<'a>(
     }
 }
 
-#[cfg(feature = "debug")]
 fn populate_output<'a>(
     graph: &'a MyGraph,
     outputs_cache: &'a mut OutputsCache,
@@ -690,7 +689,6 @@ fn populate_output<'a>(
     Ok(value)
 }
 
-#[cfg(feature = "debug")]
 fn evaluate_input<'a>(
     graph: &'a MyGraph,
     node_id: NodeId,
@@ -756,145 +754,5 @@ fn evaluate_input<'a>(
         }
         .value
         .clone())
-    }
-}
-
-#[cfg(not(feature = "debug"))]
-pub fn evaluate_node<'a>(
-    graph: &MyGraph,
-    node_id: NodeId,
-    outputs_cache: &mut OutputsCache,
-    all_nodes: &NodeDefinitions,
-    state: &'a mut SoundNodeGraphState,
-) -> Result<ValueType, Box<dyn std::error::Error>> {
-    let node = match all_nodes.0.get(
-        &match graph.nodes.get(node_id) {
-            Some(x) => x,
-            None => {
-                return Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Node Deref Failed",
-                )));
-            }
-        }
-        .user_data
-        .name,
-    ) {
-        Some(x) => x,
-        None => {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Node Deref Failed",
-            )));
-        }
-    };
-
-    let mut closure = |name: String| {
-        (
-            name.clone(),
-            evaluate_input(
-                graph,
-                node_id,
-                name.as_str(),
-                outputs_cache,
-                all_nodes,
-                state,
-            ),
-        )
-    };
-    let input_to_name = HashMap::from_iter(
-        node.0
-            .inputs
-            .iter()
-            .map(|(name, _input)| (closure)(name.to_string())),
-    );
-
-    let res = (node.1)(SoundNodeProps {
-        inputs: input_to_name,
-        state: state,
-    })?;
-
-    for (name, value) in &res {
-        populate_output(graph, outputs_cache, node_id, &name, value.clone());
-    }
-
-    match res.get("out") {
-        Some(x) => Ok(x.clone()),
-        None => Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Node had no output",
-        ))),
-    }
-}
-
-#[cfg(not(feature = "debug"))]
-fn populate_output<'a>(
-    graph: &'a MyGraph,
-    outputs_cache: &'a mut OutputsCache,
-    node_id: NodeId,
-    param_name: &'a str,
-    value: ValueType,
-) -> ValueType {
-    let output_id = match match graph.nodes.get(node_id) {
-        Some(x) => x,
-        None => return ValueType::AudioSource { value: 0 },
-    }
-    .get_output(param_name)
-    {
-        Ok(x) => x,
-        Err(_x) => return ValueType::AudioSource { value: 0 },
-    };
-    outputs_cache.insert(output_id, value.clone());
-    value
-}
-
-#[cfg(not(feature = "debug"))]
-fn evaluate_input<'a>(
-    graph: &'a MyGraph,
-    node_id: NodeId,
-    param_name: &'a str,
-    outputs_cache: &'a mut OutputsCache,
-    all_nodes: &'a NodeDefinitions,
-    state: &'a mut SoundNodeGraphState,
-) -> ValueType {
-    let input_id = match match graph.nodes.get(node_id) {
-        Some(x) => x,
-        None => {
-            return ValueType::AudioSource { value: 0 };
-        }
-    }
-    .get_input(param_name)
-    {
-        Ok(x) => x,
-        Err(_x) => {
-            return ValueType::AudioSource { value: 0 };
-        }
-    };
-    if let Some(other_output_id) = graph.connection(input_id) {
-        if let Some(other_value) = outputs_cache.get(&other_output_id) {
-            other_value.clone()
-        } else {
-            match evaluate_node(
-                graph,
-                graph[other_output_id].node,
-                outputs_cache,
-                all_nodes,
-                state,
-            ) {
-                Ok(x) => x,
-                Err(_x) => ValueType::AudioSource { value: 0 },
-            };
-            outputs_cache
-                .get(&other_output_id)
-                .unwrap_or(&ValueType::AudioSource { value: 0 })
-                .clone()
-        }
-    } else {
-        match graph.inputs.get(input_id) {
-            None => return ValueType::AudioSource { value: 0 },
-            Some(x) => x,
-        }
-        .value
-        .clone()
     }
 }
