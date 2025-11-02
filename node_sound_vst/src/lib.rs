@@ -15,6 +15,7 @@ use node_sound_core::{
     sound_map::GenericSource,
     sounds::{const_wave::ConstWave, speed::Speed},
 };
+use std::default;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},

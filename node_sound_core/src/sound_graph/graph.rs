@@ -53,7 +53,6 @@ pub struct SoundGraphUserState {
     pub is_saved: bool,
     pub vst_output_node_id: Option<NodeId>,
     pub wave_shaper_graph_id: usize,
-    pub is_mono: bool,
     #[serde(default)]
     pub current_theme: AppTheme,
     #[serde(skip)]
