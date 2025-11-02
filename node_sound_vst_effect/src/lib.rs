@@ -1,3 +1,4 @@
+use egui_extras_xt::knobs::AudioKnob;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
 use node_sound_core::sound_graph::graph::FileManager;
@@ -260,9 +261,10 @@ impl Plugin for NodeSound {
                 self.sound_result.clone(),
                 self.sample_rate.clone(),
                 self.bpm.clone(),
+                self.params.clone(),
             ),
             |_, _| {},
-            move |egui_ctx, _setter, state| {
+            move |egui_ctx, setter, state| {
                 let sound_result = &mut match state.1.lock() {
                     Ok(x) => x,
                     Err(_x) => {
@@ -281,6 +283,54 @@ impl Plugin for NodeSound {
                         return;
                     }
                 };
+                egui::TopBottomPanel::bottom("automations").show(egui_ctx, |ui| {
+                    egui::menu::bar(ui, |ui| {
+                        ui.label("Automations: ");
+                        egui::ScrollArea::horizontal().show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                let params = &state.4;
+                                let knobs = [
+                                    ("A1", &params.a1),
+                                    ("A2", &params.a2),
+                                    ("A3", &params.a3),
+                                    ("A4", &params.a4),
+                                    ("A5", &params.a5),
+                                    ("A6", &params.a6),
+                                    ("A7", &params.a7),
+                                    ("A8", &params.a8),
+                                    ("A9", &params.a9),
+                                    ("A10", &params.a10),
+                                    ("A11", &params.a11),
+                                    ("A12", &params.a12),
+                                    ("A13", &params.a13),
+                                    ("A14", &params.a14),
+                                    ("A15", &params.a15),
+                                    ("A16", &params.a16),
+                                    ("A17", &params.a17),
+                                    ("A18", &params.a18),
+                                ];
+
+                                for (label, param) in knobs.iter() {
+                                    ui.vertical(|ui| {
+                                        ui.label(*label);
+                                        let param_value = param.value();
+                                        let mut current_value = param_value;
+                                        let response = ui.add(
+                                            AudioKnob::new(&mut current_value)
+                                                .range(-1.0..=1.0)
+                                                .drag_length(50.0)
+                                                .diameter(15.0),
+                                        );
+                                        if response.changed() && current_value != param_value {
+                                            setter.set_parameter(*param, current_value);
+                                        }
+                                    });
+                                    ui.add_space(2.0);
+                                }
+                            });
+                        });
+                    });
+                });
                 graph.update_root(egui_ctx);
                 if sound_result.is_none() || graph.state.user_state.active_node.is_playing() {
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
