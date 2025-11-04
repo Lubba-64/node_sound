@@ -41,8 +41,7 @@ impl<I: DawSource + Clone> DawSource for DelayRepeat<I> {
                         (total_size / self.points) * point
                     }] / (self.points as f32 / (self.points - point) as f32)
                 })
-                .sum::<f32>()
-                / self.points as f32,
+                .sum::<f32>(),
         )
     }
 }
