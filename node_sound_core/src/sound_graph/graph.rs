@@ -16,6 +16,7 @@ pub use egui_node_graph_2::*;
 use futures::executor;
 pub use rodio::source::Zero;
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::ffi::OsStr;
 use std::fs;
 use std::sync::{Arc, Mutex};
@@ -444,6 +445,7 @@ pub struct UnserializeableGraphState {
     pub node_definitions: NodeDefinitions,
     pub is_done_showing_recording_dialogue: bool,
     pub queue: SoundQueue,
+    pub buffers: Vec<Arc<Mutex<VecDeque<f32>>>>,
     pub automations: DAWAutomations,
     pub input: DAWInput,
 }

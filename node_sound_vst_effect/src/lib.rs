@@ -10,7 +10,6 @@ use node_sound_core::{
     },
     sound_map::GenericSource,
 };
-
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -345,6 +344,7 @@ impl Plugin for NodeSound {
                                 ._unserializeable_state
                                 .queue
                                 .set_sample_rate(**sample_rate);
+                            graph.state._unserializeable_state.buffers.clear();
                             graph.state.user_state.wavetables.clear();
                             graph.state._unserializeable_state.queue.set_note_speed(1.0);
                             graph

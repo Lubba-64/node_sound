@@ -679,6 +679,7 @@ impl Plugin for NodeSound {
                     executor::block_on(paste(&mut graph.state.editor_state, None, copy_state));
                 }
                 if sound_result_id.is_none() || graph.state.user_state.active_node.is_playing() {
+                    graph.state._unserializeable_state.buffers.clear();
                     let mut clear = false;
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
                     match graph.state.user_state.vst_output_node_id {
