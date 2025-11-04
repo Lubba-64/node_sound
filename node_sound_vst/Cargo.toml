@@ -8,8 +8,8 @@ authors = ["Lubba64"]
 crate-type = ["cdylib"]
 
 [dependencies]
-nih_plug = { git = "https://github.com/robbert-vdh/nih-plug", rev = "d64b2ab"}
-nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug", rev = "d64b2ab" }
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug" }
+nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug" }
 node_sound_core = { version = "*", path = "../node_sound_core"}
 crossbeam = "0.8.4"
 lock_api = "0.4.12"

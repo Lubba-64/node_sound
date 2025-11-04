@@ -262,15 +262,10 @@ impl Plugin for NodeSound {
                 self.sample_rate.clone(),
                 self.bpm.clone(),
                 self.params.clone(),
+                false,
             ),
             |_, _| {},
             move |egui_ctx, setter, state| {
-                let sound_result = &mut match state.1.lock() {
-                    Ok(x) => x,
-                    Err(_x) => {
-                        return;
-                    }
-                };
                 let sample_rate = &mut match state.2.lock() {
                     Ok(x) => x,
                     Err(_x) => {
@@ -332,7 +327,7 @@ impl Plugin for NodeSound {
                     });
                 });
                 graph.update_root(egui_ctx);
-                if sound_result.is_none() || graph.state.user_state.active_node.is_playing() {
+                if !state.5 || graph.state.user_state.active_node.is_playing() {
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
                     match graph.state.user_state.vst_output_node_id {
                         Some(x) => {
@@ -372,17 +367,22 @@ impl Plugin for NodeSound {
                                         }
                                         Ok(x) => x,
                                     };
+                                    let sound_result = &mut match state.1.lock() {
+                                        Ok(x) => x,
+                                        Err(_x) => {
+                                            return;
+                                        }
+                                    };
                                     **sound_result = Some(sound);
+                                    state.5 = true;
                                 }
                                 Err(_err) => {
                                     graph.state._unserializeable_state.queue.clear();
-                                    **sound_result = None
                                 }
                             };
                         }
                         None => {
                             graph.state._unserializeable_state.queue.clear();
-                            **sound_result = None
                         }
                     }
                 }
@@ -407,7 +407,7 @@ impl Plugin for NodeSound {
     ) -> ProcessStatus {
         match self.sample_rate.try_lock() {
             Ok(mut x) => *x = context.transport().sample_rate,
-            Err(_x) => return ProcessStatus::KeepAlive,
+            Err(_x) => {}
         };
         let state = &match self.params.plugin_state.graph.lock() {
             Ok(x) => x,
@@ -419,11 +419,8 @@ impl Plugin for NodeSound {
         match self.bpm.try_lock() {
             Ok(mut x) => {
                 *x = context.transport().tempo.unwrap_or(120.0) as f32;
-                *x
             }
-            Err(_x) => {
-                return ProcessStatus::KeepAlive;
-            }
+            Err(_x) => {}
         };
         match state.user_state.files.try_lock() {
             Ok(x) => {
@@ -438,15 +435,13 @@ impl Plugin for NodeSound {
                     ));
                 }
             }
-            Err(_x) => {
-                return ProcessStatus::KeepAlive;
-            }
+            Err(_x) => {}
         }
         let automations = state._unserializeable_state.automations.0.clone();
         let input = state._unserializeable_state.input.0.clone();
         let size = buffer.samples();
         let output = buffer.as_slice();
-        let mut res = match self.sound_result.try_lock() {
+        let mut sound_result = match self.sound_result.try_lock() {
             Ok(x) => x,
             Err(_x) => {
                 return ProcessStatus::KeepAlive;
@@ -463,7 +458,6 @@ impl Plugin for NodeSound {
             }
             output[0][sample_idx] = 0.0;
             output[1][sample_idx] = 0.0;
-
             mkparamgetter!(a1, 0, self, automations);
             mkparamgetter!(a2, 1, self, automations);
             mkparamgetter!(a3, 2, self, automations);
@@ -482,15 +476,18 @@ impl Plugin for NodeSound {
             mkparamgetter!(a16, 15, self, automations);
             mkparamgetter!(a17, 16, self, automations);
             mkparamgetter!(a18, 17, self, automations);
-            match &mut res {
+            match &mut sound_result {
                 Some(source) => {
                     let time_index = (sample_idx + self.total_idx) as f32;
                     let left_sample = source.next(time_index, 0).unwrap_or_default();
                     let right_sample = source.next(time_index, 1).unwrap_or_default();
-                    output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
-                    output[1][sample_idx] += right_sample.clamp(-1.0, 1.0);
+                    output[0][sample_idx] = left_sample.clamp(-1.0, 1.0);
+                    output[1][sample_idx] = right_sample.clamp(-1.0, 1.0);
                 }
-                None => {}
+                None => {
+                    output[0][sample_idx] = 0.0;
+                    output[1][sample_idx] = 0.0;
+                }
             }
         }
         self.total_idx = self.total_idx.wrapping_add(size);
