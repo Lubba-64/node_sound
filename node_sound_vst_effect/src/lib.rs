@@ -263,6 +263,7 @@ impl Plugin for NodeSound {
                 self.bpm.clone(),
                 self.params.clone(),
                 false,
+                None,
             ),
             |_, _| {},
             move |egui_ctx, setter, state| {
@@ -278,6 +279,7 @@ impl Plugin for NodeSound {
                         return;
                     }
                 };
+                let error: &mut Option<String> = &mut state.6;
                 egui::TopBottomPanel::bottom("automations").show(egui_ctx, |ui| {
                     egui::menu::bar(ui, |ui| {
                         ui.label("Automations: ");
@@ -321,6 +323,13 @@ impl Plugin for NodeSound {
                                         }
                                     });
                                     ui.add_space(2.0);
+                                }
+                                ui.separator();
+                                match error {
+                                    Some(err) => {
+                                        ui.label(format!("Error: {}", err));
+                                    }
+                                    None => {}
                                 }
                             });
                         });
@@ -376,7 +385,8 @@ impl Plugin for NodeSound {
                                     **sound_result = Some(sound);
                                     state.5 = true;
                                 }
-                                Err(_err) => {
+                                Err(err) => {
+                                    *error = Some(format!("{:?}", err));
                                     graph.state._unserializeable_state.queue.clear();
                                 }
                             };

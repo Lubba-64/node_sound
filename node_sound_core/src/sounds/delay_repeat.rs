@@ -1,9 +1,6 @@
-// ai shit
-
-use std::collections::VecDeque;
-
 use crate::sound_map::DawSource;
-
+use std::collections::VecDeque;
+// this used to say ai shit but no this was actually all me because I disliked the ai version.
 #[derive(Clone, Debug)]
 pub struct DelayRepeat<I: DawSource> {
     source: I,
