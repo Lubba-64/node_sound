@@ -2529,7 +2529,7 @@ dependencies = [
 [[package]]
 name = "nih_plug"
 version = "0.0.0"
-source = "git+https://github.com/robbert-vdh/nih-plug?rev=d64b2ab#d64b2ab9cfb94773c5ee4d0e72aef5921ee95d2d"
+source = "git+https://github.com/robbert-vdh/nih-plug#28b149ec4d62757d0b448809148a0c3ca6e09a95"
 dependencies = [
  "anyhow",
  "anymap3",
@@ -2559,7 +2559,7 @@ dependencies = [
 [[package]]
 name = "nih_plug_derive"
 version = "0.1.0"
-source = "git+https://github.com/robbert-vdh/nih-plug?rev=d64b2ab#d64b2ab9cfb94773c5ee4d0e72aef5921ee95d2d"
+source = "git+https://github.com/robbert-vdh/nih-plug#28b149ec4d62757d0b448809148a0c3ca6e09a95"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2569,7 +2569,7 @@ dependencies = [
 [[package]]
 name = "nih_plug_egui"
 version = "0.0.0"
-source = "git+https://github.com/robbert-vdh/nih-plug?rev=d64b2ab#d64b2ab9cfb94773c5ee4d0e72aef5921ee95d2d"
+source = "git+https://github.com/robbert-vdh/nih-plug#28b149ec4d62757d0b448809148a0c3ca6e09a95"
 dependencies = [
  "baseview",
  "crossbeam",
@@ -2583,7 +2583,7 @@ dependencies = [
 [[package]]
 name = "nih_plug_xtask"
 version = "0.1.0"
-source = "git+https://github.com/robbert-vdh/nih-plug.git#28b149ec4d62757d0b448809148a0c3ca6e09a95"
+source = "git+https://github.com/robbert-vdh/nih-plug#28b149ec4d62757d0b448809148a0c3ca6e09a95"
 dependencies = [
  "anyhow",
  "cargo_metadata",
@@ -2621,7 +2621,7 @@ dependencies = [
 
 [[package]]
 name = "node_sound_core"
-version = "5.2.0"
+version = "5.3.1"
 dependencies = [
  "arboard",
  "dyn-clone",
@@ -2647,9 +2647,11 @@ dependencies = [
 
 [[package]]
 name = "node_sound_vst"
-version = "5.2.0"
+version = "5.3.1"
 dependencies = [
  "crossbeam",
+ "egui",
+ "egui_extras_xt",
  "ezing",
  "futures",
  "lock_api",
@@ -2663,9 +2665,11 @@ dependencies = [
 
 [[package]]
 name = "node_sound_vst_effect"
-version = "5.2.0"
+version = "5.3.1"
 dependencies = [
  "crossbeam",
+ "egui",
+ "egui_extras_xt",
  "ezing",
  "futures",
  "lock_api",
@@ -2673,7 +2677,6 @@ dependencies = [
  "nih_plug_egui",
  "node_sound_core",
  "rfd",
- "rodio",
  "ron",
 ]
 

@@ -1,3 +1,4 @@
+use egui_extras_xt::knobs::AudioKnob;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
 use node_sound_core::sound_graph::graph::FileManager;
@@ -9,7 +10,6 @@ use node_sound_core::{
     },
     sound_map::GenericSource,
 };
-
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -260,15 +260,12 @@ impl Plugin for NodeSound {
                 self.sound_result.clone(),
                 self.sample_rate.clone(),
                 self.bpm.clone(),
+                self.params.clone(),
+                false,
+                None,
             ),
             |_, _| {},
-            move |egui_ctx, _setter, state| {
-                let sound_result = &mut match state.1.lock() {
-                    Ok(x) => x,
-                    Err(_x) => {
-                        return;
-                    }
-                };
+            move |egui_ctx, setter, state| {
                 let sample_rate = &mut match state.2.lock() {
                     Ok(x) => x,
                     Err(_x) => {
@@ -281,8 +278,64 @@ impl Plugin for NodeSound {
                         return;
                     }
                 };
+                let error: &mut Option<String> = &mut state.6;
+                egui::TopBottomPanel::bottom("automations").show(egui_ctx, |ui| {
+                    egui::menu::bar(ui, |ui| {
+                        ui.label("Automations: ");
+                        egui::ScrollArea::horizontal().show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                let params = &state.4;
+                                let knobs = [
+                                    ("A1", &params.a1),
+                                    ("A2", &params.a2),
+                                    ("A3", &params.a3),
+                                    ("A4", &params.a4),
+                                    ("A5", &params.a5),
+                                    ("A6", &params.a6),
+                                    ("A7", &params.a7),
+                                    ("A8", &params.a8),
+                                    ("A9", &params.a9),
+                                    ("A10", &params.a10),
+                                    ("A11", &params.a11),
+                                    ("A12", &params.a12),
+                                    ("A13", &params.a13),
+                                    ("A14", &params.a14),
+                                    ("A15", &params.a15),
+                                    ("A16", &params.a16),
+                                    ("A17", &params.a17),
+                                    ("A18", &params.a18),
+                                ];
+
+                                for (label, param) in knobs.iter() {
+                                    ui.vertical(|ui| {
+                                        ui.label(*label);
+                                        let param_value = param.value();
+                                        let mut current_value = param_value;
+                                        let response = ui.add(
+                                            AudioKnob::new(&mut current_value)
+                                                .range(-1.0..=1.0)
+                                                .drag_length(50.0)
+                                                .diameter(15.0),
+                                        );
+                                        if response.changed() && current_value != param_value {
+                                            setter.set_parameter(*param, current_value);
+                                        }
+                                    });
+                                    ui.add_space(2.0);
+                                }
+                                ui.separator();
+                                match error {
+                                    Some(err) => {
+                                        ui.label(format!("Error: {}", err));
+                                    }
+                                    None => {}
+                                }
+                            });
+                        });
+                    });
+                });
                 graph.update_root(egui_ctx);
-                if sound_result.is_none() || graph.state.user_state.active_node.is_playing() {
+                if !state.5 || graph.state.user_state.active_node.is_playing() {
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
                     match graph.state.user_state.vst_output_node_id {
                         Some(x) => {
@@ -322,17 +375,23 @@ impl Plugin for NodeSound {
                                         }
                                         Ok(x) => x,
                                     };
+                                    let sound_result = &mut match state.1.lock() {
+                                        Ok(x) => x,
+                                        Err(_x) => {
+                                            return;
+                                        }
+                                    };
                                     **sound_result = Some(sound);
+                                    state.5 = true;
                                 }
-                                Err(_err) => {
+                                Err(err) => {
+                                    *error = Some(format!("{:?}", err));
                                     graph.state._unserializeable_state.queue.clear();
-                                    **sound_result = None
                                 }
                             };
                         }
                         None => {
                             graph.state._unserializeable_state.queue.clear();
-                            **sound_result = None
                         }
                     }
                 }
@@ -357,7 +416,7 @@ impl Plugin for NodeSound {
     ) -> ProcessStatus {
         match self.sample_rate.try_lock() {
             Ok(mut x) => *x = context.transport().sample_rate,
-            Err(_x) => return ProcessStatus::KeepAlive,
+            Err(_x) => {}
         };
         let state = &match self.params.plugin_state.graph.lock() {
             Ok(x) => x,
@@ -369,11 +428,8 @@ impl Plugin for NodeSound {
         match self.bpm.try_lock() {
             Ok(mut x) => {
                 *x = context.transport().tempo.unwrap_or(120.0) as f32;
-                *x
             }
-            Err(_x) => {
-                return ProcessStatus::KeepAlive;
-            }
+            Err(_x) => {}
         };
         match state.user_state.files.try_lock() {
             Ok(x) => {
@@ -388,21 +444,18 @@ impl Plugin for NodeSound {
                     ));
                 }
             }
-            Err(_x) => {
-                return ProcessStatus::KeepAlive;
-            }
+            Err(_x) => {}
         }
         let automations = state._unserializeable_state.automations.0.clone();
         let input = state._unserializeable_state.input.0.clone();
         let size = buffer.samples();
         let output = buffer.as_slice();
-        let mut res = match self.sound_result.try_lock() {
+        let mut sound_result = match self.sound_result.try_lock() {
             Ok(x) => x,
             Err(_x) => {
                 return ProcessStatus::KeepAlive;
             }
-        }
-        .clone();
+        };
         for sample_idx in 0..size {
             match input.try_lock() {
                 Ok(mut x) => {
@@ -413,7 +466,6 @@ impl Plugin for NodeSound {
             }
             output[0][sample_idx] = 0.0;
             output[1][sample_idx] = 0.0;
-
             mkparamgetter!(a1, 0, self, automations);
             mkparamgetter!(a2, 1, self, automations);
             mkparamgetter!(a3, 2, self, automations);
@@ -432,15 +484,18 @@ impl Plugin for NodeSound {
             mkparamgetter!(a16, 15, self, automations);
             mkparamgetter!(a17, 16, self, automations);
             mkparamgetter!(a18, 17, self, automations);
-            match &mut res {
+            match &mut *sound_result {
                 Some(source) => {
                     let time_index = (sample_idx + self.total_idx) as f32;
                     let left_sample = source.next(time_index, 0).unwrap_or_default();
                     let right_sample = source.next(time_index, 1).unwrap_or_default();
-                    output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
-                    output[1][sample_idx] += right_sample.clamp(-1.0, 1.0);
+                    output[0][sample_idx] = left_sample.clamp(-1.0, 1.0);
+                    output[1][sample_idx] = right_sample.clamp(-1.0, 1.0);
                 }
-                None => {}
+                None => {
+                    output[0][sample_idx] = 0.0;
+                    output[1][sample_idx] = 0.0;
+                }
             }
         }
         self.total_idx = self.total_idx.wrapping_add(size);

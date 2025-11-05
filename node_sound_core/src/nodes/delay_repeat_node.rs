@@ -60,15 +60,16 @@ pub fn delay_repeat_node() -> SoundNode {
 }
 pub fn delay_repeat_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+    let delay = DelayRepeat::new(
+        cloned,
+        props.get_float("delay")?,
+        props.sample_rate(),
+        props.get_float("points")? as usize,
+    );
     Ok(BTreeMap::from([(
         "out".to_string(),
         ValueType::AudioSource {
-            value: props.push_sound(Box::new(DelayRepeat::new(
-                cloned,
-                props.get_float("delay")?,
-                props.sample_rate(),
-                props.get_float("points")? as usize,
-            ))),
+            value: props.push_sound(Box::new(delay)),
         },
     )]))
 }

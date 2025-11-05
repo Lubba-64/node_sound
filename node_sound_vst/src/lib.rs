@@ -1,3 +1,4 @@
+use egui_extras_xt::knobs::AudioKnob;
 use futures::executor;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor, egui};
@@ -14,8 +15,6 @@ use node_sound_core::{
     sound_map::GenericSource,
     sounds::{const_wave::ConstWave, speed::Speed},
 };
-use std::error::Error;
-use std::fmt::format;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -73,6 +72,9 @@ pub struct PluginPresetState {
     graph: Arc<Mutex<SoundNodeGraph>>,
 }
 
+unsafe impl Send for PluginPresetState {}
+unsafe impl Sync for PluginPresetState {}
+
 #[derive(Params)]
 pub struct NodeSoundParams {
     #[persist = "editor-state"]
@@ -88,6 +90,8 @@ pub struct NodeSoundParams {
     /// The amplitude envelope release time. This is the same for every voice.
     #[id = "amp_rel"]
     amp_release_ms: FloatParam,
+    #[id = "is_mono"]
+    is_mono: BoolParam,
     #[id = "a1"]
     pub a1: FloatParam,
     #[id = "a2"]
@@ -195,6 +199,7 @@ impl Default for NodeSoundParams {
         mkparam! {a18, "A18"}
 
         Self {
+            is_mono: BoolParam::new("Mono", false),
             editor_state: EguiState::from_size(1280, 720),
             plugin_state: PluginPresetState {
                 graph: Arc::new(Mutex::new(
@@ -527,9 +532,10 @@ impl Plugin for NodeSound {
                 false,
                 self.bpm.clone(),
                 None,
+                self.params.clone(),
             ),
             |_, _| {},
-            move |egui_ctx, _setter, state| {
+            move |egui_ctx, setter, state| {
                 let sound_result_id = &mut match state.3.lock() {
                     Ok(x) => x,
                     Err(_x) => {
@@ -556,15 +562,115 @@ impl Plugin for NodeSound {
                 };
                 let error: &mut Option<String> = &mut state.6;
                 graph.update_root(egui_ctx);
-                #[cfg(feature = "debug")]
-                egui::TopBottomPanel::top("top").show(egui_ctx, |ui| {
-                    egui::menu::bar(ui, |ui| match error {
-                        Some(x) => {
-                            ui.label(x.clone());
+
+                let mut gain = state.7.gain.value();
+                let mut attack = state.7.amp_attack_ms.value();
+                let mut release = state.7.amp_release_ms.value();
+                let mut mono = state.7.is_mono.value();
+
+                egui::TopBottomPanel::bottom("bottom").show(egui_ctx, |ui| {
+                    egui::menu::bar(ui, |ui| {
+                        let mono_color = if mono {
+                            ui.visuals().code_bg_color
+                        } else {
+                            ui.visuals().extreme_bg_color
+                        };
+                        if ui
+                            .add(
+                                egui::Button::new("Mono")
+                                    .fill(mono_color)
+                                    .min_size(egui::Vec2::new(60.0, 20.0)),
+                            )
+                            .clicked()
+                        {
+                            mono = !mono;
                         }
-                        _ => {}
+                        ui.label("Gain:");
+                        ui.add(
+                            AudioKnob::new(&mut gain)
+                                .range(util::db_to_gain(-36.0)..=util::db_to_gain(0.0))
+                                .drag_length(20.0)
+                                .diameter(20.0),
+                        );
+                        ui.separator();
+                        ui.label("Attack:");
+                        ui.add(
+                            AudioKnob::new(&mut attack)
+                                .range(0.0..=2000.0)
+                                .drag_length(20.0)
+                                .diameter(20.0),
+                        );
+                        ui.separator();
+                        ui.label("Release:");
+                        ui.add(
+                            AudioKnob::new(&mut release)
+                                .range(0.0..=2000.0)
+                                .drag_length(20.0)
+                                .diameter(20.0),
+                        );
+                        ui.separator();
+                        match error {
+                            Some(x) => {
+                                ui.label(x.clone());
+                            }
+                            _ => {}
+                        };
                     })
                 });
+                setter.set_parameter(&state.7.gain, gain);
+                setter.set_parameter(&state.7.amp_attack_ms, attack);
+                setter.set_parameter(&state.7.amp_release_ms, release);
+                setter.set_parameter(&state.7.is_mono, mono);
+
+                egui::TopBottomPanel::bottom("automations").show(egui_ctx, |ui| {
+                    egui::menu::bar(ui, |ui| {
+                        ui.label("Automations: ");
+                        egui::ScrollArea::horizontal().show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                let params = &state.7;
+                                let knobs = [
+                                    ("A1", &params.a1),
+                                    ("A2", &params.a2),
+                                    ("A3", &params.a3),
+                                    ("A4", &params.a4),
+                                    ("A5", &params.a5),
+                                    ("A6", &params.a6),
+                                    ("A7", &params.a7),
+                                    ("A8", &params.a8),
+                                    ("A9", &params.a9),
+                                    ("A10", &params.a10),
+                                    ("A11", &params.a11),
+                                    ("A12", &params.a12),
+                                    ("A13", &params.a13),
+                                    ("A14", &params.a14),
+                                    ("A15", &params.a15),
+                                    ("A16", &params.a16),
+                                    ("A17", &params.a17),
+                                    ("A18", &params.a18),
+                                ];
+
+                                for (label, param) in knobs.iter() {
+                                    ui.vertical(|ui| {
+                                        ui.label(*label);
+                                        let param_value = param.value();
+                                        let mut current_value = param_value;
+                                        let response = ui.add(
+                                            AudioKnob::new(&mut current_value)
+                                                .range(-1.0..=1.0)
+                                                .drag_length(50.0)
+                                                .diameter(15.0),
+                                        );
+                                        if response.changed() && current_value != param_value {
+                                            setter.set_parameter(*param, current_value);
+                                        }
+                                    });
+                                    ui.add_space(2.0);
+                                }
+                            });
+                        });
+                    });
+                });
+
                 // refreshes the graph state to fix bugs with DAW automations that if not refreshed will be null secretly...
                 if !state.4 {
                     state.4 = true;
@@ -912,15 +1018,24 @@ impl Plugin for NodeSound {
                     mkparamgetter!(a16, 15, self, automations);
                     mkparamgetter!(a17, 16, self, automations);
                     mkparamgetter!(a18, 17, self, automations);
-                    let time_index = (voice.voice_idx + sample_idx) as f32;
-                    let mut left_sample =
-                        voice.voice_source.next(time_index, 0).unwrap_or_default() * amp;
-                    let mut right_sample =
-                        voice.voice_source.next(time_index, 1).unwrap_or_default() * amp;
-                    left_sample /= active_voices;
-                    right_sample /= active_voices;
-                    output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
-                    output[1][sample_idx] += right_sample.clamp(-1.0, 1.0);
+                    if self.params.is_mono.value() {
+                        let time_index = (voice.voice_idx + sample_idx) as f32;
+                        let mut left_sample =
+                            voice.voice_source.next(time_index, 0).unwrap_or_default() * amp;
+                        left_sample /= active_voices;
+                        output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
+                        output[1][sample_idx] += left_sample.clamp(-1.0, 1.0);
+                    } else {
+                        let time_index = (voice.voice_idx + sample_idx) as f32;
+                        let mut left_sample =
+                            voice.voice_source.next(time_index, 0).unwrap_or_default() * amp;
+                        let mut right_sample =
+                            voice.voice_source.next(time_index, 1).unwrap_or_default() * amp;
+                        left_sample /= active_voices;
+                        right_sample /= active_voices;
+                        output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
+                        output[1][sample_idx] += right_sample.clamp(-1.0, 1.0);
+                    }
                 }
             }
 

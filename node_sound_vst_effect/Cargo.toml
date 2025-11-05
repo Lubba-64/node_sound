@@ -1,6 +1,6 @@
 [package]
 name = "node_sound_vst_effect"
-version = "5.2.0"
+version = "5.3.1"
 edition = "2024"
 authors = ["Lubba64"]
 
@@ -8,14 +8,16 @@ authors = ["Lubba64"]
 crate-type = ["cdylib"]
 
 [dependencies]
-nih_plug = { git = "https://github.com/robbert-vdh/nih-plug", rev = "d64b2ab"}
-nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug", rev = "d64b2ab" }
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug" }
+nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug" }
 node_sound_core = { version = "*", path = "../node_sound_core"}
 crossbeam = "0.8.4"
 lock_api = "0.4.12"
 ron = "0.8.1"
-rodio = "0.19.0"
 ezing = "0.2.1"
 futures = "0.3.30"
 rfd = { version = "0.14.1", features = ["file-handle-inner"] }
-
+egui = "0.31.1"
+egui_extras_xt = { version = "*", git = "https://github.com/xTibor/egui_extras_xt.git", features = [
+  "knobs",
+] }
