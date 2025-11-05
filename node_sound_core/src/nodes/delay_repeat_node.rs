@@ -65,7 +65,6 @@ pub fn delay_repeat_logic(mut props: SoundNodeProps) -> SoundNodeResult {
         props.get_float("delay")?,
         props.sample_rate(),
         props.get_float("points")? as usize,
-        &mut props.state._unserializeable_state.buffers,
     );
     Ok(BTreeMap::from([(
         "out".to_string(),

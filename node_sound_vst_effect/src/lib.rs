@@ -344,7 +344,6 @@ impl Plugin for NodeSound {
                                 ._unserializeable_state
                                 .queue
                                 .set_sample_rate(**sample_rate);
-                            graph.state._unserializeable_state.buffers.clear();
                             graph.state.user_state.wavetables.clear();
                             graph.state._unserializeable_state.queue.set_note_speed(1.0);
                             graph
@@ -456,8 +455,7 @@ impl Plugin for NodeSound {
             Err(_x) => {
                 return ProcessStatus::KeepAlive;
             }
-        }
-        .clone();
+        };
         for sample_idx in 0..size {
             match input.try_lock() {
                 Ok(mut x) => {
@@ -486,7 +484,7 @@ impl Plugin for NodeSound {
             mkparamgetter!(a16, 15, self, automations);
             mkparamgetter!(a17, 16, self, automations);
             mkparamgetter!(a18, 17, self, automations);
-            match &mut sound_result {
+            match &mut *sound_result {
                 Some(source) => {
                     let time_index = (sample_idx + self.total_idx) as f32;
                     let left_sample = source.next(time_index, 0).unwrap_or_default();
