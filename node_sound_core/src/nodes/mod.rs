@@ -42,6 +42,7 @@ pub mod duration_node;
 pub mod eq_node;
 pub mod file_node;
 pub mod flip_node;
+pub mod fm_operator_node;
 pub mod fm_synth_node;
 pub mod hold_node;
 pub mod input_node;
@@ -435,6 +436,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             fm_synth_node::fm_synth_node(),
             Box::new(fm_synth_node::fm_synth_logic),
+        ),
+        (
+            fm_operator_node::fm_operator_node(),
+            Box::new(fm_operator_node::fm_operator_logic),
         ),
         (
             wave_folder_node::wave_folder_node(),
