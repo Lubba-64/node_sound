@@ -47,11 +47,11 @@ impl<I: DawSource + Clone> RandomDuration<I> {
 
 impl<I: DawSource + Clone> DawSource for RandomDuration<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
-        if index < self.last_index {
+        if index / self.speed < self.last_index {
             self.next_duration();
         }
         self.last_index = index;
-        if index > self.sample_rate * self.duration * self.speed {
+        if index / self.speed > self.sample_rate * self.duration * self.speed {
             None
         } else {
             self.source.next(index, channel)

@@ -18,11 +18,13 @@ pub mod after_node;
 pub mod amplify_node;
 pub mod automated_clamp_node;
 pub mod automated_delay_repeat_node;
+pub mod automated_duration_node;
 pub mod automated_hold_node;
 pub mod automated_mod_node;
 pub mod automated_mod_raw_node;
 pub mod automated_sawtooth_node;
 pub mod automated_sine_node;
+pub mod automated_skip_node;
 pub mod automated_speed_node;
 pub mod automated_square_node;
 pub mod automated_translate_node;
@@ -415,6 +417,14 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             automated_delay_repeat_node::automated_delay_repeat_node(),
             Box::new(automated_delay_repeat_node::automated_delay_repeat_logic),
+        ),
+        (
+            automated_duration_node::automated_duration_node(),
+            Box::new(automated_duration_node::automated_duration_logic),
+        ),
+        (
+            automated_skip_node::automated_skip_node(),
+            Box::new(automated_skip_node::automated_skip_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

@@ -20,9 +20,8 @@ impl<S: DawSource> Duration<S> {
 }
 
 impl<I: DawSource + Clone> DawSource for Duration<I> {
-    fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
-        index /= self.speed;
-        if index > self.sample_rate * self.duration {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        if index / self.speed > self.sample_rate * self.duration {
             None
         } else {
             self.source.next(index, channel)
