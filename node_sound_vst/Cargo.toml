@@ -16,7 +16,6 @@ lock_api = "0.4.12"
 ron = "0.8.1"
 rodio = "0.19.0"
 ezing = "0.2.1"
-futures = "0.3.30"
 rfd = { version = "0.14.1", features = ["file-handle-inner"] }
 egui = "0.31.1"
 egui_extras_xt = { version = "*", git = "https://github.com/xTibor/egui_extras_xt.git", features = [

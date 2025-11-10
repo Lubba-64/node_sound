@@ -1,5 +1,4 @@
 use egui_extras_xt::knobs::AudioKnob;
-use futures::executor;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
 use node_sound_core::sound_map::DawSource;
@@ -20,6 +19,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 use util::midi_note_to_freq;
+
+use crate::presets::PRESETS;
+mod presets;
 
 const NUM_VOICES: u32 = 16;
 const GAIN_POLY_MOD_ID: u32 = 0;
@@ -81,6 +83,8 @@ pub struct NodeSoundParams {
     editor_state: Arc<EguiState>,
     #[persist = "editor-preset"]
     plugin_state: PluginPresetState,
+    #[persist = "preset"]
+    current_preset: Arc<Mutex<usize>>,
     /// A voice's gain. This can be polyphonically modulated.
     #[id = "gain"]
     gain: FloatParam,
@@ -199,6 +203,7 @@ impl Default for NodeSoundParams {
         mkparam! {a18, "A18"}
 
         Self {
+            current_preset: Arc::new(Mutex::new(0)),
             is_mono: BoolParam::new("Mono", false),
             editor_state: EguiState::from_size(1280, 720),
             plugin_state: PluginPresetState {
@@ -560,6 +565,14 @@ impl Plugin for NodeSound {
                         return;
                     }
                 };
+                let mut current_preset = {
+                    match state.7.current_preset.lock() {
+                        Ok(current) => current,
+                        Err(_) => {
+                            return;
+                        }
+                    }
+                };
                 let error: &mut Option<String> = &mut state.6;
                 graph.update_root(egui_ctx);
 
@@ -608,6 +621,41 @@ impl Plugin for NodeSound {
                                 .drag_length(20.0)
                                 .diameter(20.0),
                         );
+                        ui.separator();
+                        ui.label("Presets:");
+                        let mut changed = false;
+                        ui.horizontal(|ui| {
+                            if ui.button("◀").clicked() {
+                                if *current_preset - 1 <= 0 {
+                                    *current_preset = PRESETS.len() - 1;
+                                } else {
+                                    *current_preset -= 1;
+                                }
+                                changed = true;
+                            }
+                            ui.label(PRESETS[*current_preset].unwrap_or(("None", "")).0);
+                            if ui.button("▶").clicked() {
+                                if *current_preset + 1 >= PRESETS.len() {
+                                    *current_preset = 0;
+                                } else {
+                                    *current_preset += 1;
+                                }
+                                changed = true;
+                            }
+                        });
+                        if changed {
+                            match PRESETS[*current_preset] {
+                                Some(x) => match ron::de::from_str(x.1) {
+                                    Ok(x) => {
+                                        delete_nodes(&mut graph.state.editor_state, true);
+                                        paste(&mut graph.state.editor_state, None, x);
+                                        **sound_result_id = None;
+                                    }
+                                    Err(_x) => {}
+                                },
+                                _ => {}
+                            }
+                        }
                         ui.separator();
                         match error {
                             Some(x) => {
@@ -676,7 +724,7 @@ impl Plugin for NodeSound {
                     state.4 = true;
                     let copy_state = copy(&mut graph.state.editor_state, true);
                     delete_nodes(&mut graph.state.editor_state, true);
-                    executor::block_on(paste(&mut graph.state.editor_state, None, copy_state));
+                    paste(&mut graph.state.editor_state, None, copy_state)
                 }
                 if sound_result_id.is_none() || graph.state.user_state.active_node.is_playing() {
                     let mut clear = false;

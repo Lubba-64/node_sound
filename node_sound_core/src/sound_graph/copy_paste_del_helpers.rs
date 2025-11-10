@@ -104,11 +104,14 @@ pub fn copy(state: &mut SoundGraphEditorState, all: bool) -> ClipboardData {
     return clipboard_data;
 }
 
-pub async fn paste(
-    state: &mut SoundGraphEditorState,
-    cursor_pos: Option<Vec2>,
-    data: ClipboardData,
-) {
+pub fn select_all(state: &mut SoundGraphEditorState) {
+    state.selected_nodes = (&state.graph.nodes)
+        .into_iter()
+        .map(|(node_id, _)| node_id)
+        .collect();
+}
+
+pub fn paste(state: &mut SoundGraphEditorState, cursor_pos: Option<Vec2>, data: ClipboardData) {
     let mut ids = vec![];
     for (node, node_pos) in data.nodes.clone() {
         let mut _id = Default::default();

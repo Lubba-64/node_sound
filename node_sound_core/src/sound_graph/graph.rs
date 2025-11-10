@@ -3,7 +3,7 @@ use super::float_selector;
 use super::graph_types::InputValueConfig;
 use super::wave_table_graph::wave_table_graph;
 use crate::nodes::{NodeDefinitions, SoundNode, SoundNodeProps};
-use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
+use crate::sound_graph::copy_paste_del_helpers::{ClipboardData, select_all};
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::note::{Note, NoteSpeed};
 use crate::sound_graph::themes::AppTheme;
@@ -13,7 +13,6 @@ use crate::sounds::wave_table::WaveTableManager;
 use eframe::egui::{self, ComboBox, DragValue, Vec2, Widget};
 use eframe::egui::{Checkbox, Pos2, WidgetText};
 pub use egui_node_graph_2::*;
-use futures::executor;
 pub use rodio::source::Zero;
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
@@ -499,6 +498,7 @@ impl SoundNodeGraph {
 
     pub fn update_root(&mut self, ctx: &egui::Context) {
         self.update_output_node();
+        let mut select_all_nodes = false;
         self.state.user_state.current_theme.apply_theme(ctx);
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -539,10 +539,13 @@ impl SoundNodeGraph {
                     let data: ClipboardData =
                         ron::de::from_str(&clipboard.get().text().expect("clipboard read failed"))
                             .expect("expect deserialize to work...");
-                    executor::block_on(paste(&mut self.state.editor_state, Some(input_vec2), data));
+                    paste(&mut self.state.editor_state, Some(input_vec2), data)
                 }
                 if ui.add(egui::Button::new("delete selected")).clicked() {
                     delete_nodes(&mut self.state.editor_state, false);
+                }
+                if ui.add(egui::Button::new("select all")).clicked() {
+                    select_all_nodes = true;
                 }
             });
         });
@@ -553,10 +556,14 @@ impl SoundNodeGraph {
                     ui,
                     NodeDefinitionsUi(&self.state._unserializeable_state.node_definitions),
                     &mut self.state.user_state,
-                    Vec::default(),
+                    Vec::new(),
                 )
             })
             .inner;
+
+        if select_all_nodes {
+            select_all(&mut self.state.editor_state);
+        }
 
         for node_response in graph_response.node_responses {
             if let NodeResponse::User(user_event) = node_response {
