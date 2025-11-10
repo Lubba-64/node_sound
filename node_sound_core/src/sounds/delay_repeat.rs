@@ -36,11 +36,13 @@ impl<I: DawSource + Clone> DawSource for DelayRepeat<I> {
             (0..self.points)
                 .into_iter()
                 .map(|point| {
-                    deque[if point == 0 {
+                    let read_index = if point == 0 {
                         0
                     } else {
                         (total_size / self.points) * point
-                    }] / (self.points as f32 / (self.points - point) as f32)
+                    }
+                    .min(total_size - 1);
+                    deque[read_index] / (self.points as f32 / (self.points - point) as f32)
                 })
                 .sum::<f32>(),
         )

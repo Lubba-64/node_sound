@@ -17,6 +17,7 @@ pub mod abs_node;
 pub mod after_node;
 pub mod amplify_node;
 pub mod automated_clamp_node;
+pub mod automated_delay_repeat_node;
 pub mod automated_hold_node;
 pub mod automated_mod_node;
 pub mod automated_mod_raw_node;
@@ -410,6 +411,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             wave_folder_node::wave_folder_node(),
             Box::new(wave_folder_node::wave_folder_logic),
+        ),
+        (
+            automated_delay_repeat_node::automated_delay_repeat_node(),
+            Box::new(automated_delay_repeat_node::automated_delay_repeat_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(
