@@ -279,6 +279,8 @@ pub struct AutomatedWaveTableOscillator<F: DawSource> {
     pub duration_seconds: f32,
     pub speed: f32,
     pub uses_speed: bool,
+    last_index: f32,
+    adjusted_index: f32,
 }
 
 impl<F: DawSource> AutomatedWaveTableOscillator<F> {
@@ -302,6 +304,8 @@ impl<F: DawSource> AutomatedWaveTableOscillator<F> {
             duration_seconds,
             speed: if uses_speed { speed } else { 1.0 },
             uses_speed: uses_speed,
+            last_index: 0.0,
+            adjusted_index: 0.0,
         }
     }
 
@@ -310,12 +314,8 @@ impl<F: DawSource> AutomatedWaveTableOscillator<F> {
     }
 
     fn get_sample(&mut self, index: f32, channel: u8) -> Option<f32> {
-        let speed_adjusted_index = index * self.playback_rate(index, channel);
-
-        if speed_adjusted_index >= self.duration_seconds * self.sample_rate {
-            return None;
-        }
-
+        self.adjusted_index += (index - self.last_index) * self.playback_rate(index, channel);
+        self.last_index = index;
         let table = match channel {
             0 => &self.left_table,
             1 => &self.right_table,
@@ -325,15 +325,10 @@ impl<F: DawSource> AutomatedWaveTableOscillator<F> {
         if table.is_empty() {
             return None;
         }
-
-        let truncated_index = speed_adjusted_index as usize;
-
-        if truncated_index >= table.len() - 1 {
-            return Some(table[table.len() - 1]);
-        }
-
-        let next_index = truncated_index + 1;
-        let next_index_weight = speed_adjusted_index - truncated_index as f32;
+        let adjusted_index = self.adjusted_index % (table.len() - 1) as f32;
+        let truncated_index = adjusted_index as usize % (table.len() - 1);
+        let next_index = (truncated_index + 1) % (table.len() - 1);
+        let next_index_weight = adjusted_index - truncated_index as f32;
         let truncated_index_weight = 1.0 - next_index_weight;
 
         Some(
