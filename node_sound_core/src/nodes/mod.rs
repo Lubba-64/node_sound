@@ -45,6 +45,8 @@ pub mod duration_node;
 pub mod eq_node;
 pub mod file_node;
 pub mod flip_node;
+pub mod glitch_node;
+pub mod grain_node;
 pub mod hold_node;
 pub mod input_node;
 pub mod lfo_node;
@@ -425,6 +427,11 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             automated_skip_node::automated_skip_node(),
             Box::new(automated_skip_node::automated_skip_logic),
+        ),
+        (grain_node::grain_node(), Box::new(grain_node::grain_logic)),
+        (
+            glitch_node::glitch_node(),
+            Box::new(glitch_node::glitch_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

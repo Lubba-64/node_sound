@@ -28,6 +28,8 @@ pub mod delay_repeat;
 pub mod duration;
 pub mod eq;
 pub mod flip;
+pub mod glitch;
+pub mod grain;
 pub mod hold;
 pub mod input;
 pub mod lfo;
