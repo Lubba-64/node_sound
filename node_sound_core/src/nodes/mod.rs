@@ -36,6 +36,7 @@ pub mod bit_crush_node;
 pub mod bpm_sync_node;
 pub mod bpm_sync_source_node;
 pub mod clamp_node;
+pub mod clamp_to_note_node;
 pub mod const_node;
 pub mod daw_automation_mix_node;
 pub mod daw_automation_source_node;
@@ -432,6 +433,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             glitch_node::glitch_node(),
             Box::new(glitch_node::glitch_logic),
+        ),
+        (
+            clamp_to_note_node::clamp_to_note_node(),
+            Box::new(clamp_to_note_node::clamp_to_note_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(

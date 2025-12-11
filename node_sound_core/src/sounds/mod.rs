@@ -19,6 +19,7 @@ pub mod bit_crush;
 pub mod bpm_sync;
 pub mod bpm_sync_source;
 pub mod clamp;
+pub mod clamp_to_note;
 pub mod cloneable_decoder;
 pub mod const_wave;
 pub mod daw_automation_mix;
