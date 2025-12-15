@@ -1,6 +1,7 @@
 pub mod abs;
 pub mod after;
 pub mod amplify;
+pub mod automated_bpm_sync;
 pub mod automated_clamp;
 pub mod automated_delay_repeat;
 pub mod automated_duration;

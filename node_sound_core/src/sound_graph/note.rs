@@ -367,6 +367,62 @@ pub enum NoteSpeed {
     SixtyFourthDotted,
 }
 
+#[derive(Clone, Serialize, Deserialize, Debug, Default, PartialEq)]
+pub enum NoteSpeedType {
+    Any,
+    #[default]
+    Normal,
+    Dotted,
+    Triplet,
+}
+
+impl ToString for NoteSpeedType {
+    fn to_string(&self) -> String {
+        match self {
+            NoteSpeedType::Any => "Any".to_string(),
+            NoteSpeedType::Normal => "Normal".to_string(),
+            NoteSpeedType::Dotted => "Dotted".to_string(),
+            NoteSpeedType::Triplet => "Triplet".to_string(),
+        }
+    }
+}
+
+impl FromStr for NoteSpeedType {
+    type Err = std::io::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Any" => NoteSpeedType::Any,
+            "Normal" => NoteSpeedType::Normal,
+            "Dotted" => NoteSpeedType::Dotted,
+            "Triplet" => NoteSpeedType::Triplet,
+            _ => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Incorrect from_str value",
+                ));
+            }
+        })
+    }
+}
+
+impl NoteSpeedType {
+    pub const ALL: [NoteSpeedType; 4] = [
+        NoteSpeedType::Any,
+        NoteSpeedType::Normal,
+        NoteSpeedType::Dotted,
+        NoteSpeedType::Triplet,
+    ];
+
+    pub fn get_beats_type(&self) -> Vec<NoteSpeed> {
+        match self {
+            NoteSpeedType::Any => NoteSpeed::ALL.to_vec(),
+            NoteSpeedType::Normal => NoteSpeed::ALL_NORMAL.to_vec(),
+            NoteSpeedType::Dotted => NoteSpeed::ALL_DOTTED.to_vec(),
+            NoteSpeedType::Triplet => NoteSpeed::ALL_TRIPLET.to_vec(),
+        }
+    }
+}
+
 impl ToString for NoteSpeed {
     fn to_string(&self) -> String {
         match self {
@@ -453,6 +509,33 @@ impl NoteSpeed {
         NoteSpeed::SixtyFourthTriplet,
         NoteSpeed::SixtyFourth,
         NoteSpeed::SixtyFourthDotted,
+    ];
+    pub const ALL_NORMAL: [NoteSpeed; 7] = [
+        NoteSpeed::Whole,
+        NoteSpeed::Half,
+        NoteSpeed::Quarter,
+        NoteSpeed::Eighth,
+        NoteSpeed::Sixteenth,
+        NoteSpeed::ThirtySecond,
+        NoteSpeed::SixtyFourth,
+    ];
+    pub const ALL_DOTTED: [NoteSpeed; 7] = [
+        NoteSpeed::WholeDotted,
+        NoteSpeed::HalfDotted,
+        NoteSpeed::QuarterDotted,
+        NoteSpeed::EighthDotted,
+        NoteSpeed::SixteenthDotted,
+        NoteSpeed::ThirtySecondDotted,
+        NoteSpeed::SixtyFourthDotted,
+    ];
+    pub const ALL_TRIPLET: [NoteSpeed; 7] = [
+        NoteSpeed::WholeTriplet,
+        NoteSpeed::HalfTriplet,
+        NoteSpeed::QuarterTriplet,
+        NoteSpeed::EighthTriplet,
+        NoteSpeed::SixteenthTriplet,
+        NoteSpeed::ThirtySecondTriplet,
+        NoteSpeed::SixtyFourthTriplet,
     ];
 
     pub fn get_beats(&self) -> f32 {

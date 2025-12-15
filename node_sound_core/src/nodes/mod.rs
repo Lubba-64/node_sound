@@ -16,6 +16,7 @@ use synthrs::midi::MidiSong;
 pub mod abs_node;
 pub mod after_node;
 pub mod amplify_node;
+pub mod automated_bpm_sync_node;
 pub mod automated_clamp_node;
 pub mod automated_delay_repeat_node;
 pub mod automated_duration_node;
@@ -437,6 +438,10 @@ pub fn get_nodes() -> NodeDefinitions {
         (
             clamp_to_note_node::clamp_to_note_node(),
             Box::new(clamp_to_note_node::clamp_to_note_logic),
+        ),
+        (
+            automated_bpm_sync_node::automated_bpm_sync_node(),
+            Box::new(automated_bpm_sync_node::automated_bpm_sync_logic),
         ),
     ];
     NodeDefinitions(BTreeMap::from_iter(
