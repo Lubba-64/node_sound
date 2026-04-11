@@ -1,6 +1,6 @@
 [package]
 name = "node_sound_core"
-version = "5.4.1"
+version = "5.5.0"
 authors = ["Lubba64"]
 edition = "2024"
 
@@ -21,7 +21,7 @@ realfft = "3.3.0"
 itertools = "0.13.0"
 futures = "0.3.30"
 tokio = { version = "1.38.0", features = ["time"] }
-open = { version = "5.1.4"}
+open = { version = "5.1.4" }
 synthrs = { version = "0.1.0", git = "https://github.com/Lubba-64/synthrs.git", features = [
   "ser",
 ] }
