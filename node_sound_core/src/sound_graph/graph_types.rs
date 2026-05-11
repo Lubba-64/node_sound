@@ -1,11 +1,11 @@
+use crate::error::Result;
+use crate::{sound_graph::note::Pitch, sounds::tracker::TrackerNote};
+use anyhow::anyhow;
 use egui_node_graph_2::InputParamKind;
-use std::time::Duration;
-
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use std::time::Duration;
 use synthrs::midi::MidiSong;
-
-use crate::{sound_graph::note::Pitch, sounds::tracker::TrackerNote};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum DataType {
@@ -152,15 +152,15 @@ impl Debug for ValueType {
 
 impl ValueType {
     /// Tries to downcast this value type to a vector
-    pub fn try_to_source(self) -> Result<usize, String> {
+    pub fn try_to_source(self) -> Result<usize> {
         match self {
             ValueType::AudioSource { value } => Ok(value),
-            _ => Err("invalid cast".to_string()),
+            _ => Err(anyhow!("invalid cast").into()),
         }
     }
 
     /// Tries to downcast this value type to a scalar
-    pub fn try_to_float(self) -> Result<f32, String> {
+    pub fn try_to_float(self) -> Result<f32> {
         match self {
             ValueType::Float {
                 value,
@@ -168,37 +168,37 @@ impl ValueType {
                 max: _,
                 note: _,
             } => Ok(value),
-            _ => Err("invalid cast".to_string()),
+            _ => Err(anyhow!("invalid cast").into()),
         }
     }
 
-    pub fn try_to_duration(self) -> Result<Duration, String> {
+    pub fn try_to_duration(self) -> Result<Duration> {
         match self {
             ValueType::Duration { value } => Ok(value),
-            _ => Err("invalid cast".to_string()),
+            _ => Err(anyhow!("invalid cast").into()),
         }
     }
 
-    pub fn try_to_bool(self) -> Result<bool, String> {
+    pub fn try_to_bool(self) -> Result<bool> {
         match self {
             ValueType::Bool { value } => Ok(value),
-            _ => Err("invalid cast".to_string()),
+            _ => Err(anyhow!("invalid cast").into()),
         }
     }
 
-    pub fn try_to_file(self) -> Result<Option<(String, Vec<u8>)>, String> {
+    pub fn try_to_file(self) -> Result<Option<(String, Vec<u8>)>> {
         match self {
             ValueType::AudioFile { value } => Ok(value),
-            _ => Err("invalid cast".to_string()),
+            _ => Err(anyhow!("invalid cast").into()),
         }
     }
-    pub fn try_to_midi(self) -> Result<Option<(String, MidiSong)>, String> {
+    pub fn try_to_midi(self) -> Result<Option<(String, MidiSong)>> {
         match self {
             ValueType::MidiFile { value } => Ok(value),
-            _ => Err("invalid cast".to_string()),
+            _ => Err(anyhow!("invalid cast").into()),
         }
     }
-    pub fn try_to_graph(self) -> Result<Option<Vec<f32>>, String> {
+    pub fn try_to_graph(self) -> Result<Option<Vec<f32>>> {
         match self {
             ValueType::Graph {
                 value,
@@ -206,21 +206,21 @@ impl ValueType {
                 width: _,
                 height: _,
             } => Ok(value),
-            _ => Err("invalid cast".to_string()),
+            _ => Err(anyhow!("invalid cast").into()),
         }
     }
 
-    pub fn try_to_dropdown(self) -> Result<String, String> {
+    pub fn try_to_dropdown(self) -> Result<String> {
         match self {
             ValueType::Dropdown { value, values: _ } => Ok(value),
-            _ => Err("invalid cast".to_string()),
+            _ => Err(anyhow!("invalid cast").into()),
         }
     }
 
-    pub fn try_to_tracker(self) -> Result<Vec<TrackerNote>, String> {
+    pub fn try_to_tracker(self) -> Result<Vec<TrackerNote>> {
         match self {
             ValueType::TrackerNotes { notes } => Ok(notes),
-            _ => Err("invalid cast".to_string()),
+            _ => Err(anyhow!("invalid cast").into()),
         }
     }
 }

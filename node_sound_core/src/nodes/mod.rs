@@ -1,3 +1,4 @@
+use crate::error::Result;
 use crate::{
     sound_graph::{
         graph::SoundNodeGraphState,
@@ -96,7 +97,7 @@ impl<'a> SoundNodeProps<'a> {
         self.state._unserializeable_state.queue.push_sound(sound)
     }
 
-    fn clone_sound(&mut self, idx: usize) -> Result<GenericSoundNode, Box<dyn std::error::Error>> {
+    fn clone_sound(&mut self, idx: usize) -> Result<GenericSoundNode> {
         self.state._unserializeable_state.queue.clone_sound(idx)
     }
 
@@ -125,7 +126,7 @@ impl<'a> SoundNodeProps<'a> {
         self.state._unserializeable_state.queue.get_bpm()
     }
 
-    fn get_float(&self, name: &str) -> Result<f32, Box<dyn std::error::Error>> {
+    fn get_float(&self, name: &str) -> Result<f32> {
         Ok(self
             .inputs
             .get(name)
@@ -133,7 +134,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_float()?)
     }
-    fn get_bool(&self, name: &str) -> Result<bool, Box<dyn std::error::Error>> {
+    fn get_bool(&self, name: &str) -> Result<bool> {
         Ok(self
             .inputs
             .get(name)
@@ -141,7 +142,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_bool()?)
     }
-    fn get_source(&self, name: &str) -> Result<usize, Box<dyn std::error::Error>> {
+    fn get_source(&self, name: &str) -> Result<usize> {
         Ok(self
             .inputs
             .get(name)
@@ -149,7 +150,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_source()?)
     }
-    fn get_duration(&self, name: &str) -> Result<Duration, Box<dyn std::error::Error>> {
+    fn get_duration(&self, name: &str) -> Result<Duration> {
         Ok(self
             .inputs
             .get(name)
@@ -157,10 +158,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_duration()?)
     }
-    fn get_file(
-        &self,
-        name: &str,
-    ) -> Result<Option<(String, Vec<u8>)>, Box<dyn std::error::Error>> {
+    fn get_file(&self, name: &str) -> Result<Option<(String, Vec<u8>)>> {
         Ok(self
             .inputs
             .get(name)
@@ -168,10 +166,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_file()?)
     }
-    fn get_midi(
-        &self,
-        name: &str,
-    ) -> Result<Option<(String, MidiSong)>, Box<dyn std::error::Error>> {
+    fn get_midi(&self, name: &str) -> Result<Option<(String, MidiSong)>> {
         Ok(self
             .inputs
             .get(name)
@@ -179,7 +174,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_midi()?)
     }
-    fn get_graph(&self, name: &str) -> Result<Option<Vec<f32>>, Box<dyn std::error::Error>> {
+    fn get_graph(&self, name: &str) -> Result<Option<Vec<f32>>> {
         Ok(self
             .inputs
             .get(name)
@@ -187,7 +182,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_graph()?)
     }
-    fn get_dropdown(&self, name: &str) -> Result<String, Box<dyn std::error::Error>> {
+    fn get_dropdown(&self, name: &str) -> Result<String> {
         Ok(self
             .inputs
             .get(name)
@@ -195,7 +190,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_dropdown()?)
     }
-    fn get_tracker(&self, name: &str) -> Result<Vec<TrackerNote>, Box<dyn std::error::Error>> {
+    fn get_tracker(&self, name: &str) -> Result<Vec<TrackerNote>> {
         Ok(self
             .inputs
             .get(name)
@@ -212,9 +207,8 @@ pub struct SoundNodeMetadata {
     pub inputs: BTreeMap<String, InputParameter>,
     pub outputs: BTreeMap<String, Output>,
 }
-type SoundNodeOp =
-    fn(SoundNodeProps) -> Result<BTreeMap<String, ValueType>, Box<dyn std::error::Error>>;
-type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::Error>>;
+type SoundNodeOp = fn(SoundNodeProps) -> Result<BTreeMap<String, ValueType>>;
+type SoundNodeResult = Result<BTreeMap<String, ValueType>>;
 
 #[derive(Clone)]
 pub struct NodeDefinitions(pub BTreeMap<String, (SoundNodeMetadata, Box<SoundNodeOp>)>);

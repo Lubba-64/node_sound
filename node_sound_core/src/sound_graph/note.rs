@@ -1,6 +1,6 @@
-use std::str::FromStr;
-
+use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Clone, Serialize, Deserialize, Default, PartialEq, Eq, Hash, Debug)]
 pub enum Note {
@@ -388,7 +388,7 @@ impl ToString for NoteSpeedType {
 }
 
 impl FromStr for NoteSpeedType {
-    type Err = std::io::Error;
+    type Err = crate::error::NodeSoundError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "Any" => NoteSpeedType::Any,
@@ -396,10 +396,7 @@ impl FromStr for NoteSpeedType {
             "Dotted" => NoteSpeedType::Dotted,
             "Triplet" => NoteSpeedType::Triplet,
             _ => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Incorrect from_str value",
-                ));
+                return Err(anyhow!("Incorrect from_str value").into());
             }
         })
     }
@@ -452,7 +449,7 @@ impl ToString for NoteSpeed {
 }
 
 impl FromStr for NoteSpeed {
-    type Err = std::io::Error;
+    type Err = crate::error::NodeSoundError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "1 triplet" => NoteSpeed::WholeTriplet,
@@ -477,10 +474,7 @@ impl FromStr for NoteSpeed {
             "1/64" => NoteSpeed::SixtyFourth,
             "1/64." => NoteSpeed::SixtyFourthDotted,
             _ => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Incorrect from_str value",
-                ));
+                return Err(anyhow!("Incorrect from_str value").into());
             }
         })
     }

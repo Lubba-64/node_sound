@@ -2,6 +2,7 @@ use super::copy_paste_del_helpers::{copy, delete_nodes, paste};
 use super::float_selector;
 use super::graph_types::InputValueConfig;
 use super::wave_table_graph::wave_table_graph;
+use crate::error::Result;
 use crate::nodes::{NodeDefinitions, SoundNodeMetadata, SoundNodeProps};
 use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
@@ -10,6 +11,7 @@ use crate::sound_graph::themes::AppTheme;
 use crate::sound_map::SoundQueue;
 use crate::sounds::tracker::TrackerNote;
 use crate::sounds::wave_table::WaveTableManager;
+use anyhow::anyhow;
 use eframe::egui::{self, ComboBox, DragValue, Vec2, Widget};
 use eframe::egui::{Checkbox, Pos2, WidgetText};
 pub use egui_node_graph_2::*;
@@ -261,7 +263,7 @@ impl WidgetValueTrait for ValueType {
                     let dropdown = ComboBox::new(format!("combobox_{}", param_name), "")
                         .selected_text(value.clone())
                         .width(100.0)
-                        .show_ui(ui, |ui| -> Result<String, ()> {
+                        .show_ui(ui, |ui| -> Result<String> {
                             for value in values {
                                 if ui
                                     .add(eframe::egui::Button::new(value.to_string()))
@@ -270,10 +272,10 @@ impl WidgetValueTrait for ValueType {
                                     return Ok(value.to_string());
                                 }
                             }
-                            return Err(());
+                            return Err(anyhow!("No value selected").into());
                         })
                         .inner
-                        .unwrap_or(Err(()));
+                        .unwrap_or(Err(anyhow!("No value selected").into()));
                     match dropdown {
                         Err(_x) => {}
                         Ok(x) => *value = x,
@@ -580,15 +582,12 @@ pub fn evaluate_node<'a>(
     outputs_cache: &mut OutputsCache,
     all_nodes: &NodeDefinitions,
     state: &'a mut SoundNodeGraphState,
-) -> Result<ValueType, Box<dyn std::error::Error>> {
+) -> Result<ValueType> {
     let node = match all_nodes.0.get(
         &match graph.nodes.get(node_id) {
             Some(x) => x,
             None => {
-                return Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Node Deref Failed: Failed to get Node Data",
-                )));
+                return Err(anyhow!("Node Deref Failed: Failed to get Node Data").into());
             }
         }
         .user_data
@@ -596,10 +595,7 @@ pub fn evaluate_node<'a>(
     ) {
         Some(x) => x,
         None => {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Node Deref Failed: Failed to get Node from all_nodes",
-            )));
+            return Err(anyhow!("Node Deref Failed: Failed to get Node from all_nodes").into());
         }
     };
 
@@ -616,10 +612,7 @@ pub fn evaluate_node<'a>(
             ),
         )
     };
-    let input_to_name_res: HashMap<
-        std::string::String,
-        Result<ValueType, Box<dyn std::error::Error>>,
-    > = HashMap::from_iter(
+    let input_to_name_res: HashMap<std::string::String, Result<ValueType>> = HashMap::from_iter(
         node.0
             .inputs
             .iter()
@@ -632,7 +625,7 @@ pub fn evaluate_node<'a>(
             k.clone(),
             match v {
                 Ok(x) => x.clone(),
-                Err(x) => return Err(format!("{:?}", x).into()),
+                Err(x) => return Err(anyhow!("{:?}", x).into()),
             },
         );
     }
@@ -651,10 +644,7 @@ pub fn evaluate_node<'a>(
 
     match res.get("out") {
         Some(x) => Ok(x.clone()),
-        None => Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Node had no output",
-        ))),
+        None => Err(anyhow!("Node had no output").into()),
     }
 }
 
@@ -664,24 +654,18 @@ fn populate_output<'a>(
     node_id: NodeId,
     param_name: &'a str,
     value: ValueType,
-) -> Result<ValueType, Box<dyn std::error::Error>> {
+) -> Result<ValueType> {
     let output_id = match match graph.nodes.get(node_id) {
         Some(x) => x,
         None => {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Node does not exist when getting output",
-            )));
+            return Err(anyhow!("Node does not exist when getting output").into());
         }
     }
     .get_output(param_name)
     {
         Ok(x) => x,
         Err(_x) => {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Node has no output ID",
-            )));
+            return Err(anyhow!("Node has no output ID").into());
         }
     };
     outputs_cache.insert(output_id, value.clone());
@@ -695,24 +679,18 @@ fn evaluate_input<'a>(
     outputs_cache: &'a mut OutputsCache,
     all_nodes: &'a NodeDefinitions,
     state: &'a mut SoundNodeGraphState,
-) -> Result<ValueType, Box<dyn std::error::Error>> {
+) -> Result<ValueType> {
     let input_id = match match graph.nodes.get(node_id) {
         Some(x) => x,
         None => {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Node does not exist when evaluating input",
-            )));
+            return Err(anyhow!("Node does not exist when evaluating input").into());
         }
     }
     .get_input(param_name)
     {
         Ok(x) => x,
         Err(_x) => {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Node has no input id",
-            )));
+            return Err(anyhow!("Node has no input id").into());
         }
     };
     if let Some(other_output_id) = graph.connection(input_id) {
@@ -734,20 +712,14 @@ fn evaluate_input<'a>(
             match outputs_cache.get(&other_output_id) {
                 Some(x) => Ok(x.clone()),
                 None => {
-                    return Err(Box::new(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        "outputs cache empty",
-                    )));
+                    return Err(anyhow!("outputs cache empty").into());
                 }
             }
         }
     } else {
         Ok(match graph.inputs.get(input_id) {
             None => {
-                return Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Node has no input id",
-                )));
+                return Err(anyhow!("Node has no input id").into());
             }
             Some(x) => x,
         }

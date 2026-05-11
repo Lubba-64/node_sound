@@ -1,6 +1,6 @@
-use std::{f32::consts::PI, str::FromStr};
-
 use crate::sound_map::SoundNode;
+use anyhow::anyhow;
+use std::{f32::consts::PI, str::FromStr};
 // yes this is AI, I would not understand how to do this myself but if it works its getting added!
 // this stuff is just for fun.
 
@@ -42,7 +42,7 @@ impl ToString for FilterType {
 }
 
 impl FromStr for FilterType {
-    type Err = std::io::Error;
+    type Err = crate::error::NodeSoundError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "LowPass" => FilterType::LowPass,
@@ -53,10 +53,7 @@ impl FromStr for FilterType {
             "HighShelf" => FilterType::HighShelf,
             "Peak" => FilterType::Peak,
             _ => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Incorrect from_str value",
-                ));
+                return Err(anyhow!("Incorrect from_str value").into());
             }
         })
     }

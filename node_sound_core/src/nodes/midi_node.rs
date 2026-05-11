@@ -1,8 +1,10 @@
+use crate::error::NodeSoundError;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
 use crate::sounds::midi::MidiRenderer;
+use anyhow::anyhow;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
@@ -63,7 +65,8 @@ pub fn midi_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let cloned = props.clone_sound(props.get_source("audio 1")?)?;
     let midi = MidiRenderer::new(
         cloned,
-        file.unwrap().1,
+        file.ok_or::<NodeSoundError>(anyhow!("midi file is missing").into())?
+            .1,
         props.get_bool("note independant")?,
         props.note_speed(),
         props.sample_rate(),

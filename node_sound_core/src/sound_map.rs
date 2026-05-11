@@ -1,11 +1,12 @@
+use crate::error::Result;
 use crate::sounds::const_wave::ConstWave;
+use anyhow::anyhow;
 use dyn_clone::DynClone;
 use eframe::egui::ahash::{HashMap, HashMapExt};
 use ordered_float::OrderedFloat;
 use std::{
     cell::{Cell, RefCell},
     fmt::Debug,
-    io::ErrorKind,
     rc::Rc,
     sync::{Arc, Mutex},
 };
@@ -118,25 +119,16 @@ impl SoundQueue {
         return queue;
     }
 
-    pub fn clone_sound(
-        &mut self,
-        idx: usize,
-    ) -> Result<GenericSoundNode, Box<dyn std::error::Error>> {
+    pub fn clone_sound(&mut self, idx: usize) -> Result<GenericSoundNode> {
         if idx >= self.queue.len() {
-            return Err(Box::new(std::io::Error::new(
-                ErrorKind::Other,
-                "Sound queue accessed an out of bounds element",
-            )));
+            return Err(anyhow!("Sound queue accessed an out of bounds element").into());
         }
         return Ok(self.queue[idx].clone());
     }
 
-    pub fn arc_clone_sound(&mut self, idx: usize) -> Result<RefSource, Box<dyn std::error::Error>> {
+    pub fn arc_clone_sound(&mut self, idx: usize) -> Result<RefSource> {
         if idx >= self.queue.len() {
-            return Err(Box::new(std::io::Error::new(
-                ErrorKind::Other,
-                "Sound queue accessed an out of bounds element",
-            )));
+            return Err(anyhow!("Sound queue accessed an out of bounds element").into());
         }
         return Ok(RefSource::new(Rc::new(RefCell::new(
             self.queue[idx].clone(),
