@@ -33,7 +33,7 @@ impl BPMSyncSource {
 impl SoundNode for BPMSyncSource {
     fn next(&mut self, mut index: f32, _channel: u8) -> Option<f32> {
         let seconds_per_note =
-            self.note_speed.get_beats() / (self.bpm.lock().map(|x| *x).unwrap_or(120.0) / 60.0);
+            self.note_speed.get_beats() / (self.bpm.lock().map(|bpm| *bpm).unwrap_or(120.0) / 60.0);
         let samples_per_note = seconds_per_note * self.sample_rate;
         index /= self.speed;
         index %= samples_per_note;

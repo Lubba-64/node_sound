@@ -17,8 +17,8 @@ impl InputChannel {
 impl SoundNode for InputChannel {
     fn next(&mut self, _index: f32, channel: u8) -> Option<f32> {
         match self.channel.lock() {
-            Err(_x) => None,
-            Ok(x) => Some(if channel == 0 { x.0 } else { x.1 }),
+            Err(_) => None,
+            Ok(sample) => Some(if channel == 0 { sample.0 } else { sample.1 }),
         }
     }
 }

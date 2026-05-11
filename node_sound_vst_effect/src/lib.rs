@@ -137,9 +137,7 @@ impl Default for NodeSoundParams {
         Self {
             editor_state: EguiState::from_size(1280, 720),
             plugin_state: PluginPresetState {
-                graph: Arc::new(Mutex::new(
-                    sound_graph::graph::SoundNodeGraph::new_vst_effect(),
-                )),
+                graph: Arc::new(Mutex::new(sound_graph::graph::SoundNodeGraph::default())),
             },
             a1,
             a2,
@@ -167,10 +165,10 @@ macro_rules! mkparamgetter {
     ($field: ident, $idx: literal, $self: ident, $buff: ident) => {
         let $field = $self.params.$field.value();
         match $buff[$idx].lock() {
-            Ok(mut x) => {
-                *x = $field;
+            Ok(mut buffer) => {
+                *buffer = $field;
             }
-            Err(_x) => {}
+            Err(_) => {}
         }
     };
 }
@@ -205,12 +203,12 @@ impl Plugin for NodeSound {
         Box::new(|cx| match cx {
             BackgroundTasks::MidiFileOpen(files) => {
                 match files.lock() {
-                    Err(_x) => {}
-                    Ok(mut x) => {
-                        match x.midi_active {
+                    Err(_) => {}
+                    Ok(mut file_manager) => {
+                        match file_manager.midi_active {
                             None => {}
                             Some(node_id) => {
-                                x.midi_file_path = Some((
+                                file_manager.midi_file_path = Some((
                                     rfd::FileDialog::new()
                                         .add_filter("audio", &["mid", "midi"])
                                         .pick_file()
@@ -220,7 +218,7 @@ impl Plugin for NodeSound {
                                         .to_string(),
                                     node_id,
                                 ));
-                                x.midi_active = None;
+                                file_manager.midi_active = None;
                             }
                         };
                     }
@@ -228,12 +226,12 @@ impl Plugin for NodeSound {
             }
             BackgroundTasks::WavFileOpen(files) => {
                 match files.lock() {
-                    Err(_x) => {}
-                    Ok(mut x) => {
-                        match x.wav_active {
+                    Err(_) => {}
+                    Ok(mut file_manager) => {
+                        match file_manager.wav_active {
                             None => {}
                             Some(node_id) => {
-                                x.wav_file_path = Some((
+                                file_manager.wav_file_path = Some((
                                     rfd::FileDialog::new()
                                         .add_filter("audio", &["wav", "mp3", "flac", "ogg"])
                                         .pick_file()
@@ -243,7 +241,7 @@ impl Plugin for NodeSound {
                                         .to_string(),
                                     node_id,
                                 ));
-                                x.wav_active = None;
+                                file_manager.wav_active = None;
                             }
                         };
                     }
@@ -267,14 +265,14 @@ impl Plugin for NodeSound {
             |_, _| {},
             move |egui_ctx, setter, state| {
                 let sample_rate = &mut match state.2.lock() {
-                    Ok(x) => x,
-                    Err(_x) => {
+                    Ok(sample_rate) => sample_rate,
+                    Err(_) => {
                         return;
                     }
                 };
                 let graph = &mut match state.0.lock() {
-                    Ok(x) => x,
-                    Err(_x) => {
+                    Ok(graph) => graph,
+                    Err(_) => {
                         return;
                     }
                 };
@@ -337,8 +335,8 @@ impl Plugin for NodeSound {
                 graph.update_root(egui_ctx);
                 if !state.5 || graph.state.user_state.active_node.is_playing() {
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
-                    match graph.state.user_state.vst_output_node_id {
-                        Some(x) => {
+                    match graph.state.user_state.output_id {
+                        Some(node_id) => {
                             graph
                                 .state
                                 .runtime_state
@@ -349,15 +347,15 @@ impl Plugin for NodeSound {
                             graph.state.runtime_state.queue.set_bpm(state.3.clone());
                             match evaluate_node(
                                 &graph.state.editor_state.graph.clone(),
-                                x,
+                                node_id,
                                 &mut HashMap::new(),
                                 &graph.state.runtime_state.node_definitions.clone(),
                                 &mut graph.state,
                             ) {
                                 Ok(val) => {
                                     let source_id = match val.try_to_source() {
-                                        Err(_x) => return,
-                                        Ok(x) => x,
+                                        Err(_) => return,
+                                        Ok(source_id) => source_id,
                                     }
                                     .clone();
                                     let sound = match graph
@@ -369,11 +367,11 @@ impl Plugin for NodeSound {
                                         Err(_err) => {
                                             return;
                                         }
-                                        Ok(x) => x,
+                                        Ok(node) => node,
                                     };
                                     let sound_result = &mut match state.1.lock() {
-                                        Ok(x) => x,
-                                        Err(_x) => {
+                                        Ok(node) => node,
+                                        Err(_) => {
                                             return;
                                         }
                                     };
@@ -411,52 +409,52 @@ impl Plugin for NodeSound {
         context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
         match self.sample_rate.try_lock() {
-            Ok(mut x) => *x = context.transport().sample_rate,
-            Err(_x) => {}
+            Ok(mut sample_rate) => *sample_rate = context.transport().sample_rate,
+            Err(_) => {}
         };
         let state = &match self.params.plugin_state.graph.lock() {
-            Ok(x) => x,
-            Err(_x) => {
+            Ok(graph) => graph,
+            Err(_) => {
                 return ProcessStatus::KeepAlive;
             }
         }
         .state;
         match self.bpm.try_lock() {
-            Ok(mut x) => {
-                *x = context.transport().tempo.unwrap_or(120.0) as f32;
+            Ok(mut bpm) => {
+                *bpm = context.transport().tempo.unwrap_or(120.0) as f32;
             }
-            Err(_x) => {}
+            Err(_) => {}
         };
         match state.user_state.files.try_lock() {
-            Ok(x) => {
-                if x.midi_active.is_some() {
+            Ok(file_manager) => {
+                if file_manager.midi_active.is_some() {
                     context.execute_background(BackgroundTasks::MidiFileOpen(
                         state.user_state.files.clone(),
                     ));
                 }
-                if x.wav_active.is_some() {
+                if file_manager.wav_active.is_some() {
                     context.execute_background(BackgroundTasks::WavFileOpen(
                         state.user_state.files.clone(),
                     ));
                 }
             }
-            Err(_x) => {}
+            Err(_) => {}
         }
         let automations = state.runtime_state.automations.0.clone();
         let input = state.runtime_state.input.0.clone();
         let size = buffer.samples();
         let output = buffer.as_slice();
         let mut sound_result = match self.sound_result.try_lock() {
-            Ok(x) => x,
-            Err(_x) => {
+            Ok(node) => node,
+            Err(_) => {
                 return ProcessStatus::KeepAlive;
             }
         };
         for sample_idx in 0..size {
             match input.try_lock() {
-                Ok(mut x) => {
-                    x.0 = output[0][sample_idx];
-                    x.1 = output[1][sample_idx];
+                Ok(mut input) => {
+                    input.0 = output[0][sample_idx];
+                    input.1 = output[1][sample_idx];
                 }
                 _ => {}
             }

@@ -39,7 +39,7 @@ impl<I: SoundNode + Clone> SoundNode for RepeatRefSource<I> {
                 self.ind_min += index;
                 self.current_source.next(0.0, channel)
             }
-            Some(x) => Some(x),
+            Some(sample) => Some(sample),
         }
     }
 }

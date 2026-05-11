@@ -49,11 +49,7 @@ impl ActiveNodeState {
 #[derive(Default, Serialize, Deserialize)]
 pub struct SoundGraphUserState {
     pub active_node: ActiveNodeState,
-    pub active_modified: bool,
-    pub sound_result_evaluated: bool,
-    pub recording_length: usize,
-    pub is_saved: bool,
-    pub vst_output_node_id: Option<NodeId>,
+    pub output_id: Option<NodeId>,
     pub wave_shaper_graph_id: usize,
     #[serde(default)]
     pub current_theme: AppTheme,
@@ -129,7 +125,6 @@ impl NodeTemplateTrait for NodeDefinitionUi {
         user_state: &mut Self::UserState,
         node_id: NodeId,
     ) {
-        user_state.is_saved = false;
         for input in self.0.inputs.iter() {
             graph.add_input_param(
                 node_id,
@@ -271,8 +266,8 @@ impl WidgetValueTrait for ValueType {
                         .inner
                         .unwrap_or(Err(anyhow!("No value selected").into()));
                     match dropdown {
-                        Err(_x) => {}
-                        Ok(x) => *value = x,
+                        Err(_) => {}
+                        Ok(val) => *value = val,
                     }
                 });
             }
@@ -306,9 +301,9 @@ impl WidgetValueTrait for ValueType {
                 ui.label("None");
             }
             ValueType::AudioFile { value } => {
-                let y = &value.clone();
-                let file_name = match y {
-                    Some(x) => std::path::Path::new(&x.0)
+                let file = &value.clone();
+                let file_name = match file {
+                    Some(file_data) => std::path::Path::new(&file_data.0)
                         .file_name()
                         .unwrap_or(OsStr::new(""))
                         .to_str()
@@ -322,11 +317,11 @@ impl WidgetValueTrait for ValueType {
                             files.wav_active = Some(node_id);
                         }
                         match &files.wav_file_path {
-                            Some(x) => {
-                                if node_id == x.1 {
-                                    match fs::read(x.0.clone()) {
-                                        Err(_x) => {}
-                                        Ok(x2) => *value = Some((x.0.clone(), x2)),
+                            Some(file_data) => {
+                                if node_id == file_data.1 {
+                                    match fs::read(file_data.0.clone()) {
+                                        Err(_) => {}
+                                        Ok(x2) => *value = Some((file_data.0.clone(), x2)),
                                     };
                                 }
                             }
@@ -337,9 +332,9 @@ impl WidgetValueTrait for ValueType {
                 }
             }
             ValueType::MidiFile { value } => {
-                let y = &value.clone();
-                let file_name = match y {
-                    Some(x) => std::path::Path::new(&x.0)
+                let file = &value.clone();
+                let file_name = match file {
+                    Some(file_data) => std::path::Path::new(&file_data.0)
                         .file_name()
                         .unwrap_or(OsStr::new(""))
                         .to_str()
@@ -352,11 +347,11 @@ impl WidgetValueTrait for ValueType {
                             files.midi_active = Some(node_id);
                         }
                         match &files.midi_file_path {
-                            Some(x) => {
-                                if node_id == x.1 {
-                                    match midi::read_midi_file(x.0.clone()) {
-                                        Err(_x) => {}
-                                        Ok(x2) => *value = Some((x.0.clone(), x2)),
+                            Some(file_data) => {
+                                if node_id == file_data.1 {
+                                    match midi::read_midi_file(file_data.0.clone()) {
+                                        Err(_) => {}
+                                        Ok(x2) => *value = Some((file_data.0.clone(), x2)),
                                     };
                                 }
                             }
@@ -390,14 +385,13 @@ impl NodeDataTrait for NodeData {
     {
         let mut responses = vec![];
         let is_playing: bool = match user_state.active_node {
-            ActiveNodeState::PlayingNode(x) => x == node_id,
+            ActiveNodeState::PlayingNode(id) => id == node_id,
             _ => false,
         };
         if !is_playing {
             if ui.button("▶ Play").clicked() {
                 if user_state.active_node == ActiveNodeState::NoNode {
                     responses.push(NodeResponse::User(ActiveNodeState::PlayingNode(node_id)));
-                    user_state.active_modified = true;
                 }
             }
         } else {
@@ -406,7 +400,6 @@ impl NodeDataTrait for NodeData {
                     .fill(egui::Color32::GOLD);
             if ui.add(button).clicked() {
                 responses.push(NodeResponse::User(ActiveNodeState::NoNode));
-                user_state.active_modified = true;
             }
         }
 
@@ -459,37 +452,20 @@ unsafe impl Send for SoundNodeGraph {}
 unsafe impl Sync for SoundNodeGraph {}
 
 impl SoundNodeGraph {
-    pub fn new_vst_synth() -> Self {
-        SoundNodeGraph::default()
-    }
-
-    pub fn new_vst_effect() -> Self {
-        SoundNodeGraph::default()
-    }
-
-    pub fn new_app(cc: Option<&eframe::CreationContext<'_>>) -> Self {
-        if cc.is_some() {
-            if let Some(storage) = cc.unwrap().storage {
-                return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-            }
-        }
-        SoundNodeGraph::default()
-    }
-
     fn update_output_node(&mut self) {
         let mut found = false;
         for node in self.state.editor_state.graph.iter_nodes() {
             let found_match = match self.state.editor_state.graph.nodes.get(node) {
                 None => false,
-                Some(x) => x.label == "Output",
+                Some(node) => node.label == "Output",
             };
             if found_match {
                 found = true;
-                self.state.user_state.vst_output_node_id = Some(node)
+                self.state.user_state.output_id = Some(node)
             }
         }
         if !found {
-            self.state.user_state.vst_output_node_id = None;
+            self.state.user_state.output_id = None;
         }
     }
 

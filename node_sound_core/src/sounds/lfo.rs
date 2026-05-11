@@ -19,7 +19,7 @@ impl<I1: SoundNode + Clone, I2: SoundNode + Clone> SoundNode for Lfo<I1, I2> {
             self.source2.next(index, channel),
             self.source1.next(index, channel),
         ) {
-            (Some(x), Some(y)) => Some(x * y),
+            (Some(sample1), Some(sample2)) => Some(sample1 * sample2),
             _ => None,
         }
     }

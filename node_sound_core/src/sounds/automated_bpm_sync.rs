@@ -43,7 +43,7 @@ impl<S: SoundNode + Clone> SoundNode for AutomatedBPMSync<S> {
             .cloned()
             .unwrap_or_default()
             .get_beats()
-            / (self.bpm.lock().map(|x| *x).unwrap_or(120.0) / 60.0);
+            / (self.bpm.lock().map(|bpm| *bpm).unwrap_or(120.0) / 60.0);
         let samples_per_note = seconds_per_note * self.sample_rate;
         index /= self.speed;
         index %= samples_per_note;

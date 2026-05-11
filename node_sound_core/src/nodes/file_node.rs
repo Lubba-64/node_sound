@@ -48,7 +48,7 @@ pub fn file_node() -> SoundNodeMetadata {
                         ValueType::AudioSource { value: 0 },
                     )]));
                 }
-                Some(x) => x,
+                Some(file) => file,
             };
             let decoder = CloneableDecoder::new(
                 file.1.clone(),

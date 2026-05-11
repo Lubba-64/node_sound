@@ -47,7 +47,7 @@ The automation values for Any is 0-21, 0-7 for the rest which corresponds to the
                     name: "note speeds".to_string(),
                     value: InputValueConfig::Dropdown {
                         value: NoteSpeedType::Normal.to_string(),
-                        values: NoteSpeedType::ALL.map(|x| x.to_string()).to_vec(),
+                        values: NoteSpeedType::ALL.map(|speed_type| speed_type.to_string()).to_vec(),
                     },
                 },
             ),

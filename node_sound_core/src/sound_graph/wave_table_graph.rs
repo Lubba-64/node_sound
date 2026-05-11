@@ -11,7 +11,7 @@ pub fn wave_table_graph(
     width: f32,
 ) {
     let value = match value {
-        Some(x) => x,
+        Some(wave_table) => wave_table,
         None => {
             return;
         }
@@ -24,12 +24,16 @@ pub fn wave_table_graph(
 
     let points: PlotPoints = (0..WAVE_TABLE_SIZE)
         .map(|i| {
-            let x = i as f64 * 10.0 / WAVE_TABLE_SIZE as f64;
-            [x, value[i].into()]
+            let wave_table_y_val = i as f64 * 10.0 / WAVE_TABLE_SIZE as f64;
+            [wave_table_y_val, value[i].into()]
         })
         .collect();
     let line = Line::new(points);
-    let mouse_down = ui.input(|x| x.pointer.button_down(eframe::egui::PointerButton::Primary));
+    let mouse_down = ui.input(|input_state| {
+        input_state
+            .pointer
+            .button_down(eframe::egui::PointerButton::Primary)
+    });
 
     Plot::new(id.to_string())
         .view_aspect(2.0)

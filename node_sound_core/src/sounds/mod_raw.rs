@@ -16,7 +16,7 @@ impl<I: SoundNode> RawMod<I> {
 impl<I: SoundNode + Clone> SoundNode for RawMod<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         match self.source.next(index, channel) {
-            Some(x) => Some(x % self.mod_by),
+            Some(sample) => Some(sample % self.mod_by),
             None => None,
         }
     }

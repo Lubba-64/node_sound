@@ -35,9 +35,9 @@ impl<I: SoundNode + Clone> BPMSync<I> {
 
 impl<I: SoundNode + Clone> SoundNode for BPMSync<I> {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
-        self.source.next(index, channel).map(|x| {
-            let seconds_per_note =
-                self.note_speed.get_beats() / (self.bpm.lock().map(|x| *x).unwrap_or(120.0) / 60.0);
+        self.source.next(index, channel).map(|sample| {
+            let seconds_per_note = self.note_speed.get_beats()
+                / (self.bpm.lock().map(|sample| *sample).unwrap_or(120.0) / 60.0);
             let samples_per_note = seconds_per_note * self.sample_rate;
             index /= self.speed;
             index %= samples_per_note;
@@ -51,7 +51,7 @@ impl<I: SoundNode + Clone> SoundNode for BPMSync<I> {
             } else {
                 self.table[idx + 1]
             } * (1.0 - initial_weight);
-            x * (first + second)
+            sample * (first + second)
         })
     }
 }

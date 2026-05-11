@@ -19,7 +19,7 @@ impl<I1: SoundNode + Clone, I2: SoundNode + Clone> SoundNode for AutomatedModRaw
             self.source.next(index, channel),
             self.mod_by.next(index, channel),
         ) {
-            (Some(x), Some(mod_by)) => Some(x % mod_by),
+            (Some(sample), Some(mod_by)) => Some(sample % mod_by),
             _ => None,
         }
     }

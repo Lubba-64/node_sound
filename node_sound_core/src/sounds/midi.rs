@@ -47,7 +47,7 @@ impl MidiRenderer {
                     let midi_samples =
                         make_samples_from_midi(sampler, total_samples as usize, true, song.clone())
                             .expect("midi play failed");
-                    let left: Vec<_> = midi_samples.iter().map(|&x| x as f32).collect();
+                    let left: Vec<_> = midi_samples.iter().map(|&sample| sample as f32).collect();
                     (left.clone(), left)
                 }),
             ),

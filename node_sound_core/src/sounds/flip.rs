@@ -14,6 +14,6 @@ impl<I1: SoundNode> Flip<I1> {
 
 impl<I1: SoundNode + Clone> SoundNode for Flip<I1> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
-        self.source.next(index, channel).map(|x| -x)
+        self.source.next(index, channel).map(|sample| -sample)
     }
 }

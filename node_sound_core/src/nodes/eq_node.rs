@@ -43,7 +43,7 @@ pub fn eq_node() -> SoundNodeMetadata {
                     name: "filter type".to_string(),
                     value: InputValueConfig::Dropdown {
                         value: FilterType::LowPass.to_string(),
-                        values: FilterType::ALL.map(|x| x.to_string()).to_vec(),
+                        values: FilterType::ALL.map(|filter| filter.to_string()).to_vec(),
                     },
                 },
             ),

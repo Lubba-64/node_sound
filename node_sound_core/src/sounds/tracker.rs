@@ -57,8 +57,8 @@ impl<S: SoundNode> Tracker<S> {
 impl<S: SoundNode + Clone> SoundNode for Tracker<S> {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
         let tracker_note = &self.notes[self.current_note];
-        let seconds_per_note =
-            tracker_note.speed.get_beats() / (self.bpm.lock().map(|x| *x).unwrap_or(120.0) / 60.0);
+        let seconds_per_note = tracker_note.speed.get_beats()
+            / (self.bpm.lock().map(|bpm| *bpm).unwrap_or(120.0) / 60.0);
         let samples_per_note = seconds_per_note * self.sample_rate;
         let note = match &tracker_note.note {
             None => {
@@ -74,7 +74,7 @@ impl<S: SoundNode + Clone> SoundNode for Tracker<S> {
                 self.last_idx = index;
                 return Some(0.0);
             }
-            Some(x) => x,
+            Some(note) => note,
         };
         self.source
             .next(

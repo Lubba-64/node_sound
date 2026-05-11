@@ -199,9 +199,7 @@ impl Default for NodeSoundParams {
             is_mono: BoolParam::new("Mono", false),
             editor_state: EguiState::from_size(1280, 720),
             plugin_state: PluginPresetState {
-                graph: Arc::new(Mutex::new(
-                    sound_graph::graph::SoundNodeGraph::new_vst_synth(),
-                )),
+                graph: Arc::new(Mutex::new(sound_graph::graph::SoundNodeGraph::default())),
             },
             gain: FloatParam::new(
                 "Gain",
@@ -286,7 +284,7 @@ impl NodeSound {
         note: u8,
         velocity: f32,
         sample_rate: f32,
-    ) -> &mut Voice {
+    ) -> Option<&mut Voice> {
         let amp_envelope = Smoother::new(SmoothingStyle::Exponential(
             self.params.amp_attack_ms.value(),
         ));
@@ -309,24 +307,22 @@ impl NodeSound {
                 .clone()
                 .unwrap_or(GenericSoundNode::new(Box::new(ConstWave::new(0.0)))),
         };
-
         self.next_internal_voice_id = self.next_internal_voice_id.wrapping_add(1);
-
         match self.voices.iter().position(|voice| voice.is_none()) {
             Some(free_voice_idx) => {
                 self.voices[free_voice_idx] = Some(new_voice);
-                return self.voices[free_voice_idx].as_mut().unwrap();
+                Some(self.voices[free_voice_idx].as_mut()?)
             }
             None => {
-                let oldest_voice = unsafe {
-                    self.voices
-                        .iter_mut()
-                        .min_by_key(|voice| voice.as_ref().unwrap_unchecked().internal_id)
-                        .unwrap_unchecked()
-                };
-
+                let oldest_voice = self
+                    .voices
+                    .iter_mut()
+                    .min_by_key(|voice| match voice {
+                        Some(voice) => voice.internal_id,
+                        None => 0,
+                    })?
+                    .as_mut()?;
                 {
-                    let oldest_voice = oldest_voice.as_ref().unwrap();
                     context.send_event(NoteEvent::VoiceTerminated {
                         timing: sample_offset,
                         voice_id: Some(oldest_voice.id),
@@ -334,9 +330,8 @@ impl NodeSound {
                         note: oldest_voice.note,
                     });
                 }
-
-                *oldest_voice = Some(new_voice);
-                return oldest_voice.as_mut().unwrap();
+                *oldest_voice = new_voice;
+                Some(oldest_voice)
             }
         }
     }
@@ -366,13 +361,6 @@ impl NodeSound {
                     amp_envelope.style =
                         SmoothingStyle::Exponential(self.params.amp_release_ms.value());
                     amp_envelope.set_target(sample_rate, 0.0);
-
-                    // If this targetted a single voice ID, we're done here. Otherwise there may be
-                    // multiple overlapping voices as we enabled support for that in the
-                    // `PolyModulationConfig`.
-                    if voice_id.is_some() {
-                        // return;
-                    }
                 }
                 _ => (),
             }
@@ -423,10 +411,10 @@ macro_rules! mkparamgetter {
     ($field: ident, $idx: literal, $self: ident, $buff: ident) => {
         let $field = $self.params.$field.value();
         match $buff[$idx].lock() {
-            Ok(mut x) => {
-                *x = $field;
+            Ok(mut buffer) => {
+                *buffer = $field;
             }
-            Err(_x) => {}
+            Err(_) => {}
         }
     };
 }
@@ -471,12 +459,12 @@ impl Plugin for NodeSound {
         Box::new(|cx| match cx {
             BackgroundTasks::MidiFileOpen(files) => {
                 match files.lock() {
-                    Err(_x) => {}
-                    Ok(mut x) => {
-                        match x.midi_active {
+                    Err(_) => {}
+                    Ok(mut file_manager) => {
+                        match file_manager.midi_active {
                             None => {}
                             Some(node_id) => {
-                                x.midi_file_path = Some((
+                                file_manager.midi_file_path = Some((
                                     rfd::FileDialog::new()
                                         .add_filter("audio", &["mid", "midi"])
                                         .pick_file()
@@ -486,7 +474,7 @@ impl Plugin for NodeSound {
                                         .to_string(),
                                     node_id,
                                 ));
-                                x.midi_active = None;
+                                file_manager.midi_active = None;
                             }
                         };
                     }
@@ -494,12 +482,12 @@ impl Plugin for NodeSound {
             }
             BackgroundTasks::WavFileOpen(files) => {
                 match files.lock() {
-                    Err(_x) => {}
-                    Ok(mut x) => {
-                        match x.wav_active {
+                    Err(_) => {}
+                    Ok(mut file_manager) => {
+                        match file_manager.wav_active {
                             None => {}
                             Some(node_id) => {
-                                x.wav_file_path = Some((
+                                file_manager.wav_file_path = Some((
                                     rfd::FileDialog::new()
                                         .add_filter("audio", &["wav", "mp3", "flac", "ogg"])
                                         .pick_file()
@@ -509,7 +497,7 @@ impl Plugin for NodeSound {
                                         .to_string(),
                                     node_id,
                                 ));
-                                x.wav_active = None;
+                                file_manager.wav_active = None;
                             }
                         };
                     }
@@ -534,26 +522,26 @@ impl Plugin for NodeSound {
             |_, _| {},
             move |egui_ctx, setter, state| {
                 let sound_result_id = &mut match state.3.lock() {
-                    Ok(x) => x,
-                    Err(_x) => {
+                    Ok(result_id) => result_id,
+                    Err(_) => {
                         return;
                     }
                 };
                 let sample_rate = &mut match state.2.lock() {
-                    Ok(x) => x,
-                    Err(_x) => {
+                    Ok(sample_rate) => sample_rate,
+                    Err(_) => {
                         return;
                     }
                 };
                 let sound_buffers = &mut match state.1.lock() {
-                    Ok(x) => x,
-                    Err(_x) => {
+                    Ok(buffers) => buffers,
+                    Err(_) => {
                         return;
                     }
                 };
                 let graph = &mut match state.0.lock() {
-                    Ok(x) => x,
-                    Err(_x) => {
+                    Ok(graph) => graph,
+                    Err(_) => {
                         return;
                     }
                 };
@@ -607,8 +595,8 @@ impl Plugin for NodeSound {
                         );
                         ui.separator();
                         match error {
-                            Some(x) => {
-                                ui.label(x.clone());
+                            Some(err) => {
+                                ui.label(err.clone());
                             }
                             _ => {}
                         };
@@ -678,7 +666,7 @@ impl Plugin for NodeSound {
                 if sound_result_id.is_none() || graph.state.user_state.active_node.is_playing() {
                     let mut clear = false;
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
-                    match graph.state.user_state.vst_output_node_id {
+                    match graph.state.user_state.output_id {
                         Some(outputid) => {
                             graph.state.runtime_state.queue.set_bpm(state.5.clone());
                             graph.state.user_state.wavetables.clear();
@@ -724,7 +712,7 @@ impl Plugin for NodeSound {
                                             Err(_err) => {
                                                 GenericSoundNode::new(Box::new(ConstWave::new(0.0)))
                                             }
-                                            Ok(x) => x,
+                                            Ok(node) => node,
                                         };
                                         sound_buffers[vidx] = Some(GenericSoundNode::new(
                                             Box::new(Speed::new(sound, speed)),
@@ -773,8 +761,8 @@ impl Plugin for NodeSound {
         let automations;
         {
             let state = &match self.params.plugin_state.graph.lock() {
-                Ok(x) => x,
-                Err(_x) => {
+                Ok(graph) => graph,
+                Err(_) => {
                     return ProcessStatus::KeepAlive;
                 }
             }
@@ -782,39 +770,39 @@ impl Plugin for NodeSound {
             automations = state.runtime_state.automations.0.clone();
 
             match state.user_state.files.lock() {
-                Ok(x) => {
-                    if x.midi_active.is_some() {
+                Ok(file_manager) => {
+                    if file_manager.midi_active.is_some() {
                         context.execute_background(BackgroundTasks::MidiFileOpen(
                             state.user_state.files.clone(),
                         ));
                     }
-                    if x.wav_active.is_some() {
+                    if file_manager.wav_active.is_some() {
                         context.execute_background(BackgroundTasks::WavFileOpen(
                             state.user_state.files.clone(),
                         ));
                     }
                 }
-                Err(_x) => {
+                Err(_) => {
                     return ProcessStatus::KeepAlive;
                 }
             }
         }
 
         let sample_rate = match self.sample_rate.lock() {
-            Ok(mut x) => {
-                *x = context.transport().sample_rate;
-                *x
+            Ok(mut sample_rate) => {
+                *sample_rate = context.transport().sample_rate;
+                *sample_rate
             }
-            Err(_x) => {
+            Err(_) => {
                 return ProcessStatus::KeepAlive;
             }
         };
         match self.bpm.lock() {
-            Ok(mut x) => {
-                *x = context.transport().tempo.unwrap_or(120.0) as f32;
-                *x
+            Ok(mut bpm) => {
+                *bpm = context.transport().tempo.unwrap_or(120.0) as f32;
+                *bpm
             }
-            Err(_x) => {
+            Err(_) => {
                 return ProcessStatus::KeepAlive;
             }
         };
@@ -841,7 +829,7 @@ impl Plugin for NodeSound {
                                 note,
                                 velocity,
                             } => {
-                                self.start_voice(
+                                match self.start_voice(
                                     context,
                                     timing,
                                     voice_id,
@@ -849,7 +837,10 @@ impl Plugin for NodeSound {
                                     note,
                                     velocity,
                                     sample_rate,
-                                );
+                                ) {
+                                    None => return ProcessStatus::KeepAlive,
+                                    _ => {}
+                                };
                                 notes_to_reset.push(note);
                             }
                             NoteEvent::NoteOff {
@@ -883,7 +874,10 @@ impl Plugin for NodeSound {
                                 // will be). Because of that, we won't print any assertion failures
                                 // when we can't find the voice index here.
                                 if let Some(voice_idx) = self.get_voice_idx(voice_id) {
-                                    let voice = self.voices[voice_idx].as_mut().unwrap();
+                                    let voice = match self.voices[voice_idx].as_mut() {
+                                        Some(voice) => voice,
+                                        None => return ProcessStatus::KeepAlive,
+                                    };
 
                                     match poly_modulation_id {
                                         GAIN_POLY_MOD_ID => {

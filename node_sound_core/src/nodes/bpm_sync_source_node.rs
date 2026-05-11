@@ -36,7 +36,7 @@ pub fn bpm_sync_source_node() -> SoundNodeMetadata {
                     name: "note speed".to_string(),
                     value: InputValueConfig::Dropdown {
                         value: NoteSpeed::Quarter.to_string(),
-                        values: NoteSpeed::ALL.map(|x| x.to_string()).to_vec(),
+                        values: NoteSpeed::ALL.map(|speed| speed.to_string()).to_vec(),
                     },
                 },
             ),

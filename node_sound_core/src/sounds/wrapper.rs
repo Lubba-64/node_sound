@@ -22,17 +22,17 @@ impl<I: SoundNode + Clone> SoundNode for Wrapper<I> {
             self.source.next(index, channel),
             self.last[channel as usize],
         ) {
-            (Some(x), Some(y)) => {
-                if x + y > 1.0 {
-                    return Some(-1.0 + x + y - 1.0);
+            (Some(sample1), Some(sample2)) => {
+                if sample1 + sample2 > 1.0 {
+                    return Some(-1.0 + sample1 + sample2 - 1.0);
                 }
-                if x + y < -1.0 {
-                    return Some(1.0 - x + y + 1.0);
+                if sample1 + sample2 < -1.0 {
+                    return Some(1.0 - sample1 + sample2 + 1.0);
                 }
-                Some(x + y)
+                Some(sample1 + sample2)
             }
-            (None, Some(y)) => Some(y),
-            (Some(x), None) => Some(x),
+            (None, Some(sample2)) => Some(sample2),
+            (Some(sample1), None) => Some(sample1),
             _ => Some(0.0),
         };
         self.last[channel as usize]

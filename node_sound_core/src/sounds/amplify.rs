@@ -20,6 +20,6 @@ impl<I: SoundNode + Clone> SoundNode for Amplify<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.source
             .next(index, channel)
-            .map(|x| x * self.amplification)
+            .map(|sample| sample * self.amplification)
     }
 }
