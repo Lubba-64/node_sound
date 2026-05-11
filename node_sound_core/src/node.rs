@@ -1,13 +1,9 @@
 use crate::error::Result;
-use crate::sounds::const_wave::ConstWave;
+use crate::nodes::const_node::ConstWave;
 use anyhow::anyhow;
 use dyn_clone::DynClone;
-use eframe::egui::ahash::{HashMap, HashMapExt};
-use ordered_float::OrderedFloat;
 use std::{
-    cell::{Cell, RefCell},
     fmt::Debug,
-    rc::Rc,
     sync::{Arc, Mutex},
 };
 
@@ -42,58 +38,6 @@ impl SoundNode for GenericSoundNode {
     }
 }
 
-#[derive(Debug)]
-pub struct RefSource {
-    sound: Rc<RefCell<dyn SoundNode>>,
-    val: Rc<RefCell<HashMap<OrderedFloat<f32>, Option<f32>>>>,
-    size: Rc<Cell<usize>>,
-    count: Rc<Cell<usize>>,
-    last_index: f32,
-}
-
-impl Clone for RefSource {
-    fn clone(&self) -> Self {
-        Self {
-            sound: self.sound.clone(),
-            val: self.val.clone(),
-            size: self.size.clone(),
-            count: self.count.clone(),
-            last_index: self.last_index,
-        }
-    }
-}
-
-unsafe impl Send for RefSource {}
-
-impl RefSource {
-    pub fn new(sound: Rc<RefCell<dyn SoundNode>>) -> Self {
-        Self {
-            sound: sound,
-            size: Rc::new(Cell::new(0)),
-            val: Rc::new(RefCell::new(HashMap::new())),
-            count: Rc::new(Cell::new(0)),
-            last_index: 0.0,
-        }
-    }
-}
-
-impl SoundNode for RefSource {
-    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
-        let mut val = self.val.borrow_mut();
-        if self.last_index > index {
-            val.clear();
-        }
-        self.last_index = index;
-        if !val.contains_key(&OrderedFloat(index)) {
-            val.insert(
-                OrderedFloat(index),
-                self.sound.borrow_mut().next(index, channel),
-            );
-        }
-        val[&OrderedFloat(index)]
-    }
-}
-
 pub struct SoundQueue {
     queue: Vec<GenericSoundNode>,
     sample_rate: f32,
@@ -124,15 +68,6 @@ impl SoundQueue {
             return Err(anyhow!("Sound queue accessed an out of bounds element").into());
         }
         return Ok(self.queue[idx].clone());
-    }
-
-    pub fn arc_clone_sound(&mut self, idx: usize) -> Result<RefSource> {
-        if idx >= self.queue.len() {
-            return Err(anyhow!("Sound queue accessed an out of bounds element").into());
-        }
-        return Ok(RefSource::new(Rc::new(RefCell::new(
-            self.queue[idx].clone(),
-        ))));
     }
 
     pub fn push_sound(&mut self, sound: Box<dyn SoundNode>) -> usize {

@@ -20,7 +20,6 @@ pub mod automated_wave_table_node;
 pub mod avg_node;
 pub mod bit_crush_node;
 pub mod bpm_sync_node;
-pub mod bpm_sync_source_node;
 pub mod clamp_node;
 pub mod clamp_to_note_node;
 pub mod const_node;
@@ -47,6 +46,7 @@ pub mod no_op_node;
 pub mod noise_node;
 pub mod output_node;
 pub mod random_duration_node;
+pub mod repeat;
 pub mod repeat_infinite;
 pub mod repeat_n_node;
 pub mod reverb_node;
@@ -66,18 +66,19 @@ pub mod unison_node;
 pub mod vertical_wave_shaper_node;
 pub mod wave_folder_node;
 pub mod wave_shaper_node;
+pub mod wave_table;
 pub mod wave_table_node;
 pub mod weird_node;
 pub mod wrapper_node;
 
 use crate::error::Result;
+use crate::nodes::tracker_node::TrackerNote;
 use crate::{
     node::{GenericSoundNode, SoundNode},
     sound_graph::{
         graph::SoundNodeGraphState,
         graph_types::{InputParameter, Output, ValueType},
     },
-    sounds::{tracker::TrackerNote, wave_table::WaveTableManager},
 };
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
@@ -87,6 +88,7 @@ use std::{
     time::Duration,
 };
 use synthrs::midi::MidiSong;
+use wave_table::WaveTableManager;
 
 pub struct SoundNodeProps<'a> {
     pub inputs: HashMap<String, ValueType>,
@@ -233,83 +235,77 @@ impl NodeDefinitions {
 
 impl Default for NodeDefinitions {
     fn default() -> Self {
-        get_nodes()
+        NodeDefinitions(vec![
+            sawtooth_node::sawtooth_node(),
+            sine_node::sine_node(),
+            square_node::square_node(),
+            triangle_node::triangle_node(),
+            mix_node::mix_node(),
+            minus_node::minus_node(),
+            const_node::const_node(),
+            speed_node::speed_node(),
+            lfo_node::lfo_node(),
+            flip_node::flip_node(),
+            output_node::output_node(),
+            wrapper_node::wrapper_node(),
+            wave_table_node::wave_table_node(),
+            wave_shaper_node::wave_shaper_node(),
+            translate_node::translate_node(),
+            automated_triangle_node::automated_triangle_node(),
+            automated_sawtooth_node::automated_sawtooth_node(),
+            automated_sine_node::automated_sine_node(),
+            automated_square_node::automated_square_node(),
+            midi_node::midi_node(),
+            split_channels_node::split_channels_node(),
+            merge_channels_node::merge_channels_node(),
+            reverse_node::reverse_node(),
+            repeat_infinite::repeat_infinite_node(),
+            repeat_n_node::repeat_n_node(),
+            file_node::file_node(),
+            skip_node::skip_node(),
+            delay_node::delay_node(),
+            amplify_node::amplify_node(),
+            reverb_node::reverb_node(),
+            noise_node::noise_node(),
+            mod_node::mod_node(),
+            mod_raw_node::mod_raw_node(),
+            daw_automation_source_node::daw_automation_source_node(),
+            clamp_node::clamp_node(),
+            abs_node::abs_node(),
+            automated_clamp_node::automated_clamp_node(),
+            automated_mod_node::automated_mod_node(),
+            automated_mod_raw_node::automated_mod_raw_node(),
+            automated_translate_node::automated_translate_node(),
+            duration_node::duration_node(),
+            bit_crush_node::bit_crush_node(),
+            automated_wave_shaper_node::automated_wave_shaper_node(),
+            automated_wave_table_node::automated_wave_table_node(),
+            weird_node::weird_node(),
+            no_op_node::no_op_node(),
+            signum_node::signum_node(),
+            vertical_wave_shaper_node::vertical_wave_shaper_node(),
+            random_duration_node::random_duration_node(),
+            avg_node::avg_node(),
+            input_node::input_node(),
+            bpm_sync_node::bpm_sync_source_node(),
+            tracker_node::tracker_node(),
+            eq_node::eq_node(),
+            unison_node::unison_node(),
+            daw_automation_mix_node::daw_automation_mix_node(),
+            automated_speed_node::automated_speed_node(),
+            after_node::after_node(),
+            hold_node::hold_node(),
+            switch_node::switch_node(),
+            automated_hold_node::automated_hold_node(),
+            delay_repeat_node::delay_repeat_node(),
+            wave_folder_node::wave_folder_node(),
+            automated_delay_repeat_node::automated_delay_repeat_node(),
+            automated_duration_node::automated_duration_node(),
+            automated_skip_node::automated_skip_node(),
+            grain_node::grain_node(),
+            glitch_node::glitch_node(),
+            clamp_to_note_node::clamp_to_note_node(),
+            automated_bpm_sync_node::automated_bpm_sync_node(),
+        ])
     }
-}
-
-pub fn get_nodes() -> NodeDefinitions {
-    let nodes: Vec<SoundNodeMetadata> = vec![
-        sawtooth_node::sawtooth_node(),
-        sine_node::sine_node(),
-        square_node::square_node(),
-        triangle_node::triangle_node(),
-        mix_node::mix_node(),
-        minus_node::minus_node(),
-        const_node::const_node(),
-        speed_node::speed_node(),
-        lfo_node::lfo_node(),
-        flip_node::flip_node(),
-        output_node::output_node(),
-        wrapper_node::wrapper_node(),
-        wave_table_node::wave_table_node(),
-        wave_shaper_node::wave_shaper_node(),
-        translate_node::translate_node(),
-        automated_triangle_node::automated_triangle_node(),
-        automated_sawtooth_node::automated_sawtooth_node(),
-        automated_sine_node::automated_sine_node(),
-        automated_square_node::automated_square_node(),
-        midi_node::midi_node(),
-        split_channels_node::split_channels_node(),
-        merge_channels_node::merge_channels_node(),
-        reverse_node::reverse_node(),
-        repeat_infinite::repeat_infinite_node(),
-        repeat_n_node::repeat_n_node(),
-        file_node::file_node(),
-        skip_node::skip_node(),
-        delay_node::delay_node(),
-        amplify_node::amplify_node(),
-        reverb_node::reverb_node(),
-        noise_node::noise_node(),
-        mod_node::mod_node(),
-        mod_raw_node::mod_raw_node(),
-        daw_automation_source_node::daw_automation_source_node(),
-        clamp_node::clamp_node(),
-        abs_node::abs_node(),
-        automated_clamp_node::automated_clamp_node(),
-        automated_mod_node::automated_mod_node(),
-        automated_mod_raw_node::automated_mod_raw_node(),
-        automated_translate_node::automated_translate_node(),
-        duration_node::duration_node(),
-        bit_crush_node::bit_crush_node(),
-        automated_wave_shaper_node::automated_wave_shaper_node(),
-        automated_wave_table_node::automated_wave_table_node(),
-        weird_node::weird_node(),
-        no_op_node::no_op_node(),
-        signum_node::signum_node(),
-        vertical_wave_shaper_node::vertical_wave_shaper_node(),
-        random_duration_node::random_duration_node(),
-        avg_node::avg_node(),
-        input_node::input_node(),
-        bpm_sync_node::bpm_sync_node(),
-        bpm_sync_source_node::bpm_sync_source_node(),
-        tracker_node::tracker_node(),
-        eq_node::eq_node(),
-        unison_node::unison_node(),
-        daw_automation_mix_node::daw_automation_mix_node(),
-        automated_speed_node::automated_speed_node(),
-        after_node::after_node(),
-        hold_node::hold_node(),
-        switch_node::switch_node(),
-        automated_hold_node::automated_hold_node(),
-        delay_repeat_node::delay_repeat_node(),
-        wave_folder_node::wave_folder_node(),
-        automated_delay_repeat_node::automated_delay_repeat_node(),
-        automated_duration_node::automated_duration_node(),
-        automated_skip_node::automated_skip_node(),
-        grain_node::grain_node(),
-        glitch_node::glitch_node(),
-        clamp_to_note_node::clamp_to_note_node(),
-        automated_bpm_sync_node::automated_bpm_sync_node(),
-    ];
-    NodeDefinitions(nodes)
 }

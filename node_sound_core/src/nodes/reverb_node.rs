@@ -1,11 +1,11 @@
 use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNodeMetadata;
+use crate::nodes::amplify_node::Amplify;
+use crate::nodes::delay_node::Delay;
+use crate::nodes::mix_node::Mix;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::amplify::Amplify;
-use crate::sounds::delay::Delay;
-use crate::sounds::mix::Mix;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;

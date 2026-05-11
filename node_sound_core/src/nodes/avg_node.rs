@@ -1,11 +1,41 @@
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::avg::Avg;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
+use std::collections::VecDeque;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct Avg<I: SoundNode> {
+    source: I,
+    table: VecDeque<f32>,
+    size: usize,
+}
+
+impl<I: SoundNode> Avg<I> {
+    #[inline]
+    pub fn new(source: I, table_size: usize) -> Self {
+        Self {
+            source,
+            table: VecDeque::new(),
+            size: table_size,
+        }
+    }
+}
+
+impl<I: SoundNode + Clone> SoundNode for Avg<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.table
+            .push_back(self.source.next(index, channel).unwrap_or_default());
+        if self.table.len() > self.size {
+            self.table.pop_front();
+        }
+        Some(self.table.iter().map(|sample| *sample).sum::<f32>() / self.table.len() as f32)
+    }
+}
 
 pub fn avg_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

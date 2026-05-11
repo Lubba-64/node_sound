@@ -1,11 +1,45 @@
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::automated_clamp::AutomatedClamp;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct AutomatedClamp<I1: SoundNode, I2: SoundNode, I3: SoundNode> {
+    source: I1,
+    min: I2,
+    max: I3,
+}
+
+impl<I1: SoundNode, I2: SoundNode, I3: SoundNode> AutomatedClamp<I1, I2, I3> {
+    #[inline]
+    pub fn new(source: I1, min: I2, max: I3) -> Self {
+        Self { source, max, min }
+    }
+}
+
+impl<I1: SoundNode + Clone, I2: SoundNode + Clone, I3: SoundNode + Clone> SoundNode
+    for AutomatedClamp<I1, I2, I3>
+{
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        match (
+            self.source.next(index, channel),
+            self.min.next(index, channel),
+            self.max.next(index, channel),
+        ) {
+            (Some(source), Some(mut min), Some(mut max)) => {
+                if min > max {
+                    std::mem::swap(&mut min, &mut max);
+                }
+                Some(source.clamp(min, max))
+            }
+            _ => None,
+        }
+    }
+}
 
 pub fn automated_clamp_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

@@ -1,12 +1,30 @@
 use crate::constants::MAX_FREQ;
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::const_wave::ConstWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct ConstWave {
+    val: f32,
+}
+
+impl ConstWave {
+    #[inline]
+    pub fn new(val: f32) -> Self {
+        Self { val }
+    }
+}
+
+impl SoundNode for ConstWave {
+    fn next(&mut self, _index: f32, _channel: u8) -> Option<f32> {
+        Some(self.val)
+    }
+}
 
 pub fn const_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

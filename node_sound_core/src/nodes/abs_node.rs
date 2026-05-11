@@ -1,11 +1,29 @@
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::abs::Abs;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct Abs<I: SoundNode> {
+    source: I,
+}
+
+impl<I: SoundNode> Abs<I> {
+    #[inline]
+    pub fn new(source: I) -> Self {
+        Self { source }
+    }
+}
+
+impl<I: SoundNode + Clone> SoundNode for Abs<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.source.next(index, channel).map(|sample| sample.abs())
+    }
+}
 
 pub fn abs_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

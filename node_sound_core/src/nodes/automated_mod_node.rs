@@ -1,11 +1,36 @@
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::automated_mod::AutomatedMod;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct AutomatedMod<I1: SoundNode, I2: SoundNode> {
+    source: I1,
+    mod_by: I2,
+}
+
+impl<I1: SoundNode, I2: SoundNode> AutomatedMod<I1, I2> {
+    #[inline]
+    pub fn new(source: I1, mod_by: I2) -> Self {
+        Self { source, mod_by }
+    }
+}
+
+impl<I1: SoundNode + Clone, I2: SoundNode + Clone> SoundNode for AutomatedMod<I1, I2> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        match (
+            self.source.next(index, channel),
+            self.mod_by.next(index, channel),
+        ) {
+            (Some(sample), Some(mod_by)) => Some(sample - (sample % mod_by)),
+            _ => None,
+        }
+    }
+}
 
 pub fn automated_mod_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

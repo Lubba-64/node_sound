@@ -1,11 +1,30 @@
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::split_channels::SplitChannels;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct SplitChannels<I: SoundNode> {
+    source: I,
+    channel: u8,
+}
+
+impl<I: SoundNode> SplitChannels<I> {
+    #[inline]
+    pub fn new(source: I, channel: u8) -> Self {
+        Self { source, channel }
+    }
+}
+
+impl<I: SoundNode + Clone> SoundNode for SplitChannels<I> {
+    fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
+        self.source.next(index, self.channel)
+    }
+}
 
 pub fn split_channels_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

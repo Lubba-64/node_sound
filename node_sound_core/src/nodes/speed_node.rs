@@ -1,12 +1,31 @@
 use crate::constants::MAX_FREQ;
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::speed::Speed;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct Speed<I: SoundNode> {
+    source: I,
+    speed: f32,
+}
+
+impl<I: SoundNode> Speed<I> {
+    pub fn new(source: I, speed: f32) -> Self {
+        Self { source, speed }
+    }
+}
+
+impl<I: SoundNode + Clone> SoundNode for Speed<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        let scaled_index = index * self.speed;
+        self.source.next(scaled_index, channel)
+    }
+}
 
 pub fn speed_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

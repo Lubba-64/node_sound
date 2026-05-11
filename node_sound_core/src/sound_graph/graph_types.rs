@@ -1,5 +1,5 @@
 use crate::error::Result;
-use crate::{sound_graph::note::Pitch, sounds::tracker::TrackerNote};
+use crate::{nodes::tracker_node::TrackerNote, sound_graph::note::Pitch};
 use anyhow::anyhow;
 use egui_node_graph_2::InputParamKind;
 use serde::{Deserialize, Serialize};
@@ -98,9 +98,9 @@ pub enum InputValueConfig {
 }
 
 impl Debug for ValueType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::AudioSource { value: _ } => f
+            Self::AudioSource { value: _ } => formatter
                 .debug_struct("Source")
                 .field("value", &"Anonymous AudioSource")
                 .finish(),
@@ -109,13 +109,19 @@ impl Debug for ValueType {
                 min: _,
                 max: _,
                 note: _,
-            } => f.debug_struct("Float").field("value", value).finish(),
-            Self::Duration { value } => f.debug_struct("Duration").field("value", value).finish(),
-            Self::None => f.debug_struct("None").finish(),
-            Self::AudioFile { value } => f
+            } => formatter
+                .debug_struct("Float")
+                .field("value", value)
+                .finish(),
+            Self::Duration { value } => formatter
+                .debug_struct("Duration")
+                .field("value", value)
+                .finish(),
+            Self::None => formatter.debug_struct("None").finish(),
+            Self::AudioFile { value } => formatter
                 .debug_struct(&value.clone().unwrap_or(("None".to_string(), vec![])).0)
                 .finish(),
-            Self::MidiFile { value: _ } => f
+            Self::MidiFile { value: _ } => formatter
                 .debug_struct("Midi")
                 .field("value", &"Anonymous MidiFile")
                 .finish(),
@@ -124,25 +130,25 @@ impl Debug for ValueType {
                 id: _,
                 width: _,
                 height: _,
-            } => f
+            } => formatter
                 .debug_struct("Graph")
                 .field("value", &"Anonymous Graph")
                 .finish(),
             Self::Bool { value } => {
                 if *value {
-                    f.debug_struct("true").finish()
+                    formatter.debug_struct("true").finish()
                 } else {
-                    f.debug_struct("false").finish()
+                    formatter.debug_struct("false").finish()
                 }
             }
-            Self::TrackerNotes { notes: _ } => f
+            Self::TrackerNotes { notes: _ } => formatter
                 .debug_struct("TrackerNotes")
                 .field("value", &"Anonymous TrackerNotes")
                 .finish(),
             Self::Dropdown {
                 value: _,
                 values: _,
-            } => f
+            } => formatter
                 .debug_struct("Dropdown")
                 .field("value", &"Anonymous Dropdown")
                 .finish(),

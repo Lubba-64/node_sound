@@ -1,11 +1,46 @@
+use crate::node::GenericSoundNode;
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
+use crate::nodes::const_node::ConstWave;
+use crate::nodes::daw_automation_source_node::DawAutomationChannel;
+use crate::nodes::lfo_node::Lfo;
+use crate::nodes::minus_node::Minus;
+use crate::nodes::mix_node::Mix;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::daw_automation_mix::DawAutomationMix;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+use std::sync::Mutex;
+
+#[derive(Clone, Debug)]
+pub struct DawAutomationMix {
+    source: GenericSoundNode,
+}
+
+impl DawAutomationMix {
+    #[inline]
+    pub fn new<S: SoundNode + Clone + 'static, S2: SoundNode + Clone + 'static>(
+        channel: Arc<Mutex<f32>>,
+        audio1: S,
+        audio2: S2,
+    ) -> Self {
+        let channel = DawAutomationChannel::new(channel);
+        Self {
+            source: GenericSoundNode::new(Box::new(Mix::new(
+                Lfo::new(Minus::new(channel.clone(), ConstWave::new(1.0)), audio1),
+                Lfo::new(channel, audio2),
+            ))),
+        }
+    }
+}
+
+impl SoundNode for DawAutomationMix {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.source.next(index, channel)
+    }
+}
 
 pub fn daw_automation_mix_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

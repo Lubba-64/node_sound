@@ -1,12 +1,36 @@
 use crate::constants::MAX_FREQ;
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::amplify::Amplify;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct Amplify<I: SoundNode> {
+    source: I,
+    amplification: f32,
+}
+
+impl<I: SoundNode> Amplify<I> {
+    #[inline]
+    pub fn new(source: I, amplification: f32) -> Self {
+        Self {
+            source,
+            amplification,
+        }
+    }
+}
+
+impl<I: SoundNode + Clone> SoundNode for Amplify<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.source
+            .next(index, channel)
+            .map(|sample| sample * self.amplification)
+    }
+}
 
 pub fn amplify_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

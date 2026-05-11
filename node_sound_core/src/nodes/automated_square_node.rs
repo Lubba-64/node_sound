@@ -1,11 +1,39 @@
 use crate::nodes::SoundNodeMetadata;
+use crate::nodes::automated_speed_node::AutomatedSpeed;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::automated_square::AutomatedSquareWave;
+use crate::{node::SoundNode, nodes::square_node::SquareWave};
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct AutomatedSquareWave<F: SoundNode> {
+    freq_source: AutomatedSpeed<SquareWave, F>,
+    speed: f32,
+}
+
+impl<F: SoundNode> AutomatedSquareWave<F> {
+    #[inline]
+    pub fn new(freq_source: F, uses_speed: bool, speed: f32, sample_rate: f32) -> Self {
+        Self {
+            freq_source: AutomatedSpeed::new(
+                SquareWave::new(1.0, false, sample_rate, 1.0),
+                1.0,
+                freq_source,
+            ),
+            speed: if uses_speed { speed } else { 1.0 },
+        }
+    }
+}
+
+impl<F: SoundNode + Clone> SoundNode for AutomatedSquareWave<F> {
+    fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
+        index /= self.speed;
+        self.freq_source.next(index, channel)
+    }
+}
 
 pub fn automated_square_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

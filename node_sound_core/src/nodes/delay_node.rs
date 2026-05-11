@@ -1,11 +1,40 @@
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::delay::Delay;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct Delay<S: SoundNode> {
+    duration: f32,
+    source: S,
+    sample_rate: f32,
+    speed: f32,
+}
+
+impl<S: SoundNode> Delay<S> {
+    pub fn new(duration: f32, source: S, uses_speed: bool, speed: f32, sample_rate: f32) -> Self {
+        Self {
+            duration,
+            source,
+            speed: if uses_speed { speed } else { 1.0 },
+            sample_rate,
+        }
+    }
+}
+
+impl<S: SoundNode + Clone> SoundNode for Delay<S> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        if index > self.duration * self.speed * self.sample_rate {
+            self.source.next(index, channel)
+        } else {
+            Some(0.0)
+        }
+    }
+}
 
 pub fn delay_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

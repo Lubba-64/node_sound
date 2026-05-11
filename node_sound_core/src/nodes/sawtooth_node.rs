@@ -1,12 +1,39 @@
 use crate::constants::MAX_FREQ;
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::sawtooth::SawtoothWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
+use std::f32::consts::PI;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct SawtoothWave {
+    frequency: f32,
+    sample_rate: f32,
+    speed: f32,
+}
+
+impl SawtoothWave {
+    #[inline]
+    pub fn new(frequency: f32, uses_speed: bool, sample_rate: f32, speed: f32) -> Self {
+        Self {
+            frequency,
+            speed: if uses_speed { speed } else { 1.0 },
+            sample_rate,
+        }
+    }
+}
+
+impl SoundNode for SawtoothWave {
+    fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
+        let phase_increment = 2.0 * PI * self.frequency / self.sample_rate / self.speed;
+        let phase = (phase_increment * index) % (2.0 * PI);
+        Some((phase / PI) - 1.0)
+    }
+}
 
 pub fn sawtooth_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

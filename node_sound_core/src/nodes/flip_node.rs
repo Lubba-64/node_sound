@@ -1,11 +1,29 @@
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::flip::Flip;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct Flip<I1: SoundNode> {
+    source: I1,
+}
+
+impl<I1: SoundNode> Flip<I1> {
+    #[inline]
+    pub fn new(source: I1) -> Self {
+        Self { source }
+    }
+}
+
+impl<I1: SoundNode + Clone> SoundNode for Flip<I1> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.source.next(index, channel).map(|sample| -sample)
+    }
+}
 
 pub fn flip_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

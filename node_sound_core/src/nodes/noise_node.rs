@@ -1,11 +1,44 @@
+use crate::node::SoundNode;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::noise::Noise;
 use egui_node_graph_2::InputParamKind;
+use rand::prelude::*;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub struct Noise {
+    min: f32,
+    max: f32,
+}
+
+impl Noise {
+    #[inline]
+    pub fn new(min: f32, max: f32) -> Self {
+        let mut min_1 = min;
+        let mut max_1 = max;
+        if min_1 > max_1 {
+            let other = min_1;
+            min_1 = max_1;
+            max_1 = other;
+        }
+        Self {
+            min: min_1,
+            max: max_1,
+        }
+    }
+}
+
+impl SoundNode for Noise {
+    fn next(&mut self, _index: f32, _channel: u8) -> Option<f32> {
+        if self.min == self.max {
+            return Some(self.min);
+        }
+        Some(thread_rng().gen_range(self.min..self.max))
+    }
+}
 
 pub fn noise_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

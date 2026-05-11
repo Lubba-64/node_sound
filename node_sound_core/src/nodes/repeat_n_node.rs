@@ -1,8 +1,8 @@
 use crate::nodes::SoundNodeMetadata;
+use crate::nodes::repeat::RepeatRefSource;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
-use crate::sounds::repeat_n::RepeatRefSource;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;

@@ -2,17 +2,17 @@ use egui_extras_xt::knobs::AudioKnob;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
 use node_sound_core::node::SoundNode;
+use node_sound_core::nodes::NodeDefinitions;
 use node_sound_core::{
     constants::MIDDLE_C_FREQ,
     node::GenericSoundNode,
-    nodes::get_nodes,
+    nodes::{const_node::ConstWave, speed_node::Speed},
     sound_graph::{
         self,
         copy_paste_del_helpers::{copy, delete_nodes, paste},
         graph::{ActiveNodeState, FileManager, SoundNodeGraph, evaluate_node},
         graph_types::ValueType,
     },
-    sounds::{const_wave::ConstWave, speed::Speed},
 };
 use std::{
     collections::HashMap,
@@ -693,7 +693,7 @@ impl Plugin for NodeSound {
                                     &graph.state.editor_state.graph.clone(),
                                     outputid,
                                     &mut HashMap::new(),
-                                    &get_nodes(),
+                                    &NodeDefinitions::default(),
                                     &mut graph.state,
                                 ) {
                                     Ok(val) => {
