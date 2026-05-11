@@ -1,14 +1,7 @@
-use crate::constants::MAX_FREQ;
-use crate::nodes::SoundNodeMetadata;
-use crate::nodes::amplify_node::Amplify;
-use crate::nodes::delay_node::Delay;
-use crate::nodes::mix_node::Mix;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
+use crate::{
+    node_prelude::*,
+    nodes::{amplify_node::Amplify, delay_node::Delay, mix_node::Mix},
 };
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
-use std::sync::Arc;
 
 pub fn reverb_node() -> SoundNodeMetadata {
     SoundNodeMetadata {

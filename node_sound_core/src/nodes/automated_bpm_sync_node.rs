@@ -1,15 +1,4 @@
-use crate::constants::WAVE_TABLE_SIZE;
-use crate::node::SoundNode;
-use crate::nodes::SoundNodeMetadata;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
-};
-use crate::sound_graph::note::NoteSpeedType;
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::sync::Mutex;
+use crate::node_prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct AutomatedBPMSync<S: SoundNode> {

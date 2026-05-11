@@ -1,14 +1,8 @@
-use crate::error::NodeSoundError;
-use crate::nodes::SoundNodeMetadata;
-use crate::nodes::wave_table::{WaveTableManager, WaveTableOscillator};
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
+use crate::{
+    error::NodeSoundError,
+    node_prelude::*,
+    nodes::wave_table::{WaveTableManager, WaveTableOscillator},
 };
-use crate::{constants::MIDDLE_C_FREQ, node::SoundNode};
-use anyhow::anyhow;
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
-use std::sync::Arc;
 use synthrs::{midi::MidiSong, synthesizer::make_samples_from_midi, wave};
 
 #[derive(Clone, Debug)]

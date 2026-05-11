@@ -1,15 +1,8 @@
-use crate::constants::MAX_FREQ;
-use crate::nodes::SoundNodeMetadata;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
-};
 use crate::{
-    node::{GenericSoundNode, SoundNode},
+    node::GenericSoundNode,
+    node_prelude::*,
     nodes::{skip_node::Skip, speed_node::Speed},
 };
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
-use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct UnisonVoice {

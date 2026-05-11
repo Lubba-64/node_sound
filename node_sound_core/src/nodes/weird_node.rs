@@ -1,13 +1,5 @@
-use crate::nodes::SoundNodeMetadata;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
-};
-use egui_node_graph_2::InputParamKind;
+use crate::node_prelude::*;
 use rand::Rng;
-use std::collections::BTreeMap;
-use std::sync::Arc;
-
-use crate::node::SoundNode;
 
 #[derive(Clone, Debug)]
 pub struct Weird<I: SoundNode> {

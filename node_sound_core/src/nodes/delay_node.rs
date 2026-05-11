@@ -1,11 +1,4 @@
-use crate::node::SoundNode;
-use crate::nodes::SoundNodeMetadata;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
-};
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
-use std::sync::Arc;
+use crate::node_prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct Delay<S: SoundNode> {

@@ -1,12 +1,7 @@
-use crate::node::SoundNode;
-use crate::nodes::SoundNodeMetadata;
-use crate::nodes::wave_table::{WaveTableManager, WaveTableOscillator};
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
+use crate::{
+    node_prelude::*,
+    nodes::wave_table::{WaveTableManager, WaveTableOscillator},
 };
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
-use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct ReverseSource {

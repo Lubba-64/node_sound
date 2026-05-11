@@ -1,5 +1,4 @@
-use crate::node::SoundNode;
-use std::u32;
+use crate::node_prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct RepeatRefSource<I: SoundNode> {

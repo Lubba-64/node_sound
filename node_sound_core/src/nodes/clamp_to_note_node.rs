@@ -1,12 +1,4 @@
-use crate::nodes::SoundNodeMetadata;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
-};
-use crate::{node::SoundNode, sound_graph::note::Pitch};
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
-use std::f32;
-use std::sync::Arc;
+use crate::node_prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct ClampToNote<I: SoundNode> {

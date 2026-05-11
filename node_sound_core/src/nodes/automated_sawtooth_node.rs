@@ -1,13 +1,7 @@
-use crate::node::SoundNode;
-use crate::nodes::SoundNodeMetadata;
-use crate::nodes::automated_speed_node::AutomatedSpeed;
-use crate::nodes::sawtooth_node::SawtoothWave;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
+use crate::{
+    node_prelude::*,
+    nodes::{automated_speed_node::AutomatedSpeed, sawtooth_node::SawtoothWave},
 };
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
-use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct AutomatedSawtoothWave<F: SoundNode> {

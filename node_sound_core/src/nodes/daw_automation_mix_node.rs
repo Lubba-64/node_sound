@@ -1,18 +1,11 @@
-use crate::node::GenericSoundNode;
-use crate::node::SoundNode;
-use crate::nodes::SoundNodeMetadata;
-use crate::nodes::const_node::ConstWave;
-use crate::nodes::daw_automation_source_node::DawAutomationChannel;
-use crate::nodes::lfo_node::Lfo;
-use crate::nodes::minus_node::Minus;
-use crate::nodes::mix_node::Mix;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
+use crate::{
+    node::GenericSoundNode,
+    node_prelude::*,
+    nodes::{
+        const_node::ConstWave, daw_automation_source_node::DawAutomationChannel, lfo_node::Lfo,
+        minus_node::Minus, mix_node::Mix,
+    },
 };
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
-use std::sync::Arc;
-use std::sync::Mutex;
 
 #[derive(Clone, Debug)]
 pub struct DawAutomationMix {

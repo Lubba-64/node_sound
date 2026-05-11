@@ -1,15 +1,4 @@
-use crate::constants::MAX_FREQ;
-use crate::node::SoundNode;
-use crate::nodes::SoundNodeMetadata;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
-};
-use anyhow::anyhow;
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
-use std::f32::consts::PI;
-use std::str::FromStr;
-use std::sync::Arc;
+use crate::node_prelude::*;
 // AI generated. It works. I will eventually rewrite this from scratch.
 
 #[derive(Clone, Copy, Debug)]
