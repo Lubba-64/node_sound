@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::automated_clamp::AutomatedClamp;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn automated_clamp_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -51,16 +50,17 @@ min and max are waveforms going from -1.0 to 1.0."#
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned1 = props.clone_sound(props.get_source("min")?)?;
+            let cloned2 = props.clone_sound(props.get_source("max")?)?;
+            let cloned3 = props.clone_sound(props.get_source("audio 1")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props
+                        .push_sound(Box::new(AutomatedClamp::new(cloned1, cloned2, cloned3))),
+                },
+            )]))
+        })),
     }
-}
-pub fn automated_clamp_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned1 = props.clone_sound(props.get_source("min")?)?;
-    let cloned2 = props.clone_sound(props.get_source("max")?)?;
-    let cloned3 = props.clone_sound(props.get_source("audio 1")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(AutomatedClamp::new(cloned1, cloned2, cloned3))),
-        },
-    )]))
 }

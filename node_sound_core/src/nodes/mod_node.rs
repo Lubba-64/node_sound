@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::mod_source::Mod;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn mod_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -43,14 +42,14 @@ pub fn mod_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(Mod::new(cloned, props.get_float("mod")?))),
+                },
+            )]))
+        })),
     }
-}
-pub fn mod_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(Mod::new(cloned, props.get_float("mod")?))),
-        },
-    )]))
 }

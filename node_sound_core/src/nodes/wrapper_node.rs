@@ -1,3 +1,4 @@
+use super::{SoundNodeProps, SoundNodeResult};
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
@@ -5,8 +6,6 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::wrapper::Wrapper;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
 
 pub fn wrapper_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -32,6 +31,7 @@ wraps this value around to the other side if it exceeds -1.0 to 1.0."#
         )]),
     }
 }
+
 pub fn wrapper_logic(mut props: SoundNodeProps) -> SoundNodeResult {
     let cloned = props.clone_sound(props.get_source("audio 1")?)?;
     Ok(BTreeMap::from([(

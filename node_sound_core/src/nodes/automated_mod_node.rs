@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::automated_mod::AutomatedMod;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn automated_mod_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -42,15 +41,15 @@ Mod stairsteps the wave by the desired amount."#
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned1 = props.clone_sound(props.get_source("audio 1")?)?;
+            let cloned2 = props.clone_sound(props.get_source("mod")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(AutomatedMod::new(cloned1, cloned2))),
+                },
+            )]))
+        })),
     }
-}
-pub fn automated_mod_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned1 = props.clone_sound(props.get_source("audio 1")?)?;
-    let cloned2 = props.clone_sound(props.get_source("mod")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(AutomatedMod::new(cloned1, cloned2))),
-        },
-    )]))
 }

@@ -1,4 +1,3 @@
-use super::{SoundNodeProps, SoundNodeResult};
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
@@ -6,6 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::bit_crush::BitCrusher;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 pub fn bit_crush_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -42,18 +42,17 @@ pub fn bit_crush_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(BitCrusher::new(
+                        cloned,
+                        props.get_float("reduction")? as u32,
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn bit_crush_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(BitCrusher::new(
-                cloned,
-                props.get_float("reduction")? as u32,
-            ))),
-        },
-    )]))
 }

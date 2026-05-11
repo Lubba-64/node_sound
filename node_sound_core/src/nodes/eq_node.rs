@@ -1,4 +1,3 @@
-use super::{SoundNodeProps, SoundNodeResult};
 use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
@@ -8,6 +7,7 @@ use crate::sounds::eq::{FilterType, SingleFilterEq};
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::str::FromStr;
+use std::sync::Arc;
 
 pub fn eq_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -94,23 +94,23 @@ pub fn eq_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            let filter_type = FilterType::from_str(&props.get_dropdown("filter type")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(SingleFilterEq::new(
+                        cloned,
+                        props.sample_rate(),
+                        2,
+                        filter_type,
+                        props.get_float("frequency")?,
+                        props.get_float("q factor")?,
+                        props.get_float("gain")?,
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-pub fn eq_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    let filter_type = FilterType::from_str(&props.get_dropdown("filter type")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(SingleFilterEq::new(
-                cloned,
-                props.sample_rate(),
-                2,
-                filter_type,
-                props.get_float("frequency")?,
-                props.get_float("q factor")?,
-                props.get_float("gain")?,
-            ))),
-        },
-    )]))
 }

@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::noise::Noise;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn noise_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -47,16 +46,16 @@ pub fn noise_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(Noise::new(
+                        props.get_float("min")?,
+                        props.get_float("max")?,
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-pub fn noise_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(Noise::new(
-                props.get_float("min")?,
-                props.get_float("max")?,
-            ))),
-        },
-    )]))
 }

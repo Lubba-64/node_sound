@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::automated_translate::AutomatedTranslateWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn automated_translate_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -68,22 +67,20 @@ All parameters from the previous node are automated."#
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned1 = props.clone_sound(props.get_source("start_min")?)?;
+            let cloned2 = props.clone_sound(props.get_source("start_max")?)?;
+            let cloned3 = props.clone_sound(props.get_source("end_min")?)?;
+            let cloned4 = props.clone_sound(props.get_source("end_max")?)?;
+            let cloned5 = props.clone_sound(props.get_source("audio 1")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(AutomatedTranslateWave::new(
+                        cloned1, cloned2, cloned3, cloned4, cloned5,
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn automated_translate_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned1 = props.clone_sound(props.get_source("start_min")?)?;
-    let cloned2 = props.clone_sound(props.get_source("start_max")?)?;
-    let cloned3 = props.clone_sound(props.get_source("end_min")?)?;
-    let cloned4 = props.clone_sound(props.get_source("end_max")?)?;
-    let cloned5 = props.clone_sound(props.get_source("audio 1")?)?;
-
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(AutomatedTranslateWave::new(
-                cloned1, cloned2, cloned3, cloned4, cloned5,
-            ))),
-        },
-    )]))
 }

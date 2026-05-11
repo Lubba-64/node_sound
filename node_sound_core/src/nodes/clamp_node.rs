@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::clamp::Clamp;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn clamp_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -58,18 +57,18 @@ making sure no values go above or below the given min or max."#
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(Clamp::new(
+                        cloned,
+                        props.get_float("min")?,
+                        props.get_float("max")?,
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-pub fn clamp_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(Clamp::new(
-                cloned,
-                props.get_float("min")?,
-                props.get_float("max")?,
-            ))),
-        },
-    )]))
 }

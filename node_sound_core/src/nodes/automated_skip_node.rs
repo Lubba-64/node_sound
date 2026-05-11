@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::automated_skip::AutomatedSkip;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn automated_skip_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -48,20 +47,20 @@ pub fn automated_skip_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = AutomatedSkip::new(
+                props.clone_sound(props.get_source("duration")?)?,
+                props.clone_sound(props.get_source("audio 1")?)?,
+                props.get_bool("note independant")?,
+                props.sample_rate(),
+                props.note_speed(),
+            );
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(cloned)),
+                },
+            )]))
+        })),
     }
-}
-pub fn automated_skip_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = AutomatedSkip::new(
-        props.clone_sound(props.get_source("duration")?)?,
-        props.clone_sound(props.get_source("audio 1")?)?,
-        props.get_bool("note independant")?,
-        props.sample_rate(),
-        props.note_speed(),
-    );
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(cloned)),
-        },
-    )]))
 }

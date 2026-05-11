@@ -8,8 +8,7 @@ use crate::sounds::automated_bpm_sync::AutomatedBPMSync;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::str::FromStr;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn automated_bpm_sync_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -60,24 +59,24 @@ The automation values for Any is 0-21, 0-7 for the rest which corresponds to the
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let speed = NoteSpeedType::from_str(&props.get_dropdown("note speed type")?)?;
+            let cloned = props.clone_sound(props.get_source("note speed")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(AutomatedBPMSync::new(
+                        props.sample_rate(),
+                        props.bpm(),
+                        cloned,
+                        speed,
+                        props
+                            .get_graph("graph")?
+                            .unwrap_or(vec![0.0; WAVE_TABLE_SIZE]),
+                        props.note_speed(),
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-pub fn automated_bpm_sync_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let speed = NoteSpeedType::from_str(&props.get_dropdown("note speed type")?)?;
-    let cloned = props.clone_sound(props.get_source("note speed")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(AutomatedBPMSync::new(
-                props.sample_rate(),
-                props.bpm(),
-                cloned,
-                speed,
-                props
-                    .get_graph("graph")?
-                    .unwrap_or(vec![0.0; WAVE_TABLE_SIZE]),
-                props.note_speed(),
-            ))),
-        },
-    )]))
 }

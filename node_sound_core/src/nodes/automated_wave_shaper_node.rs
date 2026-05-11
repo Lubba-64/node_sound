@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 };
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn automated_wave_shaper_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -56,33 +55,30 @@ by setting the end min and end max to your desired frequency values."#
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("frequency")?)?;
+            props.update_wavetables_node_idx();
+            let left = props
+                .get_graph("graph")?
+                .unwrap_or(vec![0.01; WAVE_TABLE_SIZE]);
+            let wavetable = props
+                .state
+                .user_state
+                .wavetables
+                .make_automated_wavetable_samples(
+                    props.sample_rate(),
+                    MIDDLE_C_FREQ,
+                    cloned,
+                    props.get_bool("note independant")?,
+                    props.note_speed(),
+                    Box::new(|| (left.clone(), left.clone())),
+                );
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(wavetable)),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn automated_wave_shaper_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("frequency")?)?;
-    props.update_wavetables_node_idx();
-    let left = props
-        .get_graph("graph")?
-        .unwrap_or(vec![0.01; WAVE_TABLE_SIZE]);
-
-    let wavetable = props
-        .state
-        .user_state
-        .wavetables
-        .make_automated_wavetable_samples(
-            props.sample_rate(),
-            MIDDLE_C_FREQ,
-            cloned,
-            props.get_bool("note independant")?,
-            props.note_speed(),
-            Box::new(|| (left.clone(), left.clone())),
-        );
-
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(wavetable)),
-        },
-    )]))
 }

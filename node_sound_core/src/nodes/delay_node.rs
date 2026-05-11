@@ -1,4 +1,3 @@
-use super::{SoundNodeProps, SoundNodeResult};
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
@@ -6,6 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::delay::Delay;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 pub fn delay_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -47,21 +47,20 @@ pub fn delay_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = Delay::new(
+                props.get_duration("delay")?.as_secs_f32(),
+                props.clone_sound(props.get_source("audio 1")?)?,
+                props.get_bool("note independant")?,
+                props.note_speed(),
+                props.sample_rate(),
+            );
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(cloned)),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn delay_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = Delay::new(
-        props.get_duration("delay")?.as_secs_f32(),
-        props.clone_sound(props.get_source("audio 1")?)?,
-        props.get_bool("note independant")?,
-        props.note_speed(),
-        props.sample_rate(),
-    );
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(cloned)),
-        },
-    )]))
 }

@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::automated_hold::AutomatedHold;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn automated_hold_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -48,21 +47,21 @@ pub fn automated_hold_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            let hold = props.clone_sound(props.get_source("hold")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(AutomatedHold::new(
+                        cloned,
+                        hold,
+                        props.sample_rate(),
+                        props.note_speed(),
+                        props.get_bool("note independant")?,
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-pub fn automated_hold_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    let hold = props.clone_sound(props.get_source("hold")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(AutomatedHold::new(
-                cloned,
-                hold,
-                props.sample_rate(),
-                props.note_speed(),
-                props.get_bool("note independant")?,
-            ))),
-        },
-    )]))
 }

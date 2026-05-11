@@ -8,8 +8,7 @@ use crate::sounds::bpm_sync_source::BPMSyncSource;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::str::FromStr;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn bpm_sync_source_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -49,22 +48,22 @@ pub fn bpm_sync_source_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let speed = NoteSpeed::from_str(&props.get_dropdown("note speed")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(BPMSyncSource::new(
+                        props.sample_rate(),
+                        props.bpm(),
+                        speed,
+                        props
+                            .get_graph("graph")?
+                            .unwrap_or(vec![0.0; WAVE_TABLE_SIZE]),
+                        props.note_speed(),
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-pub fn bpm_sync_source_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let speed = NoteSpeed::from_str(&props.get_dropdown("note speed")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(BPMSyncSource::new(
-                props.sample_rate(),
-                props.bpm(),
-                speed,
-                props
-                    .get_graph("graph")?
-                    .unwrap_or(vec![0.0; WAVE_TABLE_SIZE]),
-                props.note_speed(),
-            ))),
-        },
-    )]))
 }

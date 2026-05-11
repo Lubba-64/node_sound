@@ -7,8 +7,7 @@ use crate::sounds::midi::MidiRenderer;
 use anyhow::anyhow;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn midi_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -50,32 +49,31 @@ pub fn midi_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            props.update_wavetables_node_idx();
+            let file = props.get_midi("file")?;
+            if file.is_none() {
+                return Ok(BTreeMap::from([(
+                    "out".to_string(),
+                    ValueType::AudioSource { value: 0 },
+                )]));
+            }
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            let midi = MidiRenderer::new(
+                cloned,
+                file.ok_or::<NodeSoundError>(anyhow!("midi file is missing").into())?
+                    .1,
+                props.get_bool("note independant")?,
+                props.note_speed(),
+                props.sample_rate(),
+                &mut props.state.user_state.wavetables,
+            );
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(midi)),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn midi_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    props.update_wavetables_node_idx();
-    let file = props.get_midi("file")?;
-    if file.is_none() {
-        return Ok(BTreeMap::from([(
-            "out".to_string(),
-            ValueType::AudioSource { value: 0 },
-        )]));
-    }
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    let midi = MidiRenderer::new(
-        cloned,
-        file.ok_or::<NodeSoundError>(anyhow!("midi file is missing").into())?
-            .1,
-        props.get_bool("note independant")?,
-        props.note_speed(),
-        props.sample_rate(),
-        &mut props.state.user_state.wavetables,
-    );
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(midi)),
-        },
-    )]))
 }

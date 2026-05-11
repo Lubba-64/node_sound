@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::automated_sawtooth::AutomatedSawtoothWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn automated_sawtooth_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -43,19 +42,19 @@ by setting the end min and end max to your desired frequency values."#
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("freq")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(AutomatedSawtoothWave::new(
+                        cloned,
+                        props.get_bool("note independant")?,
+                        props.note_speed(),
+                        props.sample_rate(),
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-pub fn automated_sawtooth_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("freq")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(AutomatedSawtoothWave::new(
-                cloned,
-                props.get_bool("note independant")?,
-                props.note_speed(),
-                props.sample_rate(),
-            ))),
-        },
-    )]))
 }

@@ -5,8 +5,8 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::daw_automation_source::DawAutomationChannel;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
-use super::{SoundNodeProps, SoundNodeResult};
 pub fn daw_automation_source_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
         name: "Daw Automations".to_string(),
@@ -31,18 +31,17 @@ pub fn daw_automation_source_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(DawAutomationChannel::new(
+                        props.state.runtime_state.automations.0
+                            [(props.get_float("channel")?.round() as usize).clamp(0, 17)]
+                        .clone(),
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn daw_automation_source_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(DawAutomationChannel::new(
-                props.state._unserializeable_state.automations.0
-                    [(props.get_float("channel")?.round() as usize).clamp(0, 17)]
-                .clone(),
-            ))),
-        },
-    )]))
 }

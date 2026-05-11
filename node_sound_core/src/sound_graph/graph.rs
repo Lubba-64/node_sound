@@ -430,7 +430,7 @@ pub struct SoundNodeGraphState {
     pub user_state: SoundGraphUserState,
     pub editor_state: SoundGraphEditorState,
     #[serde(skip)]
-    pub _unserializeable_state: UnserializeableGraphState,
+    pub runtime_state: RuntimeState,
 }
 
 #[derive(Default, Clone)]
@@ -442,7 +442,7 @@ pub struct FileManager {
 }
 
 #[derive(Default)]
-pub struct UnserializeableGraphState {
+pub struct RuntimeState {
     pub node_definitions: NodeDefinitions,
     pub is_done_showing_recording_dialogue: bool,
     pub queue: SoundQueue,
@@ -553,7 +553,7 @@ impl SoundNodeGraph {
             .show(ctx, |ui| {
                 self.state.editor_state.draw_graph_editor(
                     ui,
-                    NodeDefinitionsUi(&self.state._unserializeable_state.node_definitions),
+                    NodeDefinitionsUi(&self.state.runtime_state.node_definitions),
                     &mut self.state.user_state,
                     Vec::default(),
                 )
