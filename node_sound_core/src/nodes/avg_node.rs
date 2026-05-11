@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn avg_node() -> SoundNode {
-    SoundNode {
+pub fn avg_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Avg".to_string(),
         tooltip: r#"Averages all values in a list of values determined by the length parameter.
         the values are cycled each time the table produces a sample."#

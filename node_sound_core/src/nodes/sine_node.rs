@@ -1,5 +1,5 @@
 use crate::constants::MAX_FREQ;
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
-pub fn sine_node() -> SoundNode {
-    SoundNode {
+pub fn sine_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Sine Wave".to_string(),
         tooltip: r#"Sine waveform generator."#.to_string(),
         inputs: BTreeMap::from([

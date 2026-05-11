@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn weird_node() -> SoundNode {
-    SoundNode {
+pub fn weird_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Weird".to_string(),
         tooltip: r#"Weird effect that randomly cycles between 3 different wave shaping functions."#
             .to_string(),

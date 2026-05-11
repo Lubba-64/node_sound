@@ -1,8 +1,8 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 use std::collections::VecDeque;
 
 #[derive(Clone, Debug)]
-pub struct AutomatedDelayRepeat<I: DawSource, B: DawSource, P: DawSource> {
+pub struct AutomatedDelayRepeat<I: SoundNode, B: SoundNode, P: SoundNode> {
     source: I,
     buffer_size_source: B,
     points_source: P,
@@ -10,7 +10,7 @@ pub struct AutomatedDelayRepeat<I: DawSource, B: DawSource, P: DawSource> {
     deque: [VecDeque<f32>; 2],
 }
 
-impl<I: DawSource, B: DawSource, P: DawSource> AutomatedDelayRepeat<I, B, P> {
+impl<I: SoundNode, B: SoundNode, P: SoundNode> AutomatedDelayRepeat<I, B, P> {
     pub fn new(source: I, buffer_size_source: B, points_source: P, sample_rate: f32) -> Self {
         Self {
             source,
@@ -32,7 +32,7 @@ impl<I: DawSource, B: DawSource, P: DawSource> AutomatedDelayRepeat<I, B, P> {
     }
 }
 
-impl<I: DawSource + Clone, B: DawSource + Clone, P: DawSource + Clone> DawSource
+impl<I: SoundNode + Clone, B: SoundNode + Clone, P: SoundNode + Clone> SoundNode
     for AutomatedDelayRepeat<I, B, P>
 {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {

@@ -1,12 +1,12 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct Glitch<I: DawSource> {
+pub struct Glitch<I: SoundNode> {
     current_source: I,
     ind_min: f32,
 }
 
-impl<I: DawSource + Clone> Glitch<I> {
+impl<I: SoundNode + Clone> Glitch<I> {
     #[inline]
     pub fn new(source: I) -> Self {
         Self {
@@ -16,7 +16,7 @@ impl<I: DawSource + Clone> Glitch<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for Glitch<I> {
+impl<I: SoundNode + Clone> SoundNode for Glitch<I> {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
         index += 0.1;
         if index > 0.1 + 0.1 {

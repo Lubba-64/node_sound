@@ -1,7 +1,7 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct AutomatedHold<I: DawSource, I2: DawSource> {
+pub struct AutomatedHold<I: SoundNode, I2: SoundNode> {
     source: I,
     hold_length: I2,
     speed: f32,
@@ -10,7 +10,7 @@ pub struct AutomatedHold<I: DawSource, I2: DawSource> {
     held_value: [f32; 2],
 }
 
-impl<I: DawSource, I2: DawSource> AutomatedHold<I, I2> {
+impl<I: SoundNode, I2: SoundNode> AutomatedHold<I, I2> {
     pub fn new(source: I, hold_length: I2, sample_rate: f32, speed: f32, uses_speed: bool) -> Self {
         Self {
             source,
@@ -23,7 +23,7 @@ impl<I: DawSource, I2: DawSource> AutomatedHold<I, I2> {
     }
 }
 
-impl<I: DawSource + Clone, I2: DawSource + Clone> DawSource for AutomatedHold<I, I2> {
+impl<I: SoundNode + Clone, I2: SoundNode + Clone> SoundNode for AutomatedHold<I, I2> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         let next = self.source.next(index, channel)?;
         let ch = channel as usize;

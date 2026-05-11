@@ -1,5 +1,5 @@
 use super::{SoundNodeProps, SoundNodeResult};
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use crate::sounds::random_duration::RandomDuration;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
-pub fn random_duration_node() -> SoundNode {
-    SoundNode {
+pub fn random_duration_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Random Take Duration".to_string(),
         tooltip: r#"Takes a snapshot of the waveform for the amount of time you input.
         The Random Take Duration node does this as a random number from min duration to max duration."#

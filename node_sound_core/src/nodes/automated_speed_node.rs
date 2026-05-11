@@ -1,5 +1,5 @@
 use crate::constants::MAX_FREQ;
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -9,8 +9,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn automated_speed_node() -> SoundNode {
-    SoundNode {
+pub fn automated_speed_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Automated Speed".to_string(),
         tooltip: r#"Changes the speed of the input waveform based off of the base frequency to the automation value."#
             .to_string(),

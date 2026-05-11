@@ -1,20 +1,20 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct AutomatedClamp<I1: DawSource, I2: DawSource, I3: DawSource> {
+pub struct AutomatedClamp<I1: SoundNode, I2: SoundNode, I3: SoundNode> {
     source: I1,
     min: I2,
     max: I3,
 }
 
-impl<I1: DawSource, I2: DawSource, I3: DawSource> AutomatedClamp<I1, I2, I3> {
+impl<I1: SoundNode, I2: SoundNode, I3: SoundNode> AutomatedClamp<I1, I2, I3> {
     #[inline]
     pub fn new(source: I1, min: I2, max: I3) -> Self {
         Self { source, max, min }
     }
 }
 
-impl<I1: DawSource + Clone, I2: DawSource + Clone, I3: DawSource + Clone> DawSource
+impl<I1: SoundNode + Clone, I2: SoundNode + Clone, I3: SoundNode + Clone> SoundNode
     for AutomatedClamp<I1, I2, I3>
 {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {

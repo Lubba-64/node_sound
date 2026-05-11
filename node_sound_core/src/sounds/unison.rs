@@ -1,5 +1,5 @@
 use crate::{
-    sound_map::{DawSource, GenericSource},
+    sound_map::{GenericSoundNode, SoundNode},
     sounds::{skip::Skip, speed::Speed},
 };
 
@@ -10,16 +10,16 @@ pub struct UnisonVoice {
 
 #[derive(Clone, Debug)]
 pub struct MixVec {
-    vec: Vec<GenericSource>,
+    vec: Vec<GenericSoundNode>,
 }
 
 impl MixVec {
-    fn new(vec: Vec<GenericSource>) -> Self {
+    fn new(vec: Vec<GenericSoundNode>) -> Self {
         Self { vec }
     }
 }
 
-impl DawSource for MixVec {
+impl SoundNode for MixVec {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         let mut samples = vec![0.0; self.vec.len()];
         for i in 0..self.vec.len() {
@@ -30,7 +30,7 @@ impl DawSource for MixVec {
 }
 
 impl UnisonVoice {
-    pub fn new<S: DawSource + 'static + Clone>(
+    pub fn new<S: SoundNode + 'static + Clone>(
         source: S,
         mut phase_sep: f32,
         voices: u8,
@@ -63,15 +63,15 @@ impl UnisonVoice {
                 // First voice - no phase offset, just potential detune
                 if (detune_factor - 1.0).abs() > 0.0001 {
                     // Only wrap in Speed if detune is actually applied
-                    GenericSource::new(Box::new(Speed::new(source.clone(), detuned_speed)))
+                    GenericSoundNode::new(Box::new(Speed::new(source.clone(), detuned_speed)))
                 } else {
-                    GenericSource::new(Box::new(source.clone()))
+                    GenericSoundNode::new(Box::new(source.clone()))
                 }
             } else {
                 // Other voices with phase offset and detune
                 let phase_offset = time_offset * i as f32;
 
-                GenericSource::new(Box::new(Speed::new(
+                GenericSoundNode::new(Box::new(Speed::new(
                     Skip::new(phase_offset, source.clone(), true, sample_rate, note_speed),
                     detuned_speed,
                 )))
@@ -86,7 +86,7 @@ impl UnisonVoice {
     }
 }
 
-impl DawSource for UnisonVoice {
+impl SoundNode for UnisonVoice {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.source.next(index, channel)
     }

@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn wrapper_node() -> SoundNode {
-    SoundNode {
+pub fn wrapper_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Wrapper".to_string(),
         tooltip: r#"Takes the last value and adds the current value to it.
 wraps this value around to the other side if it exceeds -1.0 to 1.0."#

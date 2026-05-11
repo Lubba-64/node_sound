@@ -1,6 +1,6 @@
 use std::{f32::consts::PI, str::FromStr};
 
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 // yes this is AI, I would not understand how to do this myself but if it works its getting added!
 // this stuff is just for fun.
 
@@ -63,7 +63,7 @@ impl FromStr for FilterType {
 }
 
 #[derive(Clone, Debug)]
-pub struct SingleFilterEq<I: DawSource> {
+pub struct SingleFilterEq<I: SoundNode> {
     source: I,
     filter_type: FilterType,
     frequency: f32,
@@ -73,7 +73,7 @@ pub struct SingleFilterEq<I: DawSource> {
     state: Vec<(f32, f32, f32, f32)>,
 }
 
-impl<I: DawSource> SingleFilterEq<I> {
+impl<I: SoundNode> SingleFilterEq<I> {
     pub fn new(
         source: I,
         sample_rate: f32,
@@ -190,7 +190,7 @@ impl<I: DawSource> SingleFilterEq<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for SingleFilterEq<I> {
+impl<I: SoundNode + Clone> SoundNode for SingleFilterEq<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         let channel_idx = channel as usize;
         if channel_idx >= self.state.len() {

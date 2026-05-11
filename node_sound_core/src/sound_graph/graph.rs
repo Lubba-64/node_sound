@@ -2,7 +2,7 @@ use super::copy_paste_del_helpers::{copy, delete_nodes, paste};
 use super::float_selector;
 use super::graph_types::InputValueConfig;
 use super::wave_table_graph::wave_table_graph;
-use crate::nodes::{NodeDefinitions, SoundNode, SoundNodeProps};
+use crate::nodes::{NodeDefinitions, SoundNodeMetadata, SoundNodeProps};
 use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::note::{Note, NoteSpeed};
@@ -94,7 +94,7 @@ impl DataTypeTrait<SoundGraphUserState> for DataType {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct NodeDefinitionUi(pub SoundNode);
+pub struct NodeDefinitionUi(pub SoundNodeMetadata);
 
 impl NodeTemplateTrait for NodeDefinitionUi {
     type NodeData = NodeData;

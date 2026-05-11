@@ -1,14 +1,14 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 use std::collections::VecDeque;
 
 #[derive(Clone, Debug)]
-pub struct Avg<I: DawSource> {
+pub struct Avg<I: SoundNode> {
     source: I,
     table: VecDeque<f32>,
     size: usize,
 }
 
-impl<I: DawSource> Avg<I> {
+impl<I: SoundNode> Avg<I> {
     #[inline]
     pub fn new(source: I, table_size: usize) -> Self {
         Self {
@@ -19,7 +19,7 @@ impl<I: DawSource> Avg<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for Avg<I> {
+impl<I: SoundNode + Clone> SoundNode for Avg<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.table
             .push_back(self.source.next(index, channel).unwrap_or_default());

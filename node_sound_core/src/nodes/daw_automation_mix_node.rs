@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
-pub fn daw_automation_mix_node() -> SoundNode {
-    SoundNode {
+pub fn daw_automation_mix_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Daw Automations Mix".to_string(),
         tooltip: r#"Mixes between audio 1 and audio 2 based on the daw parameter."#.to_string(),
         inputs: BTreeMap::from([

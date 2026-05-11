@@ -3,7 +3,7 @@ use std::io::Cursor;
 use rodio::{Decoder, Source, source::UniformSourceIterator};
 
 use crate::{
-    sound_map::DawSource,
+    sound_map::SoundNode,
     sounds::wave_table::{WaveTableManager, WaveTableOscillator},
 };
 
@@ -45,7 +45,7 @@ impl CloneableDecoder {
     }
 }
 
-impl DawSource for CloneableDecoder {
+impl SoundNode for CloneableDecoder {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.wavetable.next(index, channel)
     }

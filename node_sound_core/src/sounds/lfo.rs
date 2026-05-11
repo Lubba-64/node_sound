@@ -1,19 +1,19 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct Lfo<I1: DawSource, I2: DawSource> {
+pub struct Lfo<I1: SoundNode, I2: SoundNode> {
     source1: I1,
     source2: I2,
 }
 
-impl<I1: DawSource, I2: DawSource> Lfo<I1, I2> {
+impl<I1: SoundNode, I2: SoundNode> Lfo<I1, I2> {
     #[inline]
     pub fn new(source1: I1, source2: I2) -> Self {
         Self { source1, source2 }
     }
 }
 
-impl<I1: DawSource + Clone, I2: DawSource + Clone> DawSource for Lfo<I1, I2> {
+impl<I1: SoundNode + Clone, I2: SoundNode + Clone> SoundNode for Lfo<I1, I2> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         match (
             self.source2.next(index, channel),

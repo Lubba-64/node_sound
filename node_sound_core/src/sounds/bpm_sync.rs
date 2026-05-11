@@ -1,9 +1,9 @@
 use std::sync::{Arc, Mutex};
 
-use crate::{sound_graph::note::NoteSpeed, sound_map::DawSource};
+use crate::{sound_graph::note::NoteSpeed, sound_map::SoundNode};
 
 #[derive(Clone, Debug)]
-pub struct BPMSync<I: DawSource> {
+pub struct BPMSync<I: SoundNode> {
     source: I,
     sample_rate: f32,
     table: Vec<f32>,
@@ -12,7 +12,7 @@ pub struct BPMSync<I: DawSource> {
     bpm: Arc<Mutex<f32>>,
 }
 
-impl<I: DawSource + Clone> BPMSync<I> {
+impl<I: SoundNode + Clone> BPMSync<I> {
     #[inline]
     pub fn new(
         source: I,
@@ -33,7 +33,7 @@ impl<I: DawSource + Clone> BPMSync<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for BPMSync<I> {
+impl<I: SoundNode + Clone> SoundNode for BPMSync<I> {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
         self.source.next(index, channel).map(|x| {
             let seconds_per_note =

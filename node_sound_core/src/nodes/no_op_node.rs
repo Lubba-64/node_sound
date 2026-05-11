@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn no_op_node() -> SoundNode {
-    SoundNode {
+pub fn no_op_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "No Op".to_string(),
         tooltip: r#"Does nothing. Connect multiple nodes
 to this node to avoid reconnecting a bunch of stuff when you change a node in your graph."#

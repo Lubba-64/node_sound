@@ -1,6 +1,6 @@
 use super::{SoundNodeProps, SoundNodeResult};
 use crate::constants::MAX_FREQ;
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -9,8 +9,8 @@ use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-pub fn eq_node() -> SoundNode {
-    SoundNode {
+pub fn eq_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Eq".to_string(),
         tooltip: r#"Basic runtime EQ.
         Q factor controls how "selective" or "narrow" the filter is around the cutoff frequency.

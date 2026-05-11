@@ -1,19 +1,19 @@
-use crate::{sound_graph::note::Pitch, sound_map::DawSource};
+use crate::{sound_graph::note::Pitch, sound_map::SoundNode};
 use std::f32;
 
 #[derive(Clone, Debug)]
-pub struct ClampToNote<I: DawSource> {
+pub struct ClampToNote<I: SoundNode> {
     source: I,
 }
 
-impl<I: DawSource> ClampToNote<I> {
+impl<I: SoundNode> ClampToNote<I> {
     #[inline]
     pub fn new(source: I) -> Self {
         Self { source }
     }
 }
 
-impl<I: DawSource + Clone> DawSource for ClampToNote<I> {
+impl<I: SoundNode + Clone> SoundNode for ClampToNote<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         let val = self.source.next(index, channel).unwrap_or_default();
         let mut least_idx = 0;

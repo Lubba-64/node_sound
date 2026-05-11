@@ -1,6 +1,6 @@
 use super::{SoundNodeProps, SoundNodeResult};
 use crate::constants::MAX_FREQ;
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -10,8 +10,8 @@ use crate::sounds::mix::Mix;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
-pub fn reverb_node() -> SoundNode {
-    SoundNode {
+pub fn reverb_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Reverb".to_string(),
         tooltip: r#"More like a delay, this is just a mix node, delay node, and amplify node under the hood."#
             .to_string(),

@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn automated_mod_node() -> SoundNode {
-    SoundNode {
+pub fn automated_mod_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Automated Mod".to_string(),
         tooltip: r#"Automated version of the Mod node.
 The mod amount is controlled by a waveform going from -1.0 to 1.0.

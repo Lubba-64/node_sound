@@ -1,5 +1,5 @@
 use crate::constants::{MIDDLE_C_FREQ, WAVE_TABLE_SIZE};
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn automated_wave_shaper_node() -> SoundNode {
-    SoundNode {
+pub fn automated_wave_shaper_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Automated Wave Shaper".to_string(),
         tooltip: r#"Automated version of the Wave Shaper node.
 Automates the frequency with a given waveform.

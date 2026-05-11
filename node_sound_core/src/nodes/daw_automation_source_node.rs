@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
-pub fn daw_automation_source_node() -> SoundNode {
-    SoundNode {
+pub fn daw_automation_source_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Daw Automations".to_string(),
         tooltip: r#"Daw automation parameters 1-18 can be accessed through this node."#.to_string(),
         inputs: BTreeMap::from([(

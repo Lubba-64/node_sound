@@ -1,14 +1,14 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct Hold<I: DawSource> {
+pub struct Hold<I: SoundNode> {
     source: I,
     hold_length: u32,
     counter: [u32; 2],
     held_value: [f32; 2],
 }
 
-impl<I: DawSource> Hold<I> {
+impl<I: SoundNode> Hold<I> {
     pub fn new(
         source: I,
         hold_length: f32,
@@ -26,7 +26,7 @@ impl<I: DawSource> Hold<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for Hold<I> {
+impl<I: SoundNode + Clone> SoundNode for Hold<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         let next = self.source.next(index, channel)?;
         let ch = channel as usize;

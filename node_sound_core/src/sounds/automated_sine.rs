@@ -1,15 +1,15 @@
 use crate::{
-    sound_map::DawSource,
+    sound_map::SoundNode,
     sounds::{automated_speed::AutomatedSpeed, sine::SineWave},
 };
 
 #[derive(Clone, Debug)]
-pub struct AutomatedSineWave<F: DawSource> {
+pub struct AutomatedSineWave<F: SoundNode> {
     freq_source: AutomatedSpeed<SineWave, F>,
     speed: f32,
 }
 
-impl<F: DawSource> AutomatedSineWave<F> {
+impl<F: SoundNode> AutomatedSineWave<F> {
     #[inline]
     pub fn new(freq_source: F, uses_speed: bool, speed: f32, sample_rate: f32) -> Self {
         Self {
@@ -23,7 +23,7 @@ impl<F: DawSource> AutomatedSineWave<F> {
     }
 }
 
-impl<F: DawSource + Clone> DawSource for AutomatedSineWave<F> {
+impl<F: SoundNode + Clone> SoundNode for AutomatedSineWave<F> {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
         index /= self.speed;
         self.freq_source.next(index, channel)

@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn skip_node() -> SoundNode {
-    SoundNode {
+pub fn skip_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Skip".to_string(),
         tooltip: r#"Skips samples in the source for a given duration."#.to_string(),
         inputs: BTreeMap::from([

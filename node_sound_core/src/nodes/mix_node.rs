@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
-pub fn mix_node() -> SoundNode {
-    SoundNode {
+pub fn mix_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Mix".to_string(),
         tooltip: r#"Mixes two waveforms together."#.to_string(),
         inputs: BTreeMap::from([

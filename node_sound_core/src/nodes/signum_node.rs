@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn signum_node() -> SoundNode {
-    SoundNode {
+pub fn signum_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Signum".to_string(),
         tooltip: r#"if the wave is above 0, it becomes 1. if it's below zero, it becomes -1.
 This results in a weird square wave type effect."#

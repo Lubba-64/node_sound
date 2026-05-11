@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn repeat_n_node() -> SoundNode {
-    SoundNode {
+pub fn repeat_n_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Repeat N".to_string(),
         tooltip: r#"Repeats a given waveform a certain number of times."#.to_string(),
         inputs: BTreeMap::from([

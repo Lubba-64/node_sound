@@ -1,4 +1,4 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 use std::sync::Arc;
 use std::sync::Mutex;
 
@@ -14,7 +14,7 @@ impl InputChannel {
     }
 }
 
-impl DawSource for InputChannel {
+impl SoundNode for InputChannel {
     fn next(&mut self, _index: f32, channel: u8) -> Option<f32> {
         match self.channel.lock() {
             Err(_x) => None,

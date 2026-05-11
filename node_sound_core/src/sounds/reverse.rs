@@ -1,5 +1,5 @@
 use crate::{
-    sound_map::DawSource,
+    sound_map::SoundNode,
     sounds::wave_table::{WaveTableManager, WaveTableOscillator},
 };
 
@@ -10,7 +10,7 @@ pub struct ReverseSource {
 
 impl ReverseSource {
     #[inline]
-    pub fn new<S: DawSource>(
+    pub fn new<S: SoundNode>(
         source: S,
         duration: f32,
         sample_rate: f32,
@@ -42,7 +42,7 @@ impl ReverseSource {
     }
 }
 
-impl DawSource for ReverseSource {
+impl SoundNode for ReverseSource {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.wavetable.get_sample(index, channel)
     }

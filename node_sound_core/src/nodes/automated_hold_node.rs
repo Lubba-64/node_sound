@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn automated_hold_node() -> SoundNode {
-    SoundNode {
+pub fn automated_hold_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Automated Hold".to_string(),
         tooltip: r#"Automated hold node, Holds a sample and repeats it for n seconds"#.to_string(),
         inputs: BTreeMap::from([

@@ -1,5 +1,5 @@
 use super::{SoundNodeProps, SoundNodeResult};
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use crate::sounds::delay::Delay;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
-pub fn delay_node() -> SoundNode {
-    SoundNode {
+pub fn delay_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Delay".to_string(),
         tooltip: r#"Delays the given waveform by an amount of time."#.to_string(),
         inputs: BTreeMap::from([

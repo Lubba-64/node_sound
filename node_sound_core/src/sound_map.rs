@@ -10,32 +10,32 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-pub trait DawSource: DynClone + Debug {
+pub trait SoundNode: DynClone + Debug {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32>;
 }
 
 #[derive(Debug)]
-pub struct GenericSource {
-    sound: Box<dyn DawSource>,
+pub struct GenericSoundNode {
+    sound: Box<dyn SoundNode>,
 }
 
-impl Clone for GenericSource {
+impl Clone for GenericSoundNode {
     fn clone(&self) -> Self {
         Self {
             sound: dyn_clone::clone_box(&*self.sound),
         }
     }
 }
-unsafe impl Send for GenericSource {}
-unsafe impl Sync for GenericSource {}
+unsafe impl Send for GenericSoundNode {}
+unsafe impl Sync for GenericSoundNode {}
 
-impl GenericSource {
-    pub fn new(sound: Box<dyn DawSource>) -> Self {
+impl GenericSoundNode {
+    pub fn new(sound: Box<dyn SoundNode>) -> Self {
         Self { sound: sound }
     }
 }
 
-impl DawSource for GenericSource {
+impl SoundNode for GenericSoundNode {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.sound.next(index, channel)
     }
@@ -43,7 +43,7 @@ impl DawSource for GenericSource {
 
 #[derive(Debug)]
 pub struct RefSource {
-    sound: Rc<RefCell<dyn DawSource>>,
+    sound: Rc<RefCell<dyn SoundNode>>,
     val: Rc<RefCell<HashMap<OrderedFloat<f32>, Option<f32>>>>,
     size: Rc<Cell<usize>>,
     count: Rc<Cell<usize>>,
@@ -65,7 +65,7 @@ impl Clone for RefSource {
 unsafe impl Send for RefSource {}
 
 impl RefSource {
-    pub fn new(sound: Rc<RefCell<dyn DawSource>>) -> Self {
+    pub fn new(sound: Rc<RefCell<dyn SoundNode>>) -> Self {
         Self {
             sound: sound,
             size: Rc::new(Cell::new(0)),
@@ -76,7 +76,7 @@ impl RefSource {
     }
 }
 
-impl DawSource for RefSource {
+impl SoundNode for RefSource {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         let mut val = self.val.borrow_mut();
         if self.last_index > index {
@@ -94,7 +94,7 @@ impl DawSource for RefSource {
 }
 
 pub struct SoundQueue {
-    queue: Vec<GenericSource>,
+    queue: Vec<GenericSoundNode>,
     sample_rate: f32,
     speed: f32,
     bpm: Arc<Mutex<f32>>,
@@ -118,7 +118,10 @@ impl SoundQueue {
         return queue;
     }
 
-    pub fn clone_sound(&mut self, idx: usize) -> Result<GenericSource, Box<dyn std::error::Error>> {
+    pub fn clone_sound(
+        &mut self,
+        idx: usize,
+    ) -> Result<GenericSoundNode, Box<dyn std::error::Error>> {
         if idx >= self.queue.len() {
             return Err(Box::new(std::io::Error::new(
                 ErrorKind::Other,
@@ -140,8 +143,8 @@ impl SoundQueue {
         ))));
     }
 
-    pub fn push_sound(&mut self, sound: Box<dyn DawSource>) -> usize {
-        self.queue.push(GenericSource::new(sound));
+    pub fn push_sound(&mut self, sound: Box<dyn SoundNode>) -> usize {
+        self.queue.push(GenericSoundNode::new(sound));
         return self.queue.len() - 1;
     }
 

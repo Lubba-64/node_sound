@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn noise_node() -> SoundNode {
-    SoundNode {
+pub fn noise_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Noise".to_string(),
         tooltip: r#"Random noise waveform."#.to_string(),
         inputs: BTreeMap::from([

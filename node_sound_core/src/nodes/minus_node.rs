@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
-pub fn minus_node() -> SoundNode {
-    SoundNode {
+pub fn minus_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Minus".to_string(),
         tooltip: r#"Subtracts audio 1 from audio 2 (destructive interference)"#.to_string(),
         inputs: BTreeMap::from([

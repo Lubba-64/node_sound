@@ -1,13 +1,13 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct Clamp<I: DawSource> {
+pub struct Clamp<I: SoundNode> {
     source: I,
     min: f32,
     max: f32,
 }
 
-impl<I: DawSource> Clamp<I> {
+impl<I: SoundNode> Clamp<I> {
     #[inline]
     pub fn new(source: I, mut min: f32, mut max: f32) -> Self {
         if min > max {
@@ -21,7 +21,7 @@ impl<I: DawSource> Clamp<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for Clamp<I> {
+impl<I: SoundNode + Clone> SoundNode for Clamp<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         return self
             .source

@@ -3,7 +3,7 @@ use crate::{
         graph::SoundNodeGraphState,
         graph_types::{InputParameter, Output, ValueType},
     },
-    sound_map::{DawSource, GenericSource},
+    sound_map::{GenericSoundNode, SoundNode},
     sounds::{tracker::TrackerNote, wave_table::WaveTableManager},
 };
 use serde::{Deserialize, Serialize};
@@ -92,11 +92,11 @@ pub struct SoundNodeProps<'a> {
 }
 
 impl<'a> SoundNodeProps<'a> {
-    fn push_sound(&mut self, sound: Box<dyn DawSource>) -> usize {
+    fn push_sound(&mut self, sound: Box<dyn SoundNode>) -> usize {
         self.state._unserializeable_state.queue.push_sound(sound)
     }
 
-    fn clone_sound(&mut self, idx: usize) -> Result<GenericSource, Box<dyn std::error::Error>> {
+    fn clone_sound(&mut self, idx: usize) -> Result<GenericSoundNode, Box<dyn std::error::Error>> {
         self.state._unserializeable_state.queue.clone_sound(idx)
     }
 
@@ -206,7 +206,7 @@ impl<'a> SoundNodeProps<'a> {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct SoundNode {
+pub struct SoundNodeMetadata {
     pub name: String,
     pub tooltip: String,
     pub inputs: BTreeMap<String, InputParameter>,
@@ -217,7 +217,7 @@ type SoundNodeOp =
 type SoundNodeResult = Result<BTreeMap<String, ValueType>, Box<dyn std::error::Error>>;
 
 #[derive(Clone)]
-pub struct NodeDefinitions(pub BTreeMap<String, (SoundNode, Box<SoundNodeOp>)>);
+pub struct NodeDefinitions(pub BTreeMap<String, (SoundNodeMetadata, Box<SoundNodeOp>)>);
 
 impl Default for NodeDefinitions {
     fn default() -> Self {
@@ -226,7 +226,7 @@ impl Default for NodeDefinitions {
 }
 
 pub fn get_nodes() -> NodeDefinitions {
-    let nodes: Vec<(SoundNode, Box<SoundNodeOp>)> = vec![
+    let nodes: Vec<(SoundNodeMetadata, Box<SoundNodeOp>)> = vec![
         (
             sawtooth_node::sawtooth_node(),
             Box::new(sawtooth_node::sawtooth_logic),

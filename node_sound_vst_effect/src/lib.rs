@@ -2,13 +2,13 @@ use egui_extras_xt::knobs::AudioKnob;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
 use node_sound_core::sound_graph::graph::FileManager;
-use node_sound_core::sound_map::DawSource;
+use node_sound_core::sound_map::SoundNode;
 use node_sound_core::{
     sound_graph::{
         self,
         graph::{ActiveNodeState, SoundNodeGraph, evaluate_node},
     },
-    sound_map::GenericSource,
+    sound_map::GenericSoundNode,
 };
 use std::{
     collections::HashMap,
@@ -19,7 +19,7 @@ pub struct NodeSound {
     params: Arc<NodeSoundParams>,
     sample_rate: Arc<Mutex<f32>>,
     bpm: Arc<Mutex<f32>>,
-    sound_result: Arc<Mutex<Option<GenericSource>>>,
+    sound_result: Arc<Mutex<Option<GenericSoundNode>>>,
     total_idx: usize,
 }
 

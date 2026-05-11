@@ -1,6 +1,6 @@
 use super::{SoundNodeProps, SoundNodeResult};
 use crate::constants::MAX_FREQ;
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use crate::sounds::unison::UnisonVoice;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
-pub fn unison_node() -> SoundNode {
-    SoundNode {
+pub fn unison_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Unison".to_string(),
         tooltip: r#"Unison with multiple voices.
 voices is the number of voices.

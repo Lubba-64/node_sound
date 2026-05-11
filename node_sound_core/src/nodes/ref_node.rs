@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn ref_node() -> SoundNode {
-    SoundNode {
+pub fn ref_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Ref".to_string(),
         tooltip: r#"Does nothing to the sound itself,
 Copies the result of a sound and caches it for each sample the graph produces (this is good for performance)."#

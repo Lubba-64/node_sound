@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn reverse_node() -> SoundNode {
-    SoundNode {
+pub fn reverse_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Reverse".to_string(),
         tooltip: r#"Reverses a waveform over a certain duration."#.to_string(),
         inputs: BTreeMap::from([

@@ -4,11 +4,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     sound_graph::note::{Note, NoteSpeed, Octave, Pitch},
-    sound_map::DawSource,
+    sound_map::SoundNode,
 };
 
 #[derive(Clone, Debug)]
-pub struct Tracker<S: DawSource> {
+pub struct Tracker<S: SoundNode> {
     sample_rate: f32,
     source: S,
     speed: f32,
@@ -31,7 +31,7 @@ impl TrackerNote {
     }
 }
 
-impl<S: DawSource> Tracker<S> {
+impl<S: SoundNode> Tracker<S> {
     #[inline]
     pub fn new(
         sample_rate: f32,
@@ -54,7 +54,7 @@ impl<S: DawSource> Tracker<S> {
     }
 }
 
-impl<S: DawSource + Clone> DawSource for Tracker<S> {
+impl<S: SoundNode + Clone> SoundNode for Tracker<S> {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
         let tracker_note = &self.notes[self.current_note];
         let seconds_per_note =

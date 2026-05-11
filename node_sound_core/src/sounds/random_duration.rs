@@ -1,9 +1,9 @@
 use rand::Rng;
 
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct RandomDuration<I: DawSource> {
+pub struct RandomDuration<I: SoundNode> {
     source: I,
     duration_min: f32,
     duration_max: f32,
@@ -13,7 +13,7 @@ pub struct RandomDuration<I: DawSource> {
     last_index: f32,
 }
 
-impl<I: DawSource + Clone> RandomDuration<I> {
+impl<I: SoundNode + Clone> RandomDuration<I> {
     #[inline]
     pub fn new(
         source: I,
@@ -45,7 +45,7 @@ impl<I: DawSource + Clone> RandomDuration<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for RandomDuration<I> {
+impl<I: SoundNode + Clone> SoundNode for RandomDuration<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         if index / self.speed < self.last_index {
             self.next_duration();

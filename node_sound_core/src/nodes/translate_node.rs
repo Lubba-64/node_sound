@@ -1,5 +1,5 @@
 use crate::constants::MAX_FREQ;
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -9,8 +9,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn translate_node() -> SoundNode {
-    SoundNode {
+pub fn translate_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Translate Wave".to_string(),
         tooltip: r#"Takes a wave going from start min and start max and
 morphs its position to be within the range of end min and end max."#

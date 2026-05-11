@@ -1,6 +1,6 @@
 use crate::{
     constants::MIDDLE_C_FREQ,
-    sound_map::DawSource,
+    sound_map::SoundNode,
     sounds::wave_table::{WaveTableManager, WaveTableOscillator},
 };
 use synthrs::{midi::MidiSong, synthesizer::make_samples_from_midi, wave};
@@ -12,7 +12,7 @@ pub struct MidiRenderer {
 
 impl MidiRenderer {
     #[inline]
-    pub fn new<S: DawSource>(
+    pub fn new<S: SoundNode>(
         source: S,
         song: MidiSong,
         uses_speed: bool,
@@ -55,7 +55,7 @@ impl MidiRenderer {
     }
 }
 
-impl DawSource for MidiRenderer {
+impl SoundNode for MidiRenderer {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.wavetable.next(index, channel)
     }

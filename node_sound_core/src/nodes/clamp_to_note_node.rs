@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn clamp_to_note_node() -> SoundNode {
-    SoundNode {
+pub fn clamp_to_note_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Clamp To Note".to_string(),
         tooltip: r#"Clamps the incoming value to the nearest note value. Should only be used after translate wave."#
             .to_string(),

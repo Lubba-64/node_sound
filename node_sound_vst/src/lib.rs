@@ -2,7 +2,7 @@ use egui_extras_xt::knobs::AudioKnob;
 use futures::executor;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
-use node_sound_core::sound_map::DawSource;
+use node_sound_core::sound_map::SoundNode;
 use node_sound_core::{
     constants::MIDDLE_C_FREQ,
     nodes::get_nodes,
@@ -12,7 +12,7 @@ use node_sound_core::{
         graph::{ActiveNodeState, FileManager, SoundNodeGraph, evaluate_node},
         graph_types::ValueType,
     },
-    sound_map::GenericSource,
+    sound_map::GenericSoundNode,
     sounds::{const_wave::ConstWave, speed::Speed},
 };
 use std::{
@@ -54,7 +54,7 @@ struct Voice {
     /// offset and a smoother.
     voice_gain: Option<(f32, Smoother<f32>)>,
 
-    voice_source: GenericSource,
+    voice_source: GenericSoundNode,
 
     voice_idx: usize,
 }
@@ -65,7 +65,7 @@ pub struct NodeSound {
     next_internal_voice_id: u64,
     sample_rate: Arc<Mutex<f32>>,
     bpm: Arc<Mutex<f32>>,
-    source_sound_buffers: Arc<Mutex<[Option<GenericSource>; MIDI_NOTES_LEN as usize]>>,
+    source_sound_buffers: Arc<Mutex<[Option<GenericSoundNode>; MIDI_NOTES_LEN as usize]>>,
 }
 
 pub struct PluginPresetState {
@@ -310,7 +310,7 @@ impl NodeSound {
                 .lock()
                 .expect("expected lock on source sound buffers")[note as usize]
                 .clone()
-                .unwrap_or(GenericSource::new(Box::new(ConstWave::new(0.0)))),
+                .unwrap_or(GenericSoundNode::new(Box::new(ConstWave::new(0.0)))),
         };
 
         self.next_internal_voice_id = self.next_internal_voice_id.wrapping_add(1);
@@ -447,7 +447,7 @@ pub enum BackgroundTasks {
 }
 
 impl Plugin for NodeSound {
-    const NAME: &'static str = "Node Sound";
+    const NAME: &'static str = "Node Sound For Olim";
     const VENDOR: &'static str = "Lubba64";
     const URL: &'static str = "https://lubba-64.github.io/";
     const EMAIL: &'static str = "Lubba64@gmail.com";
@@ -733,13 +733,13 @@ impl Plugin for NodeSound {
                                             .clone_sound(source_id.clone())
                                         {
                                             Err(_err) => {
-                                                GenericSource::new(Box::new(ConstWave::new(0.0)))
+                                                GenericSoundNode::new(Box::new(ConstWave::new(0.0)))
                                             }
                                             Ok(x) => x,
                                         };
-                                        sound_buffers[vidx] = Some(GenericSource::new(Box::new(
-                                            Speed::new(sound, speed),
-                                        )));
+                                        sound_buffers[vidx] = Some(GenericSoundNode::new(
+                                            Box::new(Speed::new(sound, speed)),
+                                        ));
                                         graph.state._unserializeable_state.queue.clear();
                                     }
                                     Err(err) => {
@@ -1087,7 +1087,7 @@ impl ClapPlugin for NodeSound {
 }
 
 impl Vst3Plugin for NodeSound {
-    const VST3_CLASS_ID: [u8; 16] = *b"NodeSoundLubba64";
+    const VST3_CLASS_ID: [u8; 16] = *b"NodeSoundLubba6_";
     const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] = &[
         Vst3SubCategory::Instrument,
         Vst3SubCategory::Synth,

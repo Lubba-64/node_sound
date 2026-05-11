@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn grain_node() -> SoundNode {
-    SoundNode {
+pub fn grain_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Grain".to_string(),
         tooltip: r#"Repeating of a given grain where the length and start of the grain can be automated."#.to_string(),
         inputs: BTreeMap::from([

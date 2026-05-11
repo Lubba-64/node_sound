@@ -1,5 +1,5 @@
 use crate::constants::MAX_FREQ;
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -9,8 +9,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn amplify_node() -> SoundNode {
-    SoundNode {
+pub fn amplify_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Amplify".to_string(),
         tooltip: r#"Amplifies the waveform making sounds louder."#.to_string(),
         inputs: BTreeMap::from([

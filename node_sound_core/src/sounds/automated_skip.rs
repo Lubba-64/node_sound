@@ -1,14 +1,14 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct AutomatedSkip<S: DawSource, D: DawSource> {
+pub struct AutomatedSkip<S: SoundNode, D: SoundNode> {
     duration: D,
     source: S,
     sample_rate: f32,
     speed: f32,
 }
 
-impl<S: DawSource, D: DawSource> AutomatedSkip<S, D> {
+impl<S: SoundNode, D: SoundNode> AutomatedSkip<S, D> {
     pub fn new(duration: D, source: S, uses_speed: bool, sample_rate: f32, speed: f32) -> Self {
         Self {
             duration,
@@ -19,7 +19,7 @@ impl<S: DawSource, D: DawSource> AutomatedSkip<S, D> {
     }
 }
 
-impl<S: DawSource + Clone, D: DawSource + Clone> DawSource for AutomatedSkip<S, D> {
+impl<S: SoundNode + Clone, D: SoundNode + Clone> SoundNode for AutomatedSkip<S, D> {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
         index +=
             self.duration.next(index, channel).unwrap_or_default() * self.speed * self.sample_rate;

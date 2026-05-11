@@ -1,5 +1,5 @@
 use crate::constants::{MAX_FREQ, MIDDLE_C_FREQ};
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn wave_table_node() -> SoundNode {
-    SoundNode {
+pub fn wave_table_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Wave Table".to_string(),
         tooltip: r#"Takes a waveform and stores it in a table, interpolating values. can change frequency too."#
             .to_string(),

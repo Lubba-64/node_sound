@@ -1,5 +1,5 @@
 use super::{SoundNodeProps, SoundNodeResult};
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use crate::sounds::duration::Duration;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
-pub fn duration_node() -> SoundNode {
-    SoundNode {
+pub fn duration_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Take Duration".to_string(),
         tooltip: r#"Takes a snapshot of the waveform for the amount of time you input."#
             .to_string(),

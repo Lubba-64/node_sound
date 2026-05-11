@@ -1,13 +1,13 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct Switch<I: DawSource, I2: DawSource, I3: DawSource> {
+pub struct Switch<I: SoundNode, I2: SoundNode, I3: SoundNode> {
     source1: I,
     source2: I2,
     switch: I3,
 }
 
-impl<I: DawSource, I2: DawSource, I3: DawSource> Switch<I, I2, I3> {
+impl<I: SoundNode, I2: SoundNode, I3: SoundNode> Switch<I, I2, I3> {
     #[inline]
     pub fn new(source1: I, source2: I2, switch: I3) -> Self {
         Self {
@@ -18,7 +18,7 @@ impl<I: DawSource, I2: DawSource, I3: DawSource> Switch<I, I2, I3> {
     }
 }
 
-impl<I: DawSource + Clone, I2: DawSource + Clone, I3: DawSource + Clone> DawSource
+impl<I: SoundNode + Clone, I2: SoundNode + Clone, I3: SoundNode + Clone> SoundNode
     for Switch<I, I2, I3>
 {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {

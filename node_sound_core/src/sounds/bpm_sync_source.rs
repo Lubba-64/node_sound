@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crate::{sound_graph::note::NoteSpeed, sound_map::DawSource};
+use crate::{sound_graph::note::NoteSpeed, sound_map::SoundNode};
 
 #[derive(Clone, Debug)]
 pub struct BPMSyncSource {
@@ -30,7 +30,7 @@ impl BPMSyncSource {
     }
 }
 
-impl DawSource for BPMSyncSource {
+impl SoundNode for BPMSyncSource {
     fn next(&mut self, mut index: f32, _channel: u8) -> Option<f32> {
         let seconds_per_note =
             self.note_speed.get_beats() / (self.bpm.lock().map(|x| *x).unwrap_or(120.0) / 60.0);

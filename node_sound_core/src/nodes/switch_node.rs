@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn switch_node() -> SoundNode {
-    SoundNode {
+pub fn switch_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Switch".to_string(),
         tooltip: r#"Uses the switch channel to switch between two sources."#.to_string(),
         inputs: BTreeMap::from([

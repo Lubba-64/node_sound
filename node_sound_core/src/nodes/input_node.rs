@@ -1,11 +1,11 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{DataType, Output, ValueType};
 use crate::sounds::input::InputChannel;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
-pub fn input_node() -> SoundNode {
-    SoundNode {
+pub fn input_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Daw Input".to_string(),
         tooltip: r#"Input sound from DAW."#.to_string(),
         inputs: BTreeMap::from([]),

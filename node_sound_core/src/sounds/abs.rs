@@ -1,18 +1,18 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct Abs<I: DawSource> {
+pub struct Abs<I: SoundNode> {
     source: I,
 }
 
-impl<I: DawSource> Abs<I> {
+impl<I: SoundNode> Abs<I> {
     #[inline]
     pub fn new(source: I) -> Self {
         Self { source }
     }
 }
 
-impl<I: DawSource + Clone> DawSource for Abs<I> {
+impl<I: SoundNode + Clone> SoundNode for Abs<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.source.next(index, channel).map(|x| x.abs())
     }

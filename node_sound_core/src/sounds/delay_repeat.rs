@@ -1,9 +1,9 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 use std::collections::VecDeque;
 // this used to say ai shit but no this was actually all me because I disliked the ai version.
 // needs to be in an owned arc because otherwise
 #[derive(Clone, Debug)]
-pub struct DelayRepeat<I: DawSource> {
+pub struct DelayRepeat<I: SoundNode> {
     source: I,
     delay: f32,
     points: usize,
@@ -11,7 +11,7 @@ pub struct DelayRepeat<I: DawSource> {
     deque: [VecDeque<f32>; 2],
 }
 
-impl<I: DawSource> DelayRepeat<I> {
+impl<I: SoundNode> DelayRepeat<I> {
     pub fn new(source: I, delay: f32, sample_rate: f32, points: usize) -> Self {
         Self {
             source,
@@ -26,7 +26,7 @@ impl<I: DawSource> DelayRepeat<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for DelayRepeat<I> {
+impl<I: SoundNode + Clone> SoundNode for DelayRepeat<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         let deque = &mut self.deque[channel as usize];
         deque.pop_back();

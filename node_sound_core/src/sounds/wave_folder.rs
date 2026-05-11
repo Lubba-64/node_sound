@@ -1,7 +1,7 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct Wavefolder<I: DawSource> {
+pub struct Wavefolder<I: SoundNode> {
     source: I,
     gain: f32,
     offset: f32,
@@ -9,7 +9,7 @@ pub struct Wavefolder<I: DawSource> {
     last_sample: f32,
 }
 
-impl<I: DawSource> Wavefolder<I> {
+impl<I: SoundNode> Wavefolder<I> {
     #[inline]
     pub fn new(source: I, gain: f32, offset: f32, folds: u8) -> Self {
         Self {
@@ -39,7 +39,7 @@ impl<I: DawSource> Wavefolder<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for Wavefolder<I> {
+impl<I: SoundNode + Clone> SoundNode for Wavefolder<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.source
             .next(index, channel)

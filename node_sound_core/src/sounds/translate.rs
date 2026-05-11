@@ -1,7 +1,7 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct TranslateWave<I: DawSource> {
+pub struct TranslateWave<I: SoundNode> {
     source: I,
     start_min: f32,
     start_max: f32,
@@ -9,7 +9,7 @@ pub struct TranslateWave<I: DawSource> {
     end_max: f32,
 }
 
-impl<I: DawSource> TranslateWave<I> {
+impl<I: SoundNode> TranslateWave<I> {
     #[inline]
     pub fn new(
         source: I,
@@ -38,7 +38,7 @@ impl<I: DawSource> TranslateWave<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for TranslateWave<I> {
+impl<I: SoundNode + Clone> SoundNode for TranslateWave<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         return match self.source.next(index, channel) {
             Some(p) => Some(

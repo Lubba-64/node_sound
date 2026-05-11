@@ -1,7 +1,7 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct After<T: DawSource, U: DawSource> {
+pub struct After<T: SoundNode, U: SoundNode> {
     first: T,
     second: U,
     current: AfterState,
@@ -14,7 +14,7 @@ enum AfterState {
     Finished,
 }
 
-impl<T: DawSource, U: DawSource> After<T, U> {
+impl<T: SoundNode, U: SoundNode> After<T, U> {
     pub fn new(first: T, second: U) -> Self {
         Self {
             first,
@@ -24,7 +24,7 @@ impl<T: DawSource, U: DawSource> After<T, U> {
     }
 }
 
-impl<T: DawSource + Clone, U: DawSource + Clone> DawSource for After<T, U> {
+impl<T: SoundNode + Clone, U: SoundNode + Clone> SoundNode for After<T, U> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         match self.current {
             AfterState::PlayingFirst => {

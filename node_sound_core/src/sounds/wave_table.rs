@@ -3,7 +3,7 @@ use std::sync::Arc;
 use eframe::egui::ahash::HashMap;
 use serde::{Deserialize, Serialize};
 
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
 pub struct WaveTableOscillator {
@@ -78,7 +78,7 @@ impl WaveTableOscillator {
     }
 }
 
-impl DawSource for WaveTableOscillator {
+impl SoundNode for WaveTableOscillator {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
         index /= self.speed;
         self.get_sample(index, channel)
@@ -100,7 +100,7 @@ impl WaveTableManager {
         self.table.clear();
     }
 
-    pub fn make_wavetable_generic<S: DawSource>(
+    pub fn make_wavetable_generic<S: SoundNode>(
         &mut self,
         sample_rate: f32,
         base_frequency: f32,
@@ -131,7 +131,7 @@ impl WaveTableManager {
         )
     }
 
-    pub fn make_wavetable<'a, S: DawSource>(
+    pub fn make_wavetable<'a, S: SoundNode>(
         &mut self,
         sample_rate: f32,
         base_frequency: f32,
@@ -159,7 +159,7 @@ impl WaveTableManager {
         )
     }
 
-    pub fn make_automated_wavetable_generic<'a, S: DawSource, F: DawSource>(
+    pub fn make_automated_wavetable_generic<'a, S: SoundNode, F: SoundNode>(
         &mut self,
         sample_rate: f32,
         base_frequency: f32,
@@ -190,7 +190,7 @@ impl WaveTableManager {
         )
     }
 
-    pub fn make_automated_wavetable<'a, S: DawSource, F: DawSource>(
+    pub fn make_automated_wavetable<'a, S: SoundNode, F: SoundNode>(
         &mut self,
         sample_rate: f32,
         base_frequency: f32,
@@ -218,7 +218,7 @@ impl WaveTableManager {
         )
     }
 
-    pub fn make_automated_wavetable_samples<'a, F: DawSource>(
+    pub fn make_automated_wavetable_samples<'a, F: SoundNode>(
         &mut self,
         sample_rate: f32,
         base_frequency: f32,
@@ -270,7 +270,7 @@ impl WaveTableManager {
 }
 
 #[derive(Clone, Debug)]
-pub struct AutomatedWaveTableOscillator<F: DawSource> {
+pub struct AutomatedWaveTableOscillator<F: SoundNode> {
     pub left_table: Arc<Vec<f32>>,
     pub right_table: Arc<Vec<f32>>,
     pub sample_rate: f32,
@@ -283,7 +283,7 @@ pub struct AutomatedWaveTableOscillator<F: DawSource> {
     adjusted_index: f32,
 }
 
-impl<F: DawSource> AutomatedWaveTableOscillator<F> {
+impl<F: SoundNode> AutomatedWaveTableOscillator<F> {
     pub fn new_stereo(
         sample_rate: f32,
         base_frequency: f32,
@@ -337,7 +337,7 @@ impl<F: DawSource> AutomatedWaveTableOscillator<F> {
     }
 }
 
-impl<F: DawSource + Clone> DawSource for AutomatedWaveTableOscillator<F> {
+impl<F: SoundNode + Clone> SoundNode for AutomatedWaveTableOscillator<F> {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
         index /= self.speed;
         self.get_sample(index, channel)

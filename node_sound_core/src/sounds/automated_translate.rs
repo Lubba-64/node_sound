@@ -1,12 +1,12 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
 pub struct AutomatedTranslateWave<
-    I1: DawSource,
-    I2: DawSource,
-    I3: DawSource,
-    I4: DawSource,
-    I5: DawSource,
+    I1: SoundNode,
+    I2: SoundNode,
+    I3: SoundNode,
+    I4: SoundNode,
+    I5: SoundNode,
 > {
     source: I1,
     start_min: I2,
@@ -15,7 +15,7 @@ pub struct AutomatedTranslateWave<
     end_max: I5,
 }
 
-impl<I1: DawSource, I2: DawSource, I3: DawSource, I4: DawSource, I5: DawSource>
+impl<I1: SoundNode, I2: SoundNode, I3: SoundNode, I4: SoundNode, I5: SoundNode>
     AutomatedTranslateWave<I1, I2, I3, I4, I5>
 {
     #[inline]
@@ -31,12 +31,12 @@ impl<I1: DawSource, I2: DawSource, I3: DawSource, I4: DawSource, I5: DawSource>
 }
 
 impl<
-    I1: DawSource + Clone,
-    I2: DawSource + Clone,
-    I3: DawSource + Clone,
-    I4: DawSource + Clone,
-    I5: DawSource + Clone,
-> DawSource for AutomatedTranslateWave<I1, I2, I3, I4, I5>
+    I1: SoundNode + Clone,
+    I2: SoundNode + Clone,
+    I3: SoundNode + Clone,
+    I4: SoundNode + Clone,
+    I5: SoundNode + Clone,
+> SoundNode for AutomatedTranslateWave<I1, I2, I3, I4, I5>
 {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         match (

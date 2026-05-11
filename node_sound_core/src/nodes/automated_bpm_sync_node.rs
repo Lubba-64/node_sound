@@ -1,5 +1,5 @@
 use crate::constants::WAVE_TABLE_SIZE;
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -11,10 +11,10 @@ use std::str::FromStr;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn automated_bpm_sync_node() -> SoundNode {
-    SoundNode {
+pub fn automated_bpm_sync_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Automated BPM Sync".to_string(),
-        tooltip: r#"Syncs a wavetable to each note. 
+        tooltip: r#"Syncs a wavetable to each note.
 The automation values for Any is 0-21, 0-7 for the rest which corresponds to the automation input value."#
             .to_string(),
         inputs: BTreeMap::from([

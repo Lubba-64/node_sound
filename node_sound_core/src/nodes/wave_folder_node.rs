@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn wave_folder_node() -> SoundNode {
-    SoundNode {
+pub fn wave_folder_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Wave Folder".to_string(),
         tooltip: r#"Distortion effect for folding a wave into itself repeatedly."#.to_string(),
         inputs: BTreeMap::from([

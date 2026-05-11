@@ -1,4 +1,4 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 use std::f32::consts::PI;
 
 #[derive(Clone, Debug)]
@@ -19,7 +19,7 @@ impl SquareWave {
     }
 }
 
-impl DawSource for SquareWave {
+impl SoundNode for SquareWave {
     fn next(&mut self, index: f32, _channel: u8) -> Option<f32> {
         let phase_increment = (2.0 * PI) * self.frequency / self.sample_rate / self.speed;
         let phase = (phase_increment * index) % (2.0 * PI);

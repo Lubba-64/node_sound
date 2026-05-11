@@ -1,4 +1,4 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 use std::f32::consts::PI;
 
 #[derive(Clone, Debug)]
@@ -19,7 +19,7 @@ impl TriangleWave {
     }
 }
 
-impl DawSource for TriangleWave {
+impl SoundNode for TriangleWave {
     fn next(&mut self, mut index: f32, _channel: u8) -> Option<f32> {
         index /= self.speed;
         let phase_increment = (2.0 * PI) * self.frequency / self.sample_rate;

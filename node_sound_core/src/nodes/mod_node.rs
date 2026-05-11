@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn mod_node() -> SoundNode {
-    SoundNode {
+pub fn mod_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Mod".to_string(),
         tooltip: r#"Stairsteps a given wave by a given value."#.to_string(),
         inputs: BTreeMap::from([

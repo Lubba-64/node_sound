@@ -1,6 +1,6 @@
 use super::{SoundNodeProps, SoundNodeResult};
 use crate::constants::MAX_FREQ;
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use crate::sounds::const_wave::ConstWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
-pub fn const_node() -> SoundNode {
-    SoundNode {
+pub fn const_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Const".to_string(),
         tooltip: r#"A waveform that just sits at a given value forever."#.to_string(),
         inputs: BTreeMap::from([(

@@ -1,5 +1,5 @@
 use crate::constants::WAVE_TABLE_SIZE;
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -9,8 +9,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn vertical_wave_shaper_node() -> SoundNode {
-    SoundNode {
+pub fn vertical_wave_shaper_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Vertical Wave Shaper".to_string(),
         tooltip: r#"Shapes the incoming wave vertically by the graph."#.to_string(),
         inputs: BTreeMap::from([

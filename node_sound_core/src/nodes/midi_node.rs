@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn midi_node() -> SoundNode {
-    SoundNode {
+pub fn midi_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Midi File".to_string(),
         tooltip: r#"Imports and plays a midi file with the given waveform."#.to_string(),
         inputs: BTreeMap::from([

@@ -1,5 +1,5 @@
 use super::{SoundNodeProps, SoundNodeResult};
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use crate::sounds::bit_crush::BitCrusher;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
-pub fn bit_crush_node() -> SoundNode {
-    SoundNode {
+pub fn bit_crush_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Bit Crusher".to_string(),
         tooltip: r#"Bit chrushes the given waveform."#.to_string(),
         inputs: BTreeMap::from([

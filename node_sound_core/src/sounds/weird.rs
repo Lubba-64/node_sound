@@ -1,16 +1,16 @@
 use rand::Rng;
 
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct Weird<I: DawSource> {
+pub struct Weird<I: SoundNode> {
     source: I,
     rules: Vec<fn(f32) -> f32>,
     current_rule: [usize; 2],
     rule_change_counter: [usize; 2],
 }
 
-impl<I: DawSource> Weird<I> {
+impl<I: SoundNode> Weird<I> {
     #[inline]
     pub fn new(source: I) -> Self {
         let rule1 = |x: f32| x.abs().sin() * 0.7;
@@ -25,7 +25,7 @@ impl<I: DawSource> Weird<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for Weird<I> {
+impl<I: SoundNode + Clone> SoundNode for Weird<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         let channel_idx = channel as usize;
         self.rule_change_counter[channel_idx] += rand::thread_rng().gen_range(1..4);

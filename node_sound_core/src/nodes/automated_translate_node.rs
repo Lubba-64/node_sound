@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn automated_translate_node() -> SoundNode {
-    SoundNode {
+pub fn automated_translate_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Automated Translate Wave".to_string(),
         tooltip: r#"Automated version of the Translate node.
 All parameters from the previous node are automated."#

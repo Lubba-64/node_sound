@@ -1,4 +1,4 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 use rand::prelude::*;
 
 #[derive(Clone, Debug)]
@@ -24,7 +24,7 @@ impl Noise {
     }
 }
 
-impl DawSource for Noise {
+impl SoundNode for Noise {
     fn next(&mut self, _index: f32, _channel: u8) -> Option<f32> {
         if self.min == self.max {
             return Some(self.min);

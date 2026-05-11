@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn abs_node() -> SoundNode {
-    SoundNode {
+pub fn abs_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Abs".to_string(),
         tooltip: r#"Applies absolute value to the waveform,
 bringing everything on the bottom of the waveform to the top."#

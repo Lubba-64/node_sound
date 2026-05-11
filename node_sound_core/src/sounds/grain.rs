@@ -1,7 +1,7 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct Grain<I: DawSource, S: DawSource, L: DawSource> {
+pub struct Grain<I: SoundNode, S: SoundNode, L: SoundNode> {
     current_source: I,
     ind_min: f32,
     start: S,
@@ -10,7 +10,7 @@ pub struct Grain<I: DawSource, S: DawSource, L: DawSource> {
     current_len: Option<f32>,
 }
 
-impl<I: DawSource + Clone, S: DawSource + Clone, L: DawSource + Clone> Grain<I, S, L> {
+impl<I: SoundNode + Clone, S: SoundNode + Clone, L: SoundNode + Clone> Grain<I, S, L> {
     #[inline]
     pub fn new(source: I, start: S, len: L, sample_rate: f32) -> Self {
         Self {
@@ -24,7 +24,7 @@ impl<I: DawSource + Clone, S: DawSource + Clone, L: DawSource + Clone> Grain<I, 
     }
 }
 
-impl<I: DawSource + Clone, S: DawSource + Clone, L: DawSource + Clone> DawSource
+impl<I: SoundNode + Clone, S: SoundNode + Clone, L: SoundNode + Clone> SoundNode
     for Grain<I, S, L>
 {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {

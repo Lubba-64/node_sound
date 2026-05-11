@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn glitch_node() -> SoundNode {
-    SoundNode {
+pub fn glitch_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Glitch".to_string(),
         tooltip: r#"Glitch sounds."#.to_string(),
         inputs: BTreeMap::from([(

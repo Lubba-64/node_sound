@@ -1,12 +1,12 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct Wrapper<I: DawSource> {
+pub struct Wrapper<I: SoundNode> {
     source: I,
     last: [Option<f32>; 2],
 }
 
-impl<I: DawSource> Wrapper<I> {
+impl<I: SoundNode> Wrapper<I> {
     #[inline]
     pub fn new(source: I) -> Self {
         Self {
@@ -16,7 +16,7 @@ impl<I: DawSource> Wrapper<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for Wrapper<I> {
+impl<I: SoundNode + Clone> SoundNode for Wrapper<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.last[channel as usize] = match (
             self.source.next(index, channel),

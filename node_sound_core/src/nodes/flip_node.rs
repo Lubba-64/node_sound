@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -8,8 +8,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn flip_node() -> SoundNode {
-    SoundNode {
+pub fn flip_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Flip".to_string(),
         tooltip: r#"Flips the waveform vertically."#.to_string(),
         inputs: BTreeMap::from([(

@@ -1,7 +1,7 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct AutomatedSpeed<I: DawSource, I2: DawSource> {
+pub struct AutomatedSpeed<I: SoundNode, I2: SoundNode> {
     source: I,
     base_freq: f32,
     freq: I2,
@@ -9,7 +9,7 @@ pub struct AutomatedSpeed<I: DawSource, I2: DawSource> {
     adjusted_index: f32,
 }
 
-impl<I: DawSource, I2: DawSource> AutomatedSpeed<I, I2> {
+impl<I: SoundNode, I2: SoundNode> AutomatedSpeed<I, I2> {
     pub fn new(source: I, base_freq: f32, freq: I2) -> Self {
         Self {
             source,
@@ -21,7 +21,7 @@ impl<I: DawSource, I2: DawSource> AutomatedSpeed<I, I2> {
     }
 }
 
-impl<I: DawSource + Clone, I2: DawSource + Clone> DawSource for AutomatedSpeed<I, I2> {
+impl<I: SoundNode + Clone, I2: SoundNode + Clone> SoundNode for AutomatedSpeed<I, I2> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.adjusted_index += (index - self.last_index)
             * (self.freq.next(index, channel).unwrap_or(0.0) / self.base_freq);

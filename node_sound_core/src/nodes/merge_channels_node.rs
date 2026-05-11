@@ -1,4 +1,4 @@
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
-pub fn merge_channels_node() -> SoundNode {
-    SoundNode {
+pub fn merge_channels_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Merge Channels".to_string(),
         tooltip:
             r#"Merges the left audio of the two sources into a left and right singular source."#

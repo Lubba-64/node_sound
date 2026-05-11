@@ -1,12 +1,12 @@
-use crate::sound_map::DawSource;
+use crate::sound_map::SoundNode;
 
 #[derive(Clone, Debug)]
-pub struct BitCrusher<I: DawSource> {
+pub struct BitCrusher<I: SoundNode> {
     source: I,
     step_size: f32,
 }
 
-impl<I: DawSource> BitCrusher<I> {
+impl<I: SoundNode> BitCrusher<I> {
     #[inline]
     pub fn new(source: I, bits: u32) -> Self {
         let bits = bits.clamp(1, 16);
@@ -15,7 +15,7 @@ impl<I: DawSource> BitCrusher<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for BitCrusher<I> {
+impl<I: SoundNode + Clone> SoundNode for BitCrusher<I> {
     fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
         self.source
             .next(index, channel)

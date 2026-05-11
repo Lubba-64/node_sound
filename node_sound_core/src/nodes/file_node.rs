@@ -1,5 +1,5 @@
 use super::{SoundNodeProps, SoundNodeResult};
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -7,8 +7,8 @@ use crate::sounds::cloneable_decoder::CloneableDecoder;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
 
-pub fn file_node() -> SoundNode {
-    SoundNode {
+pub fn file_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Audio File".to_string(),
         tooltip: r#"Imports a wav, flac, or mp3 file as a waveform. Mono audio preferred."#
             .to_string(),

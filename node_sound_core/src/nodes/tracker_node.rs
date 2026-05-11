@@ -1,5 +1,5 @@
 use crate::constants::WAVE_TABLE_SIZE;
-use crate::nodes::SoundNode;
+use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
     DataType, InputParameter, InputValueConfig, Output, ValueType,
 };
@@ -9,8 +9,8 @@ use std::collections::BTreeMap;
 
 use super::{SoundNodeProps, SoundNodeResult};
 
-pub fn tracker_node() -> SoundNode {
-    SoundNode {
+pub fn tracker_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Tracker".to_string(),
         tooltip: r#"Allows you to play notes at given speeds."#.to_string(),
         inputs: BTreeMap::from([

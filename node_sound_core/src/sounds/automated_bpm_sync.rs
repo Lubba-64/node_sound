@@ -1,9 +1,9 @@
 use std::sync::{Arc, Mutex};
 
-use crate::{sound_graph::note::NoteSpeedType, sound_map::DawSource};
+use crate::{sound_graph::note::NoteSpeedType, sound_map::SoundNode};
 
 #[derive(Clone, Debug)]
-pub struct AutomatedBPMSync<S: DawSource> {
+pub struct AutomatedBPMSync<S: SoundNode> {
     sample_rate: f32,
     table: Vec<f32>,
     speed: f32,
@@ -12,7 +12,7 @@ pub struct AutomatedBPMSync<S: DawSource> {
     bpm: Arc<Mutex<f32>>,
 }
 
-impl<S: DawSource> AutomatedBPMSync<S> {
+impl<S: SoundNode> AutomatedBPMSync<S> {
     #[inline]
     pub fn new(
         sample_rate: f32,
@@ -33,7 +33,7 @@ impl<S: DawSource> AutomatedBPMSync<S> {
     }
 }
 
-impl<S: DawSource + Clone> DawSource for AutomatedBPMSync<S> {
+impl<S: SoundNode + Clone> SoundNode for AutomatedBPMSync<S> {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
         let seconds_per_note = self
             .note_speed_type
