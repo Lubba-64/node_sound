@@ -1,4 +1,4 @@
-use crate::sound_map::SoundNode;
+use crate::node::SoundNode;
 
 #[derive(Clone, Debug)]
 pub struct AutomatedSpeed<I: SoundNode, I2: SoundNode> {

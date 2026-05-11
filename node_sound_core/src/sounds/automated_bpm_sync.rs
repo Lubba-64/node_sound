@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crate::{sound_graph::note::NoteSpeedType, sound_map::SoundNode};
+use crate::{node::SoundNode, sound_graph::note::NoteSpeedType};
 
 #[derive(Clone, Debug)]
 pub struct AutomatedBPMSync<S: SoundNode> {

@@ -1,10 +1,10 @@
 use egui_extras_xt::knobs::AudioKnob;
-use futures::executor;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
-use node_sound_core::sound_map::SoundNode;
+use node_sound_core::node::SoundNode;
 use node_sound_core::{
     constants::MIDDLE_C_FREQ,
+    node::GenericSoundNode,
     nodes::get_nodes,
     sound_graph::{
         self,
@@ -12,7 +12,6 @@ use node_sound_core::{
         graph::{ActiveNodeState, FileManager, SoundNodeGraph, evaluate_node},
         graph_types::ValueType,
     },
-    sound_map::GenericSoundNode,
     sounds::{const_wave::ConstWave, speed::Speed},
 };
 use std::{
@@ -661,7 +660,10 @@ impl Plugin for NodeSound {
                     state.4 = true;
                     let copy_state = copy(&mut graph.state.editor_state, true);
                     delete_nodes(&mut graph.state.editor_state, true);
-                    executor::block_on(paste(&mut graph.state.editor_state, None, copy_state));
+                    match copy_state {
+                        Some(copy) => paste(&mut graph.state.editor_state, None, copy),
+                        _ => {}
+                    }
                 }
                 if sound_result_id.is_none() || graph.state.user_state.active_node.is_playing() {
                     let mut clear = false;

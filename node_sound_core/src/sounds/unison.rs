@@ -1,5 +1,5 @@
 use crate::{
-    sound_map::{GenericSoundNode, SoundNode},
+    node::{GenericSoundNode, SoundNode},
     sounds::{skip::Skip, speed::Speed},
 };
 

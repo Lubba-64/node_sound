@@ -1,5 +1,5 @@
 use crate::{
-    sound_map::SoundNode,
+    node::SoundNode,
     sounds::{automated_speed::AutomatedSpeed, sawtooth::SawtoothWave},
 };
 

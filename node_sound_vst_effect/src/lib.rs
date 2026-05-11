@@ -1,14 +1,14 @@
 use egui_extras_xt::knobs::AudioKnob;
 use nih_plug::{params::persist::PersistentField, prelude::*};
 use nih_plug_egui::{EguiState, create_egui_editor};
+use node_sound_core::node::SoundNode;
 use node_sound_core::sound_graph::graph::FileManager;
-use node_sound_core::sound_map::SoundNode;
 use node_sound_core::{
+    node::GenericSoundNode,
     sound_graph::{
         self,
         graph::{ActiveNodeState, SoundNodeGraph, evaluate_node},
     },
-    sound_map::GenericSoundNode,
 };
 use std::{
     collections::HashMap,

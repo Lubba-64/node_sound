@@ -1,4 +1,4 @@
-use crate::sound_map::SoundNode;
+use crate::node::SoundNode;
 use std::f32::consts::PI;
 
 #[derive(Clone, Debug)]

@@ -47,7 +47,6 @@ pub mod no_op_node;
 pub mod noise_node;
 pub mod output_node;
 pub mod random_duration_node;
-pub mod ref_node;
 pub mod repeat_infinite;
 pub mod repeat_n_node;
 pub mod reverb_node;
@@ -73,11 +72,11 @@ pub mod wrapper_node;
 
 use crate::error::Result;
 use crate::{
+    node::{GenericSoundNode, SoundNode},
     sound_graph::{
         graph::SoundNodeGraphState,
         graph_types::{InputParameter, Output, ValueType},
     },
-    sound_map::{GenericSoundNode, SoundNode},
     sounds::{tracker::TrackerNote, wave_table::WaveTableManager},
 };
 use anyhow::anyhow;
@@ -291,7 +290,6 @@ pub fn get_nodes() -> NodeDefinitions {
         random_duration_node::random_duration_node(),
         avg_node::avg_node(),
         input_node::input_node(),
-        ref_node::ref_node(),
         bpm_sync_node::bpm_sync_node(),
         bpm_sync_source_node::bpm_sync_source_node(),
         tracker_node::tracker_node(),

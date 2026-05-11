@@ -1,5 +1,5 @@
-use crate::sound_map::GenericSoundNode;
-use crate::sound_map::SoundNode;
+use crate::node::GenericSoundNode;
+use crate::node::SoundNode;
 use crate::sounds::const_wave::ConstWave;
 use crate::sounds::daw_automation_source::DawAutomationChannel;
 use crate::sounds::lfo::Lfo;

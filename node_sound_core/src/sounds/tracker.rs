@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex};
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    node::SoundNode,
     sound_graph::note::{Note, NoteSpeed, Octave, Pitch},
-    sound_map::SoundNode,
 };
 
 #[derive(Clone, Debug)]

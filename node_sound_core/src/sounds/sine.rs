@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use crate::sound_map::SoundNode;
+use crate::node::SoundNode;
 
 #[derive(Clone, Debug)]
 pub struct SineWave {

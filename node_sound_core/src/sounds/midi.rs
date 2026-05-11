@@ -1,6 +1,6 @@
 use crate::{
     constants::MIDDLE_C_FREQ,
-    sound_map::SoundNode,
+    node::SoundNode,
     sounds::wave_table::{WaveTableManager, WaveTableOscillator},
 };
 use synthrs::{midi::MidiSong, synthesizer::make_samples_from_midi, wave};

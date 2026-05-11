@@ -1,4 +1,4 @@
-use crate::sound_map::SoundNode;
+use crate::node::SoundNode;
 use rand::prelude::*;
 
 #[derive(Clone, Debug)]

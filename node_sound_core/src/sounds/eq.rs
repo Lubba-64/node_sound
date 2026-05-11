@@ -1,4 +1,4 @@
-use crate::sound_map::SoundNode;
+use crate::node::SoundNode;
 use anyhow::anyhow;
 use std::{f32::consts::PI, str::FromStr};
 // yes this is AI, I would not understand how to do this myself but if it works its getting added!

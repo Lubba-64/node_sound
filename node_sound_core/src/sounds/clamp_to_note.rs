@@ -1,4 +1,4 @@
-use crate::{sound_graph::note::Pitch, sound_map::SoundNode};
+use crate::{node::SoundNode, sound_graph::note::Pitch};
 use std::f32;
 
 #[derive(Clone, Debug)]

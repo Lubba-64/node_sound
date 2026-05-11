@@ -1,4 +1,4 @@
-use crate::sound_map::SoundNode;
+use crate::node::SoundNode;
 use std::collections::VecDeque;
 // this used to say ai shit but no this was actually all me because I disliked the ai version.
 // needs to be in an owned arc because otherwise

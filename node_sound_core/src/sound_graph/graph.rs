@@ -3,19 +3,18 @@ use super::float_selector;
 use super::graph_types::InputValueConfig;
 use super::wave_table_graph::wave_table_graph;
 use crate::error::{NodeSoundError, Result};
+use crate::node::SoundQueue;
 use crate::nodes::{NodeDefinitions, SoundNodeMetadata, SoundNodeProps};
 use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
 use crate::sound_graph::note::{Note, NoteSpeed};
 use crate::sound_graph::themes::AppTheme;
-use crate::sound_map::SoundQueue;
 use crate::sounds::tracker::TrackerNote;
 use crate::sounds::wave_table::WaveTableManager;
 use anyhow::anyhow;
 use eframe::egui::{self, ComboBox, DragValue, Vec2, Widget};
 use eframe::egui::{Checkbox, Pos2, WidgetText};
 pub use egui_node_graph_2::*;
-use futures::executor;
 pub use rodio::source::Zero;
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
@@ -511,7 +510,7 @@ impl SoundNodeGraph {
                     let data: ClipboardData =
                         ron::de::from_str(&clipboard.get().text().expect("clipboard read failed"))
                             .expect("expect deserialize to work...");
-                    executor::block_on(paste(&mut self.state.editor_state, Some(input_vec2), data));
+                    paste(&mut self.state.editor_state, Some(input_vec2), data);
                 }
                 if ui.add(egui::Button::new("delete selected")).clicked() {
                     delete_nodes(&mut self.state.editor_state, false);

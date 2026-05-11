@@ -3,7 +3,7 @@ use std::sync::Arc;
 use eframe::egui::ahash::HashMap;
 use serde::{Deserialize, Serialize};
 
-use crate::sound_map::SoundNode;
+use crate::node::SoundNode;
 
 #[derive(Clone, Debug)]
 pub struct WaveTableOscillator {

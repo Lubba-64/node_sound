@@ -1,4 +1,4 @@
-use crate::sound_map::SoundNode;
+use crate::node::SoundNode;
 
 #[derive(Clone, Debug)]
 pub struct AutomatedClamp<I1: SoundNode, I2: SoundNode, I3: SoundNode> {
