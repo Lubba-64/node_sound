@@ -2,7 +2,7 @@ use super::copy_paste_del_helpers::{copy, delete_nodes, paste};
 use super::float_selector;
 use super::graph_types::InputValueConfig;
 use super::wave_table_graph::wave_table_graph;
-use crate::error::Result;
+use crate::error::{NodeSoundError, Result};
 use crate::nodes::{NodeDefinitions, SoundNodeMetadata, SoundNodeProps};
 use crate::sound_graph::copy_paste_del_helpers::ClipboardData;
 use crate::sound_graph::graph_types::{DataType, ValueType};
@@ -187,13 +187,7 @@ impl<'a> NodeTemplateIter for NodeDefinitionsUi<'a> {
     type Item = NodeDefinitionUi;
 
     fn all_kinds(&self) -> Vec<Self::Item> {
-        self.0
-            .0
-            .values()
-            .cloned()
-            .map(|x| x.0)
-            .map(NodeDefinitionUi)
-            .collect()
+        self.0.0.iter().cloned().map(NodeDefinitionUi).collect()
     }
 }
 
@@ -583,69 +577,44 @@ pub fn evaluate_node<'a>(
     all_nodes: &NodeDefinitions,
     state: &'a mut SoundNodeGraphState,
 ) -> Result<ValueType> {
-    let node = match all_nodes.0.get(
-        &match graph.nodes.get(node_id) {
-            Some(x) => x,
-            None => {
-                return Err(anyhow!("Node Deref Failed: Failed to get Node Data").into());
-            }
-        }
-        .user_data
-        .name,
-    ) {
-        Some(x) => x,
-        None => {
-            return Err(anyhow!("Node Deref Failed: Failed to get Node from all_nodes").into());
-        }
-    };
-
-    let mut closure = |name: String| {
-        (
-            name.clone(),
-            evaluate_input(
-                graph,
-                node_id,
-                name.as_str(),
-                outputs_cache,
-                all_nodes,
-                state,
-            ),
+    let node = all_nodes
+        .get_node(
+            graph
+                .nodes
+                .get(node_id)
+                .ok_or::<NodeSoundError>(
+                    anyhow!("Node Deref Failed: Failed to get Node Data").into(),
+                )?
+                .user_data
+                .name
+                .clone(),
         )
-    };
-    let input_to_name_res: HashMap<std::string::String, Result<ValueType>> = HashMap::from_iter(
-        node.0
-            .inputs
-            .iter()
-            .map(|(name, _input)| (closure)(name.to_string())),
-    );
+        .ok_or::<NodeSoundError>(
+            anyhow!("Node Deref Failed: Failed to get Node from all_nodes").into(),
+        )?;
+
+    let input_to_name_res: HashMap<std::string::String, Result<ValueType>> =
+        HashMap::from_iter(node.inputs.iter().map(|(name, _input)| {
+            (
+                name.to_string(),
+                evaluate_input(graph, node_id, name, outputs_cache, all_nodes, state),
+            )
+        }));
     let mut input_to_name: HashMap<String, ValueType> = HashMap::new();
-
     for (k, v) in input_to_name_res.iter() {
-        input_to_name.insert(
-            k.clone(),
-            match v {
-                Ok(x) => x.clone(),
-                Err(x) => return Err(anyhow!("{:?}", x).into()),
-            },
-        );
+        input_to_name.insert(k.clone(), (*v).clone()?);
     }
-
-    let res = (node.1)(SoundNodeProps {
+    let res = node.run(SoundNodeProps {
         inputs: input_to_name,
         state: state,
     })?;
-
     for (name, value) in &res {
-        match populate_output(graph, outputs_cache, node_id, &name, value.clone()) {
-            Err(x) => return Err(x),
-            _ => {}
-        };
+        populate_output(graph, outputs_cache, node_id, &name, value.clone())?;
     }
-
-    match res.get("out") {
-        Some(x) => Ok(x.clone()),
-        None => Err(anyhow!("Node had no output").into()),
-    }
+    Ok(res
+        .get("out")
+        .cloned()
+        .ok_or(anyhow!("Failed to get node output"))?)
 }
 
 fn populate_output<'a>(
@@ -655,19 +624,12 @@ fn populate_output<'a>(
     param_name: &'a str,
     value: ValueType,
 ) -> Result<ValueType> {
-    let output_id = match match graph.nodes.get(node_id) {
-        Some(x) => x,
-        None => {
-            return Err(anyhow!("Node does not exist when getting output").into());
-        }
-    }
-    .get_output(param_name)
-    {
-        Ok(x) => x,
-        Err(_x) => {
-            return Err(anyhow!("Node has no output ID").into());
-        }
-    };
+    let output_id: OutputId = graph
+        .nodes
+        .get(node_id)
+        .ok_or::<NodeSoundError>(anyhow!("Node does not exist when getting output").into())?
+        .get_output(param_name)
+        .map_err(|_| anyhow!("Failed to get node output"))?;
     outputs_cache.insert(output_id, value.clone());
     Ok(value)
 }
@@ -680,50 +642,34 @@ fn evaluate_input<'a>(
     all_nodes: &'a NodeDefinitions,
     state: &'a mut SoundNodeGraphState,
 ) -> Result<ValueType> {
-    let input_id = match match graph.nodes.get(node_id) {
-        Some(x) => x,
-        None => {
-            return Err(anyhow!("Node does not exist when evaluating input").into());
-        }
-    }
-    .get_input(param_name)
-    {
-        Ok(x) => x,
-        Err(_x) => {
-            return Err(anyhow!("Node has no input id").into());
-        }
-    };
+    let input_id = graph
+        .nodes
+        .get(node_id)
+        .ok_or::<NodeSoundError>(anyhow!("Node does not exist when evaluating input").into())?
+        .get_input(param_name)
+        .map_err(|_| anyhow!("Node has no input id"))?;
     if let Some(other_output_id) = graph.connection(input_id) {
         if let Some(other_value) = outputs_cache.get(&other_output_id) {
             Ok(other_value.clone())
         } else {
-            match evaluate_node(
+            evaluate_node(
                 graph,
                 graph[other_output_id].node,
                 outputs_cache,
                 all_nodes,
                 state,
-            ) {
-                Ok(x) => x,
-                Err(x) => {
-                    return Err(x);
-                }
-            };
-            match outputs_cache.get(&other_output_id) {
-                Some(x) => Ok(x.clone()),
-                None => {
-                    return Err(anyhow!("outputs cache empty").into());
-                }
-            }
+            )?;
+            outputs_cache
+                .get(&other_output_id)
+                .cloned()
+                .ok_or(anyhow!("Failed to query output cache").into())
         }
     } else {
-        Ok(match graph.inputs.get(input_id) {
-            None => {
-                return Err(anyhow!("Node has no input id").into());
-            }
-            Some(x) => x,
-        }
-        .value
-        .clone())
+        Ok(graph
+            .inputs
+            .get(input_id)
+            .ok_or::<NodeSoundError>(anyhow!("Node has no input id").into())?
+            .value
+            .clone())
     }
 }

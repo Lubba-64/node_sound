@@ -1,4 +1,3 @@
-use super::{SoundNodeProps, SoundNodeResult};
 use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
@@ -9,6 +8,7 @@ use crate::sounds::delay::Delay;
 use crate::sounds::mix::Mix;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 pub fn reverb_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -64,25 +64,24 @@ pub fn reverb_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props|{
+            let cloned = Delay::new(
+                props.get_duration("duration")?.as_secs_f32(),
+                Amplify::new(
+                    props.clone_sound(props.get_source("audio 1")?)?,
+                    props.get_float("amplification")?,
+                ),
+                props.get_bool("note independant")?,
+                props.sample_rate(),
+                props.note_speed(),
+            );
+            let mixed = Mix::new(props.clone_sound(props.get_source("audio 1")?)?, cloned);
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(mixed)),
+                },
+            )]))
+        }))
     }
-}
-
-pub fn reverb_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = Delay::new(
-        props.get_duration("duration")?.as_secs_f32(),
-        Amplify::new(
-            props.clone_sound(props.get_source("audio 1")?)?,
-            props.get_float("amplification")?,
-        ),
-        props.get_bool("note independant")?,
-        props.sample_rate(),
-        props.note_speed(),
-    );
-    let mixed = Mix::new(props.clone_sound(props.get_source("audio 1")?)?, cloned);
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(mixed)),
-        },
-    )]))
 }

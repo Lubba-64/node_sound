@@ -6,8 +6,8 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::sine::SineWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
-use super::{SoundNodeProps, SoundNodeResult};
 pub fn sine_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
         name: "Sine Wave".to_string(),
@@ -43,19 +43,18 @@ pub fn sine_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(SineWave::new(
+                        props.get_float("frequency")?,
+                        props.get_bool("note independant")?,
+                        props.sample_rate(),
+                        props.note_speed(),
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn sine_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(SineWave::new(
-                props.get_float("frequency")?,
-                props.get_bool("note independant")?,
-                props.sample_rate(),
-                props.note_speed(),
-            ))),
-        },
-    )]))
 }

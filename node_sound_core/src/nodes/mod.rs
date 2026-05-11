@@ -224,7 +224,13 @@ impl SoundNodeMetadata {
 type SoundNodeResult = Result<BTreeMap<String, ValueType>>;
 
 #[derive(Clone)]
-pub struct NodeDefinitions(Vec<SoundNodeMetadata>);
+pub struct NodeDefinitions(pub Vec<SoundNodeMetadata>);
+
+impl NodeDefinitions {
+    pub fn get_node(&self, name: String) -> Option<&SoundNodeMetadata> {
+        self.0.iter().filter(|node| node.name == name).nth(0)
+    }
+}
 
 impl Default for NodeDefinitions {
     fn default() -> Self {

@@ -6,8 +6,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::translate::TranslateWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn translate_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -85,21 +84,20 @@ morphs its position to be within the range of end min and end max."#
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(TranslateWave::new(
+                        cloned,
+                        props.get_float("start_min")?,
+                        props.get_float("start_max")?,
+                        props.get_float("end_min")?,
+                        props.get_float("end_max")?,
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn translate_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(TranslateWave::new(
-                cloned,
-                props.get_float("start_min")?,
-                props.get_float("start_max")?,
-                props.get_float("end_min")?,
-                props.get_float("end_max")?,
-            ))),
-        },
-    )]))
 }

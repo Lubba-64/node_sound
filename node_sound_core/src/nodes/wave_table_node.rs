@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 };
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn wave_table_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -62,25 +61,24 @@ pub fn wave_table_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props|{
+            props.update_wavetables_node_idx();
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            let wavetable = props.state.user_state.wavetables.make_wavetable_generic(
+                props.sample_rate(),
+                MIDDLE_C_FREQ,
+                cloned,
+                props.get_duration("duration")?.as_secs_f32(),
+                props.get_float("frequency")?,
+                props.get_bool("note independant")?,
+                props.note_speed(),
+            );
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(wavetable)),
+                },
+            )]))
+        }))
     }
-}
-
-pub fn wave_table_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    props.update_wavetables_node_idx();
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    let wavetable = props.state.user_state.wavetables.make_wavetable_generic(
-        props.sample_rate(),
-        MIDDLE_C_FREQ,
-        cloned,
-        props.get_duration("duration")?.as_secs_f32(),
-        props.get_float("frequency")?,
-        props.get_bool("note independant")?,
-        props.note_speed(),
-    );
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(wavetable)),
-        },
-    )]))
 }

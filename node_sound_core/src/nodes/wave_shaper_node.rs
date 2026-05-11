@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 };
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn wave_shaper_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -56,25 +55,25 @@ pub fn wave_shaper_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            props.update_wavetables_node_idx();
+            let table: Vec<f32> = props
+                .get_graph("graph")?
+                .unwrap_or(vec![0.01; WAVE_TABLE_SIZE]);
+            let wavetable = props.state.user_state.wavetables.make_wavetable_samples(
+                props.sample_rate(),
+                MIDDLE_C_FREQ,
+                props.get_float("frequency")?,
+                props.get_bool("note independant")?,
+                props.note_speed(),
+                Box::new(|| (table.clone(), table.clone())),
+            );
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(wavetable)),
+                },
+            )]))
+        })),
     }
-}
-pub fn wave_shaper_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    props.update_wavetables_node_idx();
-    let table: Vec<f32> = props
-        .get_graph("graph")?
-        .unwrap_or(vec![0.01; WAVE_TABLE_SIZE]);
-    let wavetable = props.state.user_state.wavetables.make_wavetable_samples(
-        props.sample_rate(),
-        MIDDLE_C_FREQ,
-        props.get_float("frequency")?,
-        props.get_bool("note independant")?,
-        props.note_speed(),
-        Box::new(|| (table.clone(), table.clone())),
-    );
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(wavetable)),
-        },
-    )]))
 }

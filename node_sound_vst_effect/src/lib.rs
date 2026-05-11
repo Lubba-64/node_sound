@@ -341,21 +341,17 @@ impl Plugin for NodeSound {
                         Some(x) => {
                             graph
                                 .state
-                                ._unserializeable_state
+                                .runtime_state
                                 .queue
                                 .set_sample_rate(**sample_rate);
                             graph.state.user_state.wavetables.clear();
-                            graph.state._unserializeable_state.queue.set_note_speed(1.0);
-                            graph
-                                .state
-                                ._unserializeable_state
-                                .queue
-                                .set_bpm(state.3.clone());
+                            graph.state.runtime_state.queue.set_note_speed(1.0);
+                            graph.state.runtime_state.queue.set_bpm(state.3.clone());
                             match evaluate_node(
                                 &graph.state.editor_state.graph.clone(),
                                 x,
                                 &mut HashMap::new(),
-                                &graph.state._unserializeable_state.node_definitions.clone(),
+                                &graph.state.runtime_state.node_definitions.clone(),
                                 &mut graph.state,
                             ) {
                                 Ok(val) => {
@@ -366,7 +362,7 @@ impl Plugin for NodeSound {
                                     .clone();
                                     let sound = match graph
                                         .state
-                                        ._unserializeable_state
+                                        .runtime_state
                                         .queue
                                         .clone_sound(source_id.clone())
                                     {
@@ -386,12 +382,12 @@ impl Plugin for NodeSound {
                                 }
                                 Err(err) => {
                                     *error = Some(format!("{:?}", err));
-                                    graph.state._unserializeable_state.queue.clear();
+                                    graph.state.runtime_state.queue.clear();
                                 }
                             };
                         }
                         None => {
-                            graph.state._unserializeable_state.queue.clear();
+                            graph.state.runtime_state.queue.clear();
                         }
                     }
                 }
@@ -446,8 +442,8 @@ impl Plugin for NodeSound {
             }
             Err(_x) => {}
         }
-        let automations = state._unserializeable_state.automations.0.clone();
-        let input = state._unserializeable_state.input.0.clone();
+        let automations = state.runtime_state.automations.0.clone();
+        let input = state.runtime_state.input.0.clone();
         let size = buffer.samples();
         let output = buffer.as_slice();
         let mut sound_result = match self.sound_result.try_lock() {

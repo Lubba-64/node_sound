@@ -6,8 +6,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::speed::Speed;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn speed_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -44,17 +43,17 @@ pub fn speed_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = Speed::new(
+                props.clone_sound(props.get_source("audio 1")?)?,
+                props.get_float("speed")?,
+            );
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(cloned)),
+                },
+            )]))
+        })),
     }
-}
-pub fn speed_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = Speed::new(
-        props.clone_sound(props.get_source("audio 1")?)?,
-        props.get_float("speed")?,
-    );
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(cloned)),
-        },
-    )]))
 }

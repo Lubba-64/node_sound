@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::wave_folder::Wavefolder;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn wave_folder_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -69,20 +68,19 @@ pub fn wave_folder_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(Wavefolder::new(
+                        cloned,
+                        props.get_float("gain")?,
+                        props.get_float("offset")?,
+                        props.get_float("folds")? as u8,
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn wave_folder_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(Wavefolder::new(
-                cloned,
-                props.get_float("gain")?,
-                props.get_float("offset")?,
-                props.get_float("folds")? as u8,
-            ))),
-        },
-    )]))
 }

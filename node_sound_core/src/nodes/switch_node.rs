@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::switch::Switch;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn switch_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -48,16 +47,16 @@ pub fn switch_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned1 = props.clone_sound(props.get_source("audio 1")?)?;
+            let cloned2 = props.clone_sound(props.get_source("audio 2")?)?;
+            let switch = props.clone_sound(props.get_source("switch")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(Switch::new(cloned1, cloned2, switch))),
+                },
+            )]))
+        })),
     }
-}
-pub fn switch_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned1 = props.clone_sound(props.get_source("audio 1")?)?;
-    let cloned2 = props.clone_sound(props.get_source("audio 2")?)?;
-    let switch = props.clone_sound(props.get_source("switch")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(Switch::new(cloned1, cloned2, switch))),
-        },
-    )]))
 }

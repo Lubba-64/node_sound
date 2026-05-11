@@ -1,4 +1,3 @@
-use super::{SoundNodeProps, SoundNodeResult};
 use crate::constants::MAX_FREQ;
 use crate::nodes::SoundNodeMetadata;
 use crate::sound_graph::graph_types::{
@@ -7,6 +6,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::unison::UnisonVoice;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 pub fn unison_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -86,23 +86,22 @@ totally phase separated at 100.0"#
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(UnisonVoice::new(
+                        cloned,
+                        props.get_float("unison")?,
+                        props.get_float("voices")? as u8,
+                        props.sample_rate(),
+                        props.note_speed(),
+                        props.get_float("frequency")?,
+                        props.get_float("detune")?,
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn unison_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(UnisonVoice::new(
-                cloned,
-                props.get_float("unison")?,
-                props.get_float("voices")? as u8,
-                props.sample_rate(),
-                props.note_speed(),
-                props.get_float("frequency")?,
-                props.get_float("detune")?,
-            ))),
-        },
-    )]))
 }

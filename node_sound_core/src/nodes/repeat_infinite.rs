@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::repeat_n::RepeatRefSource;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn repeat_infinite_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -28,15 +27,15 @@ pub fn repeat_infinite_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned =
+                RepeatRefSource::new(props.clone_sound(props.get_source("audio 1")?)?, None);
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(cloned)),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn repeat_infinite_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = RepeatRefSource::new(props.clone_sound(props.get_source("audio 1")?)?, None);
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(cloned)),
-        },
-    )]))
 }

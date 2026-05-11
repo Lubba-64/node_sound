@@ -34,14 +34,14 @@ struct Voice {
     /// these IDs. If the host doesn't provide these IDs, then this is computed through
     /// `compute_fallback_voice_id()`. In that case polyphonic modulation will not work, but the
     /// basic note events will still have an effect.
-    voice_id: i32,
+    id: i32,
     /// The note's channel, in `0..16`. Only used for the voice terminated event.
     channel: u8,
     /// The note's key/note, in `0..128`. Only used for the voice terminated event.
     note: u8,
     /// The voices internal ID. Each voice has an internal voice ID one higher than the previous
     /// voice. This is used to steal the last voice in case all 16 voices are in use.
-    internal_voice_id: u64,
+    internal_id: u64,
     /// The square root of the note's velocity. This is used as a gain multiplier.
     velocity_sqrt: f32,
     /// Whether the key has been released and the voice is in its release stage. The voice will be
@@ -49,14 +49,11 @@ struct Voice {
     releasing: bool,
     /// Fades between 0 and 1 with timings based on the global attack and release settings.
     amp_envelope: Smoother<f32>,
-
     /// If this voice has polyphonic gain modulation applied, then this contains the normalized
     /// offset and a smoother.
-    voice_gain: Option<(f32, Smoother<f32>)>,
-
-    voice_source: GenericSoundNode,
-
-    voice_idx: usize,
+    gain: Option<(f32, Smoother<f32>)>,
+    node: GenericSoundNode,
+    idx: usize,
 }
 
 pub struct NodeSound {
@@ -275,7 +272,7 @@ impl NodeSound {
     fn get_voice_idx(&mut self, voice_id: i32) -> Option<usize> {
         self.voices
             .iter_mut()
-            .position(|voice| matches!(voice, Some(voice) if voice.voice_id == voice_id))
+            .position(|voice| matches!(voice, Some(voice) if voice.id == voice_id))
     }
 
     /// Start a new voice with the given voice ID. If all voices are currently in use, the oldest
@@ -296,16 +293,16 @@ impl NodeSound {
         amp_envelope.reset(0.0);
         amp_envelope.set_target(sample_rate, 1.0);
         let new_voice = Voice {
-            voice_id: voice_id.unwrap_or_else(|| compute_fallback_voice_id(note, channel)),
-            internal_voice_id: self.next_internal_voice_id,
+            id: voice_id.unwrap_or_else(|| compute_fallback_voice_id(note, channel)),
+            internal_id: self.next_internal_voice_id,
             channel,
             note,
             velocity_sqrt: velocity.sqrt(),
             releasing: false,
             amp_envelope,
-            voice_gain: None,
-            voice_idx: 0,
-            voice_source: self
+            gain: None,
+            idx: 0,
+            node: self
                 .source_sound_buffers
                 .lock()
                 .expect("expected lock on source sound buffers")[note as usize]
@@ -324,7 +321,7 @@ impl NodeSound {
                 let oldest_voice = unsafe {
                     self.voices
                         .iter_mut()
-                        .min_by_key(|voice| voice.as_ref().unwrap_unchecked().internal_voice_id)
+                        .min_by_key(|voice| voice.as_ref().unwrap_unchecked().internal_id)
                         .unwrap_unchecked()
                 };
 
@@ -332,7 +329,7 @@ impl NodeSound {
                     let oldest_voice = oldest_voice.as_ref().unwrap();
                     context.send_event(NoteEvent::VoiceTerminated {
                         timing: sample_offset,
-                        voice_id: Some(oldest_voice.voice_id),
+                        voice_id: Some(oldest_voice.id),
                         channel: oldest_voice.channel,
                         note: oldest_voice.note,
                     });
@@ -356,7 +353,7 @@ impl NodeSound {
         for voice in self.voices.iter_mut() {
             match voice {
                 Some(Voice {
-                    voice_id: candidate_voice_id,
+                    id: candidate_voice_id,
                     channel: candidate_channel,
                     note: candidate_note,
                     releasing,
@@ -396,7 +393,7 @@ impl NodeSound {
         for voice in self.voices.iter_mut() {
             match voice {
                 Some(Voice {
-                    voice_id: candidate_voice_id,
+                    id: candidate_voice_id,
                     channel: candidate_channel,
                     note: candidate_note,
                     ..
@@ -683,11 +680,7 @@ impl Plugin for NodeSound {
                     graph.state.user_state.active_node = ActiveNodeState::NoNode;
                     match graph.state.user_state.vst_output_node_id {
                         Some(outputid) => {
-                            graph
-                                .state
-                                ._unserializeable_state
-                                .queue
-                                .set_bpm(state.5.clone());
+                            graph.state.runtime_state.queue.set_bpm(state.5.clone());
                             graph.state.user_state.wavetables.clear();
                             for vidx in 0..MIDI_NOTES_LEN as usize {
                                 let speed = from_semitones(
@@ -699,15 +692,11 @@ impl Plugin for NodeSound {
                                         + 0.2
                                         + 0.1,
                                 ) / MIDDLE_C_FREQ;
-                                graph.state._unserializeable_state.queue.clear();
+                                graph.state.runtime_state.queue.clear();
+                                graph.state.runtime_state.queue.set_note_speed(speed);
                                 graph
                                     .state
-                                    ._unserializeable_state
-                                    .queue
-                                    .set_note_speed(speed);
-                                graph
-                                    .state
-                                    ._unserializeable_state
+                                    .runtime_state
                                     .queue
                                     .set_sample_rate(**sample_rate);
                                 match evaluate_node(
@@ -728,7 +717,7 @@ impl Plugin for NodeSound {
                                         **sound_result_id = Some(source_id);
                                         let sound = match graph
                                             .state
-                                            ._unserializeable_state
+                                            .runtime_state
                                             .queue
                                             .clone_sound(source_id.clone())
                                         {
@@ -740,7 +729,7 @@ impl Plugin for NodeSound {
                                         sound_buffers[vidx] = Some(GenericSoundNode::new(
                                             Box::new(Speed::new(sound, speed)),
                                         ));
-                                        graph.state._unserializeable_state.queue.clear();
+                                        graph.state.runtime_state.queue.clear();
                                     }
                                     Err(err) => {
                                         *error = Some(format!("{:?}", err));
@@ -757,7 +746,7 @@ impl Plugin for NodeSound {
                         for buffer in (**sound_buffers).iter_mut() {
                             *buffer = None;
                         }
-                        graph.state._unserializeable_state.queue.clear();
+                        graph.state.runtime_state.queue.clear();
                         **sound_result_id = None
                     }
                 }
@@ -790,7 +779,7 @@ impl Plugin for NodeSound {
                 }
             }
             .state;
-            automations = state._unserializeable_state.automations.0.clone();
+            automations = state.runtime_state.automations.0.clone();
 
             match state.user_state.files.lock() {
                 Ok(x) => {
@@ -908,7 +897,7 @@ impl Plugin for NodeSound {
                                                 .gain
                                                 .preview_modulated(normalized_offset);
                                             let (_, smoother) =
-                                                voice.voice_gain.get_or_insert_with(|| {
+                                                voice.gain.get_or_insert_with(|| {
                                                     (
                                                         normalized_offset,
                                                         self.params.gain.smoothed.clone(),
@@ -919,7 +908,7 @@ impl Plugin for NodeSound {
                                             // same sample as a voice's `NoteOn` event, then it
                                             // should immediately use the modulated value
                                             // instead of slowly fading in
-                                            if voice.internal_voice_id
+                                            if voice.internal_id
                                                 >= this_sample_internal_voice_id_start
                                             {
                                                 smoother.reset(target_plain_value);
@@ -949,7 +938,7 @@ impl Plugin for NodeSound {
                                     match poly_modulation_id {
                                         GAIN_POLY_MOD_ID => {
                                             let (normalized_offset, smoother) =
-                                                match voice.voice_gain.as_mut() {
+                                                match voice.gain.as_mut() {
                                                     Some((o, s)) => (o, s),
                                                     // If the voice does not have existing
                                                     // polyphonic modulation, then there's nothing
@@ -995,7 +984,7 @@ impl Plugin for NodeSound {
                 .sqrt();
             for sample_idx in block_start..block_end {
                 for voice in &mut self.voices.iter_mut().filter_map(|v| v.as_mut()) {
-                    let gain = match &voice.voice_gain {
+                    let gain = match &voice.gain {
                         Some((_, smoother)) => smoother.next(),
                         None => 1.0,
                     };
@@ -1019,18 +1008,18 @@ impl Plugin for NodeSound {
                     mkparamgetter!(a17, 16, self, automations);
                     mkparamgetter!(a18, 17, self, automations);
                     if self.params.is_mono.value() {
-                        let time_index = (voice.voice_idx + sample_idx) as f32;
+                        let time_index = (voice.idx + sample_idx) as f32;
                         let mut left_sample =
-                            voice.voice_source.next(time_index, 0).unwrap_or_default() * amp;
+                            voice.node.next(time_index, 0).unwrap_or_default() * amp;
                         left_sample /= active_voices;
                         output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
                         output[1][sample_idx] += left_sample.clamp(-1.0, 1.0);
                     } else {
-                        let time_index = (voice.voice_idx + sample_idx) as f32;
+                        let time_index = (voice.idx + sample_idx) as f32;
                         let mut left_sample =
-                            voice.voice_source.next(time_index, 0).unwrap_or_default() * amp;
+                            voice.node.next(time_index, 0).unwrap_or_default() * amp;
                         let mut right_sample =
-                            voice.voice_source.next(time_index, 1).unwrap_or_default() * amp;
+                            voice.node.next(time_index, 1).unwrap_or_default() * amp;
                         left_sample /= active_voices;
                         right_sample /= active_voices;
                         output[0][sample_idx] += left_sample.clamp(-1.0, 1.0);
@@ -1047,7 +1036,7 @@ impl Plugin for NodeSound {
                         // voices
                         context.send_event(NoteEvent::VoiceTerminated {
                             timing: block_end as u32,
-                            voice_id: Some(v.voice_id),
+                            voice_id: Some(v.id),
                             channel: v.channel,
                             note: v.note,
                         });
@@ -1064,7 +1053,7 @@ impl Plugin for NodeSound {
         for voice in self.voices.iter_mut() {
             match voice {
                 Some(v) => {
-                    v.voice_idx += num_samples;
+                    v.idx += num_samples;
                 }
                 None => {}
             }

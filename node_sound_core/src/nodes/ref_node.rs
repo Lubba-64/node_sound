@@ -4,8 +4,7 @@ use crate::sound_graph::graph_types::{
 };
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn ref_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -29,19 +28,18 @@ Copies the result of a sound and caches it for each sample the graph produces (t
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props|{
+            let arc_cloned = props
+                .state
+                .runtime_state
+                .queue
+                .arc_clone_sound(props.get_source("audio 1")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(arc_cloned)),
+                },
+            )]))
+        }))
     }
-}
-
-pub fn ref_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let arc_cloned = props
-        .state
-        ._unserializeable_state
-        .queue
-        .arc_clone_sound(props.get_source("audio 1")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(arc_cloned)),
-        },
-    )]))
 }

@@ -6,8 +6,8 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::square::SquareWave;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
-use super::{SoundNodeProps, SoundNodeResult};
 pub fn square_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
         name: "Square Wave".to_string(),
@@ -43,19 +43,18 @@ pub fn square_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(SquareWave::new(
+                        props.get_float("frequency")?,
+                        props.get_bool("note independant")?,
+                        props.sample_rate(),
+                        props.note_speed(),
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn square_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(SquareWave::new(
-                props.get_float("frequency")?,
-                props.get_bool("note independant")?,
-                props.sample_rate(),
-                props.note_speed(),
-            ))),
-        },
-    )]))
 }

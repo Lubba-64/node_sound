@@ -5,8 +5,7 @@ use crate::sound_graph::graph_types::{
 use crate::sounds::reverse::ReverseSource;
 use egui_node_graph_2::InputParamKind;
 use std::collections::BTreeMap;
-
-use super::{SoundNodeProps, SoundNodeResult};
+use std::sync::Arc;
 
 pub fn reverse_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
@@ -39,21 +38,21 @@ pub fn reverse_node() -> SoundNodeMetadata {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            props.update_wavetables_node_idx();
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            let source = ReverseSource::new(
+                cloned,
+                props.get_duration("duration")?.as_secs_f32(),
+                props.sample_rate(),
+                &mut props.state.user_state.wavetables,
+            );
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(source)),
+                },
+            )]))
+        })),
     }
-}
-pub fn reverse_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    props.update_wavetables_node_idx();
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    let source = ReverseSource::new(
-        cloned,
-        props.get_duration("duration")?.as_secs_f32(),
-        props.sample_rate(),
-        &mut props.state.user_state.wavetables,
-    );
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(source)),
-        },
-    )]))
 }
