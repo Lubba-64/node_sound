@@ -28,7 +28,7 @@ pub fn mix_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio source 1".to_string(),
@@ -37,7 +37,7 @@ pub fn mix_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 2".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio source 2".to_string(),

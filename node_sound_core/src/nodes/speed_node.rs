@@ -26,7 +26,7 @@ pub fn speed_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "speed".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "speed".to_string(),
@@ -39,7 +39,7 @@ pub fn speed_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),

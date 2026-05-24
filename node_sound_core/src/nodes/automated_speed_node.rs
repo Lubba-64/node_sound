@@ -35,46 +35,27 @@ pub fn automated_speed_node() -> SoundNodeMetadata {
         name: "Automated Speed".to_string(),
         tooltip: r#"Changes the speed of the input waveform based off of the base frequency to the automation value."#
             .to_string(),
-        inputs: BTreeMap::from([
-            (
-                "base frequency".to_string(),
-                InputParameter {
-                    data_type: DataType::Float,
-                    kind: InputParamKind::ConnectionOrConstant,
-                    name: "base frequency".to_string(),
-                    value: InputValueConfig::Float {
-                        value: 1.0,
-                        min: 0.0,
-                        max: MAX_FREQ,
-                    },
-                },
-            ),
-            (
-                "audio 1".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "audio 1".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-            (
-                "frequency".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "frequency".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-        ]),
-        outputs: BTreeMap::from([(
-            "out".to_string(),
-            Output {
-                data_type: DataType::AudioSource,
-                name: "out".to_string(),
+        inputs: vec![ Input {
+            data_type: DataType::Float,
+            kind: InputParamKind::ConnectionOrConstant,
+            name: "base frequency".to_string(),
+            value: InputValueConfig::Float {
+                value: 1.0,
+                min: 0.0,
+                max: MAX_FREQ,
             },
-        )]),
+        },  Input {
+            data_type: DataType::AudioSource,
+            kind: InputParamKind::ConnectionOnly,
+            name: "audio 1".to_string(),
+            value: InputValueConfig::AudioSource {},
+        }, Input {
+            data_type: DataType::AudioSource,
+            kind: InputParamKind::ConnectionOnly,
+            name: "frequency".to_string(),
+            value: InputValueConfig::AudioSource {},
+        },],
+        outputs: get_default_outputs(),
         op: Some(Arc::new(|mut props|{
             let cloned = AutomatedSpeed::new(
                 props.clone_sound(props.get_source("audio 1")?)?,

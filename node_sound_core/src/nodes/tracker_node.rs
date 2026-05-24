@@ -114,7 +114,7 @@ pub fn tracker_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),
@@ -123,7 +123,7 @@ pub fn tracker_node() -> SoundNodeMetadata {
             ),
             (
                 "tracker".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::TrackerNotes,
                     kind: InputParamKind::ConstantOnly,
                     name: "tracker".to_string(),
@@ -134,7 +134,7 @@ pub fn tracker_node() -> SoundNodeMetadata {
             ),
             (
                 "graph".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Graph,
                     kind: InputParamKind::ConstantOnly,
                     name: "graph".to_string(),

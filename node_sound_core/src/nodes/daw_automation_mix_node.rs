@@ -42,7 +42,7 @@ pub fn daw_automation_mix_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "channel".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOnly,
                     name: "channel".to_string(),
@@ -55,7 +55,7 @@ pub fn daw_automation_mix_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio source 1".to_string(),
@@ -64,7 +64,7 @@ pub fn daw_automation_mix_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 2".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio source 2".to_string(),

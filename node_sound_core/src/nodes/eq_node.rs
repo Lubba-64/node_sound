@@ -217,7 +217,7 @@ pub fn eq_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),
@@ -226,7 +226,7 @@ pub fn eq_node() -> SoundNodeMetadata {
             ),
             (
                 "filter type".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Dropdown,
                     kind: InputParamKind::ConstantOnly,
                     name: "filter type".to_string(),
@@ -238,7 +238,7 @@ pub fn eq_node() -> SoundNodeMetadata {
             ),
             (
                 "frequency".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "frequency".to_string(),
@@ -251,7 +251,7 @@ pub fn eq_node() -> SoundNodeMetadata {
             ),
             (
                 "q factor".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "q factor".to_string(),
@@ -264,7 +264,7 @@ pub fn eq_node() -> SoundNodeMetadata {
             ),
             (
                 "gain".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "gain".to_string(),

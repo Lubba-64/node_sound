@@ -38,7 +38,7 @@ pub fn vertical_wave_shaper_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "graph".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Graph,
                     kind: InputParamKind::ConstantOnly,
                     name: "graph".to_string(),
@@ -51,7 +51,7 @@ pub fn vertical_wave_shaper_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),

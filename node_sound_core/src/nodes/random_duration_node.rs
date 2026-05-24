@@ -67,7 +67,7 @@ pub fn random_duration_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "min duration".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Duration,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "min duration".to_string(),
@@ -76,7 +76,7 @@ pub fn random_duration_node() -> SoundNodeMetadata {
             ),
                         (
                 "max duration".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Duration,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "max duration".to_string(),
@@ -85,7 +85,7 @@ pub fn random_duration_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),
@@ -94,7 +94,7 @@ pub fn random_duration_node() -> SoundNodeMetadata {
             ),
             (
                 "note independant".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "note independant".to_string(),

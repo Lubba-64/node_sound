@@ -39,7 +39,7 @@ pub fn switch_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "switch".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "switch".to_string(),
@@ -48,7 +48,7 @@ pub fn switch_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),
@@ -57,7 +57,7 @@ pub fn switch_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 2".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 2".to_string(),

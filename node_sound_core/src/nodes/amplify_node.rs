@@ -28,37 +28,25 @@ pub fn amplify_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
         name: "Amplify".to_string(),
         tooltip: r#"Amplifies the waveform making sounds louder."#.to_string(),
-        inputs: BTreeMap::from([
-            (
-                "amplification".to_string(),
-                InputParameter {
-                    data_type: DataType::Float,
-                    kind: InputParamKind::ConnectionOrConstant,
-                    name: "amplification".to_string(),
-                    value: InputValueConfig::Float {
-                        value: 1.0,
-                        min: 0.0,
-                        max: MAX_FREQ,
-                    },
+        inputs: vec![
+            Input {
+                data_type: DataType::Float,
+                kind: InputParamKind::ConnectionOrConstant,
+                name: "amplification".to_string(),
+                value: InputValueConfig::Float {
+                    value: 1.0,
+                    min: 0.0,
+                    max: MAX_FREQ,
                 },
-            ),
-            (
-                "audio 1".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "audio 1".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-        ]),
-        outputs: BTreeMap::from([(
-            "out".to_string(),
-            Output {
-                data_type: DataType::AudioSource,
-                name: "out".to_string(),
             },
-        )]),
+            Input {
+                data_type: DataType::AudioSource,
+                kind: InputParamKind::ConnectionOnly,
+                name: "audio 1".to_string(),
+                value: InputValueConfig::AudioSource {},
+            },
+        ],
+        outputs: get_default_outputs(),
         op: Some(Arc::new(|mut props| {
             let cloned = Amplify::new(
                 props.clone_sound(props.get_source("audio 1")?)?,

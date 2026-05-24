@@ -7,7 +7,7 @@ pub fn wave_shaper_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "graph".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Graph,
                     kind: InputParamKind::ConstantOnly,
                     name: "graph".to_string(),
@@ -20,7 +20,7 @@ pub fn wave_shaper_node() -> SoundNodeMetadata {
             ),
             (
                 "frequency".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "frequency".to_string(),
@@ -33,7 +33,7 @@ pub fn wave_shaper_node() -> SoundNodeMetadata {
             ),
             (
                 "note independant".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "note independant".to_string(),

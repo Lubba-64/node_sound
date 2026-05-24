@@ -29,7 +29,7 @@ pub fn mod_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "mod".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "mod".to_string(),
@@ -42,7 +42,7 @@ pub fn mod_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),

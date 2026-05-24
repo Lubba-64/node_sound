@@ -71,42 +71,27 @@ pub fn automated_delay_repeat_node() -> SoundNodeMetadata {
         name: "Automated Delay Repeat".to_string(),
         tooltip: r#"Automated version of the delay repeat node which acts like a delay plugin."#
             .to_string(),
-        inputs: BTreeMap::from([
-            (
-                "audio 1".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "audio 1".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-            (
-                "points".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "points".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-            (
-                "delay".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "delay".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-        ]),
-        outputs: BTreeMap::from([(
-            "out".to_string(),
-            Output {
+        inputs: vec![
+            Input {
                 data_type: DataType::AudioSource,
-                name: "out".to_string(),
+                kind: InputParamKind::ConnectionOnly,
+                name: "audio 1".to_string(),
+                value: InputValueConfig::AudioSource {},
             },
-        )]),
+            Input {
+                data_type: DataType::AudioSource,
+                kind: InputParamKind::ConnectionOnly,
+                name: "points".to_string(),
+                value: InputValueConfig::AudioSource {},
+            },
+            Input {
+                data_type: DataType::AudioSource,
+                kind: InputParamKind::ConnectionOnly,
+                name: "delay".to_string(),
+                value: InputValueConfig::AudioSource {},
+            },
+        ],
+        outputs: get_default_outputs(),
         op: Some(Arc::new(|mut props| {
             let cloned1 = props.clone_sound(props.get_source("audio 1")?)?;
             let cloned2 = props.clone_sound(props.get_source("delay")?)?;

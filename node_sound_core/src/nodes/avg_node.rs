@@ -36,30 +36,24 @@ pub fn avg_node() -> SoundNodeMetadata {
         tooltip: r#"Averages all values in a list of values determined by the length parameter.
         the values are cycled each time the table produces a sample."#
             .to_string(),
-        inputs: BTreeMap::from([
-            (
-                "audio 1".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "audio 1".to_string(),
-                    value: InputValueConfig::AudioSource {},
+        inputs: vec![
+            Input {
+                data_type: DataType::AudioSource,
+                kind: InputParamKind::ConnectionOnly,
+                name: "audio 1".to_string(),
+                value: InputValueConfig::AudioSource {},
+            },
+            Input {
+                data_type: DataType::Float,
+                kind: InputParamKind::ConnectionOnly,
+                name: "length".to_string(),
+                value: InputValueConfig::Float {
+                    value: 0.0,
+                    min: 0.0,
+                    max: 25.0,
                 },
-            ),
-            (
-                "length".to_string(),
-                InputParameter {
-                    data_type: DataType::Float,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "length".to_string(),
-                    value: InputValueConfig::Float {
-                        value: 0.0,
-                        min: 0.0,
-                        max: 25.0,
-                    },
-                },
-            ),
-        ]),
+            },
+        ],
         outputs: BTreeMap::from([(
             "out".to_string(),
             Output {

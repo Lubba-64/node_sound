@@ -49,7 +49,7 @@ pub fn grain_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),
@@ -58,7 +58,7 @@ pub fn grain_node() -> SoundNodeMetadata {
             ),
             (
                 "start".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "start".to_string(),
@@ -67,7 +67,7 @@ pub fn grain_node() -> SoundNodeMetadata {
             ),
             (
                 "len".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "len".to_string(),

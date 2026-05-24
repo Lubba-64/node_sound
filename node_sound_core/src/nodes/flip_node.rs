@@ -24,7 +24,7 @@ pub fn flip_node() -> SoundNodeMetadata {
         tooltip: r#"Flips the waveform vertically."#.to_string(),
         inputs: BTreeMap::from([(
             "audio 1".to_string(),
-            InputParameter {
+            Input {
                 data_type: DataType::AudioSource,
                 kind: InputParamKind::ConnectionOnly,
                 name: "audio 1".to_string(),

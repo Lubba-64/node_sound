@@ -36,42 +36,27 @@ pub fn automated_duration_node() -> SoundNodeMetadata {
         name: "Automated Take Duration".to_string(),
         tooltip: r#"Takes a snapshot of the waveform for the amount of time you input."#
             .to_string(),
-        inputs: BTreeMap::from([
-            (
-                "duration".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "duration".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-            (
-                "audio 1".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "audio 1".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-            (
-                "note independant".to_string(),
-                InputParameter {
-                    data_type: DataType::Float,
-                    kind: InputParamKind::ConnectionOrConstant,
-                    name: "note independant".to_string(),
-                    value: InputValueConfig::Bool { value: false },
-                },
-            ),
-        ]),
-        outputs: BTreeMap::from([(
-            "out".to_string(),
-            Output {
+        inputs: vec![
+            Input {
                 data_type: DataType::AudioSource,
-                name: "out".to_string(),
+                kind: InputParamKind::ConnectionOnly,
+                name: "duration".to_string(),
+                value: InputValueConfig::AudioSource {},
             },
-        )]),
+            Input {
+                data_type: DataType::AudioSource,
+                kind: InputParamKind::ConnectionOnly,
+                name: "audio 1".to_string(),
+                value: InputValueConfig::AudioSource {},
+            },
+            Input {
+                data_type: DataType::Float,
+                kind: InputParamKind::ConnectionOrConstant,
+                name: "note independant".to_string(),
+                value: InputValueConfig::Bool { value: false },
+            },
+        ],
+        outputs: get_default_outputs(),
         op: Some(Arc::new(|mut props| {
             let duration = AutomatedDuration::new(
                 props.clone_sound(props.get_source("duration")?)?,

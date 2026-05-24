@@ -37,7 +37,7 @@ pub fn duration_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "duration".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Duration,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "duration".to_string(),
@@ -46,7 +46,7 @@ pub fn duration_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),
@@ -55,7 +55,7 @@ pub fn duration_node() -> SoundNodeMetadata {
             ),
             (
                 "note independant".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "note independant".to_string(),

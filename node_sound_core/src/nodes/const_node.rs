@@ -24,7 +24,7 @@ pub fn const_node() -> SoundNodeMetadata {
         tooltip: r#"A waveform that just sits at a given value forever."#.to_string(),
         inputs: BTreeMap::from([(
             "amplitude".to_string(),
-            InputParameter {
+            Input {
                 data_type: DataType::Float,
                 kind: InputParamKind::ConnectionOrConstant,
                 name: "amplitude".to_string(),

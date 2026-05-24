@@ -47,7 +47,7 @@ wraps this value around to the other side if it exceeds -1.0 to 1.0."#
             .to_string(),
         inputs: BTreeMap::from([(
             "audio 1".to_string(),
-            InputParameter {
+            Input {
                 data_type: DataType::AudioSource,
                 kind: InputParamKind::ConnectionOnly,
                 name: "audio 1".to_string(),

@@ -41,42 +41,27 @@ pub fn automated_clamp_node() -> SoundNodeMetadata {
 Clamp will make sure no values go above the maximum or below the minimum.
 min and max are waveforms going from -1.0 to 1.0."#
             .to_string(),
-        inputs: BTreeMap::from([
-            (
-                "audio 1".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "audio 1".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-            (
-                "max".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "max".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-            (
-                "min".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "min".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-        ]),
-        outputs: BTreeMap::from([(
-            "out".to_string(),
-            Output {
+        inputs: vec![
+            Input {
                 data_type: DataType::AudioSource,
-                name: "out".to_string(),
+                kind: InputParamKind::ConnectionOnly,
+                name: "audio 1".to_string(),
+                value: InputValueConfig::AudioSource {},
             },
-        )]),
+            Input {
+                data_type: DataType::AudioSource,
+                kind: InputParamKind::ConnectionOnly,
+                name: "max".to_string(),
+                value: InputValueConfig::AudioSource {},
+            },
+            Input {
+                data_type: DataType::AudioSource,
+                kind: InputParamKind::ConnectionOnly,
+                name: "min".to_string(),
+                value: InputValueConfig::AudioSource {},
+            },
+        ],
+        outputs: get_default_outputs(),
         op: Some(Arc::new(|mut props| {
             let cloned1 = props.clone_sound(props.get_source("min")?)?;
             let cloned2 = props.clone_sound(props.get_source("max")?)?;

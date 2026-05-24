@@ -38,33 +38,21 @@ Automates the frequency with a given waveform.
 Use TranslateWave to set the frequency values of the automation,
 by setting the end min and end max to your desired frequency values."#
             .to_string(),
-        inputs: BTreeMap::from([
-            (
-                "freq".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "freq".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-            (
-                "note independant".to_string(),
-                InputParameter {
-                    data_type: DataType::Float,
-                    kind: InputParamKind::ConnectionOrConstant,
-                    name: "note independant".to_string(),
-                    value: InputValueConfig::Bool { value: false },
-                },
-            ),
-        ]),
-        outputs: BTreeMap::from([(
-            "out".to_string(),
-            Output {
+        inputs: vec![
+            Input {
                 data_type: DataType::AudioSource,
-                name: "out".to_string(),
+                kind: InputParamKind::ConnectionOnly,
+                name: "freq".to_string(),
+                value: InputValueConfig::AudioSource {},
             },
-        )]),
+            Input {
+                data_type: DataType::Float,
+                kind: InputParamKind::ConnectionOrConstant,
+                name: "note independant".to_string(),
+                value: InputValueConfig::Bool { value: false },
+            },
+        ],
+        outputs: get_default_outputs(),
         op: Some(Arc::new(|mut props| {
             let cloned = props.clone_sound(props.get_source("freq")?)?;
             Ok(BTreeMap::from([(

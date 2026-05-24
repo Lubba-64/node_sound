@@ -68,7 +68,7 @@ pub fn midi_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "file".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::MidiFile,
                     kind: InputParamKind::ConstantOnly,
                     name: "file".to_string(),
@@ -77,7 +77,7 @@ pub fn midi_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),
@@ -86,7 +86,7 @@ pub fn midi_node() -> SoundNodeMetadata {
             ),
             (
                 "note independant".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "note independant".to_string(),

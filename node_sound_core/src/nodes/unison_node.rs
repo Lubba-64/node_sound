@@ -89,7 +89,7 @@ totally phase separated at 100.0"#
         inputs: BTreeMap::from([
             (
                 "unison".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "unison".to_string(),
@@ -102,7 +102,7 @@ totally phase separated at 100.0"#
             ),
             (
                 "voices".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "voices".to_string(),
@@ -115,7 +115,7 @@ totally phase separated at 100.0"#
             ),
             (
                 "frequency".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "frequency".to_string(),
@@ -128,7 +128,7 @@ totally phase separated at 100.0"#
             ),
             (
                 "detune".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "detune".to_string(),
@@ -141,7 +141,7 @@ totally phase separated at 100.0"#
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),

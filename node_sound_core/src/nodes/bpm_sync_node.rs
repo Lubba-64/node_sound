@@ -56,7 +56,7 @@ pub fn bpm_sync_source_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "graph".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Graph,
                     kind: InputParamKind::ConstantOnly,
                     name: "graph".to_string(),
@@ -69,7 +69,7 @@ pub fn bpm_sync_source_node() -> SoundNodeMetadata {
             ),
             (
                 "note speed".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Dropdown,
                     kind: InputParamKind::ConstantOnly,
                     name: "note speed".to_string(),

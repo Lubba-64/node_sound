@@ -52,33 +52,21 @@ pub fn after_node() -> SoundNodeMetadata {
     SoundNodeMetadata {
         name: "After".to_string(),
         tooltip: r#"Plays audio 2 after audio 1 has finished playing."#.to_string(),
-        inputs: BTreeMap::from([
-            (
-                "audio 1".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "audio source 1".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-            (
-                "audio 2".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "audio source 2".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-        ]),
-        outputs: BTreeMap::from([(
-            "out".to_string(),
-            Output {
+        inputs: vec![
+            Input {
                 data_type: DataType::AudioSource,
-                name: "out".to_string(),
+                kind: InputParamKind::ConnectionOnly,
+                name: "audio 1".to_string(),
+                value: InputValueConfig::AudioSource {},
             },
-        )]),
+            Input {
+                data_type: DataType::AudioSource,
+                kind: InputParamKind::ConnectionOnly,
+                name: "audio 2".to_string(),
+                value: InputValueConfig::AudioSource {},
+            },
+        ],
+        outputs: get_default_outputs(),
         op: Some(Arc::new(|mut props| {
             let cloned1 = props.clone_sound(props.get_source("audio 1")?)?;
             let cloned2 = props.clone_sound(props.get_source("audio 2")?)?;

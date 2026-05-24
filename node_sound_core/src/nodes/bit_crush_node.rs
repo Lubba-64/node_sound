@@ -30,7 +30,7 @@ pub fn bit_crush_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "reduction".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "reduction".to_string(),
@@ -43,7 +43,7 @@ pub fn bit_crush_node() -> SoundNodeMetadata {
             ),
             (
                 "audio".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio".to_string(),

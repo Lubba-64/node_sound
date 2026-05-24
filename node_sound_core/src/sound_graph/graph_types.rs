@@ -157,7 +157,6 @@ impl Debug for ValueType {
 }
 
 impl ValueType {
-    /// Tries to downcast this value type to a vector
     pub fn try_to_source(self) -> Result<usize> {
         match self {
             ValueType::AudioSource { value } => Ok(value),
@@ -165,7 +164,6 @@ impl ValueType {
         }
     }
 
-    /// Tries to downcast this value type to a scalar
     pub fn try_to_float(self) -> Result<f32> {
         match self {
             ValueType::Float {
@@ -232,12 +230,13 @@ impl ValueType {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct InputParameter {
+pub struct Input {
     pub name: String,
     pub data_type: DataType,
     pub kind: InputParamKind,
     pub value: InputValueConfig,
 }
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Output {
     pub name: String,

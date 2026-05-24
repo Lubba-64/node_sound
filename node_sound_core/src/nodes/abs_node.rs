@@ -24,22 +24,13 @@ pub fn abs_node() -> SoundNodeMetadata {
         tooltip: r#"Applies absolute value to the waveform,
 bringing everything on the bottom of the waveform to the top."#
             .to_string(),
-        inputs: BTreeMap::from([(
-            "audio 1".to_string(),
-            InputParameter {
-                data_type: DataType::AudioSource,
-                kind: InputParamKind::ConnectionOnly,
-                name: "audio 1".to_string(),
-                value: InputValueConfig::AudioSource {},
-            },
-        )]),
-        outputs: BTreeMap::from([(
-            "out".to_string(),
-            Output {
-                data_type: DataType::AudioSource,
-                name: "out".to_string(),
-            },
-        )]),
+        inputs: vec![Input {
+            data_type: DataType::AudioSource,
+            kind: InputParamKind::ConnectionOnly,
+            name: "audio 1".to_string(),
+            value: InputValueConfig::AudioSource {},
+        }],
+        outputs: get_default_outputs(),
         op: Some(Arc::new(|mut props| {
             let cloned = props.clone_sound(props.get_source("audio 1")?)?;
             Ok(BTreeMap::from([(

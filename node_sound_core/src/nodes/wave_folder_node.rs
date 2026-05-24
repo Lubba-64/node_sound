@@ -54,7 +54,7 @@ pub fn wave_folder_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "gain".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "gain".to_string(),
@@ -67,7 +67,7 @@ pub fn wave_folder_node() -> SoundNodeMetadata {
             ),
             (
                 "offset".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "offset".to_string(),
@@ -80,7 +80,7 @@ pub fn wave_folder_node() -> SoundNodeMetadata {
             ),
             (
                 "folds".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "folds".to_string(),
@@ -93,7 +93,7 @@ pub fn wave_folder_node() -> SoundNodeMetadata {
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),

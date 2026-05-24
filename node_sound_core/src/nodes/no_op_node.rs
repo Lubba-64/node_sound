@@ -8,7 +8,7 @@ to this node to avoid reconnecting a bunch of stuff when you change a node in yo
             .to_string(),
         inputs: BTreeMap::from([(
             "audio 1".to_string(),
-            InputParameter {
+            Input {
                 data_type: DataType::AudioSource,
                 kind: InputParamKind::ConnectionOnly,
                 name: "audio 1".to_string(),

@@ -1,6 +1,8 @@
 pub use crate::constants::*;
 pub use crate::node::SoundNode;
 pub use crate::nodes::SoundNodeMetadata;
+pub use crate::nodes::automation::*;
+pub use crate::nodes::get_default_outputs;
 pub use crate::sound_graph::graph_types::*;
 pub use crate::sound_graph::note::*;
 pub use anyhow::anyhow;

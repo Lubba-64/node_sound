@@ -55,7 +55,7 @@ pub fn reverse_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),
@@ -64,7 +64,7 @@ pub fn reverse_node() -> SoundNodeMetadata {
             ),
             (
                 "duration".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Duration,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "duration".to_string(),

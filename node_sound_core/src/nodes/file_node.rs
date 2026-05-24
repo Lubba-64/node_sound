@@ -29,10 +29,12 @@ impl CloneableDecoder {
                 Box::new(|| {
                     let data = data.clone();
                     let data: Vec<_> = UniformSourceIterator::new(
-                        Decoder::new(Cursor::new(data))
-                            .expect("expect valid wav data")
-                            .convert_samples::<f32>()
-                            .speed(1.0),
+                        match Decoder::new(Cursor::new(data)) {
+                            Ok(samples) => samples,
+                            Err(_) => return (vec![], vec![]),
+                        }
+                        .convert_samples::<f32>()
+                        .speed(1.0),
                         1,
                         sample_rate,
                     )
@@ -55,33 +57,21 @@ pub fn file_node() -> SoundNodeMetadata {
         name: "Audio File".to_string(),
         tooltip: r#"Imports a wav, flac, or mp3 file as a waveform. Mono audio preferred."#
             .to_string(),
-        inputs: BTreeMap::from([
-            (
-                "file".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioFile,
-                    kind: InputParamKind::ConstantOnly,
-                    name: "file".to_string(),
-                    value: InputValueConfig::AudioFile {},
-                },
-            ),
-            (
-                "note independant".to_string(),
-                InputParameter {
-                    data_type: DataType::Float,
-                    kind: InputParamKind::ConnectionOrConstant,
-                    name: "note independant".to_string(),
-                    value: InputValueConfig::Bool { value: false },
-                },
-            ),
-        ]),
-        outputs: BTreeMap::from([(
-            "out".to_string(),
-            Output {
-                data_type: DataType::AudioSource,
-                name: "out".to_string(),
+        inputs: vec![
+            Input {
+                data_type: DataType::AudioFile,
+                kind: InputParamKind::ConstantOnly,
+                name: "file".to_string(),
+                value: InputValueConfig::AudioFile {},
             },
-        )]),
+            Input {
+                data_type: DataType::Float,
+                kind: InputParamKind::ConnectionOrConstant,
+                name: "note independant".to_string(),
+                value: InputValueConfig::Bool { value: false },
+            },
+        ],
+        outputs: get_default_outputs(),
         op: Some(Arc::new(|mut props| {
             props.update_wavetables_node_idx();
             let file = match props.get_file("file")? {

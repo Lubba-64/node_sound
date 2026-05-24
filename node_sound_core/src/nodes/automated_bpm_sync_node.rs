@@ -7,28 +7,9 @@ pub struct AutomatedBPMSync<S: SoundNode> {
     speed: f32,
     note_speed_type: NoteSpeedType,
     note_speed: S,
+    note_speed_min: f32,
+    note_speed_max: f32,
     bpm: Arc<Mutex<f32>>,
-}
-
-impl<S: SoundNode> AutomatedBPMSync<S> {
-    #[inline]
-    pub fn new(
-        sample_rate: f32,
-        bpm: Arc<Mutex<f32>>,
-        note_speed: S,
-        note_speed_type: NoteSpeedType,
-        table: Vec<f32>,
-        speed: f32,
-    ) -> Self {
-        Self {
-            sample_rate,
-            bpm,
-            note_speed,
-            note_speed_type,
-            table,
-            speed,
-        }
-    }
 }
 
 impl<S: SoundNode + Clone> SoundNode for AutomatedBPMSync<S> {
@@ -37,7 +18,12 @@ impl<S: SoundNode + Clone> SoundNode for AutomatedBPMSync<S> {
             .note_speed_type
             .get_beats_type()
             .iter()
-            .nth(self.note_speed.next(index, channel).unwrap_or_default() as usize)
+            .nth(
+                self.note_speed
+                    .next(index, channel)
+                    .map(|sample| scale_param(sample, self.note_speed_min, self.note_speed_max))
+                    .unwrap_or_default() as usize,
+            )
             .cloned()
             .unwrap_or_default()
             .get_beats()
@@ -65,65 +51,68 @@ pub fn automated_bpm_sync_node() -> SoundNodeMetadata {
         tooltip: r#"Syncs a wavetable to each note.
 The automation values for Any is 0-21, 0-7 for the rest which corresponds to the automation input value."#
             .to_string(),
-        inputs: BTreeMap::from([
-            (
-                "graph".to_string(),
-                InputParameter {
-                    data_type: DataType::Graph,
-                    kind: InputParamKind::ConstantOnly,
-                    name: "graph".to_string(),
-                    value: InputValueConfig::Graph {
-                        value: vec![0.01; WAVE_TABLE_SIZE],
-                        height: 100.0,
-                        width: 300.0,
-                    },
+        inputs: vec![
+            Input {
+                data_type: DataType::Float,
+                kind: InputParamKind::ConnectionOrConstant,
+                name: "min note speed".to_string(),
+                value: InputValueConfig::Float {
+                    value: 0.0,
+                    min: 0.0,
+                    max: 21.0,
                 },
-            ),
-            (
-                "note speed".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "note speed".to_string(),
-                    value: InputValueConfig::AudioSource {},
+            }, Input {
+                data_type: DataType::Float,
+                kind: InputParamKind::ConnectionOrConstant,
+                name: "max note speed".to_string(),
+                value: InputValueConfig::Float {
+                    value: 0.0,
+                    min: 0.0,
+                    max: 21.0,
                 },
-            ),
-            (
-                "note speed type".to_string(),
-                InputParameter {
-                    data_type: DataType::Dropdown,
-                    kind: InputParamKind::ConstantOnly,
-                    name: "note speeds".to_string(),
-                    value: InputValueConfig::Dropdown {
-                        value: NoteSpeedType::Normal.to_string(),
-                        values: NoteSpeedType::ALL.map(|speed_type| speed_type.to_string()).to_vec(),
-                    },
+            },Input {
+                data_type: DataType::Graph,
+                kind: InputParamKind::ConstantOnly,
+                name: "graph".to_string(),
+                value: InputValueConfig::Graph {
+                    value: vec![0.01; WAVE_TABLE_SIZE],
+                    height: 100.0,
+                    width: 300.0,
                 },
-            ),
-        ]),
-        outputs: BTreeMap::from([(
-            "out".to_string(),
-            Output {
+            }, Input {
                 data_type: DataType::AudioSource,
-                name: "out".to_string(),
+                kind: InputParamKind::ConnectionOnly,
+                name: "note speed".to_string(),
+                value: InputValueConfig::AudioSource {},
+            }, Input {
+                data_type: DataType::Dropdown,
+                kind: InputParamKind::ConstantOnly,
+                name: "note speeds".to_string(),
+                value: InputValueConfig::Dropdown {
+                    value: NoteSpeedType::Normal.to_string(),
+                    values: NoteSpeedType::ALL.map(|speed_type| speed_type.to_string()).to_vec(),
+                },
             },
-        )]),
+        ],
+        outputs: get_default_outputs(),
         op: Some(Arc::new(|mut props| {
             let speed = NoteSpeedType::from_str(&props.get_dropdown("note speed type")?)?;
-            let cloned = props.clone_sound(props.get_source("note speed")?)?;
+            let note_speed = props.clone_sound(props.get_source("note speed")?)?;
             Ok(BTreeMap::from([(
                 "out".to_string(),
                 ValueType::AudioSource {
-                    value: props.push_sound(Box::new(AutomatedBPMSync::new(
-                        props.sample_rate(),
-                        props.bpm(),
-                        cloned,
-                        speed,
-                        props
+                    value: props.push_sound(Box::new(AutomatedBPMSync{
+                        bpm: props.bpm(),
+                        note_speed,
+                        note_speed_max: props.get_float("max note speed")?,
+                        note_speed_min: props.get_float("min note speed")?,
+                        note_speed_type: speed,
+                        sample_rate: props.sample_rate(),
+                        speed: props.note_speed(),
+                        table: props
                             .get_graph("graph")?
                             .unwrap_or(vec![0.0; WAVE_TABLE_SIZE]),
-                        props.note_speed(),
-                    ))),
+                    })),
                 },
             )]))
         })),

@@ -13,10 +13,10 @@ pub mod automated_sine_node;
 pub mod automated_skip_node;
 pub mod automated_speed_node;
 pub mod automated_square_node;
-pub mod automated_translate_node;
 pub mod automated_triangle_node;
 pub mod automated_wave_shaper_node;
 pub mod automated_wave_table_node;
+pub mod automation;
 pub mod avg_node;
 pub mod bit_crush_node;
 pub mod bpm_sync_node;
@@ -60,7 +60,6 @@ pub mod split_channels_node;
 pub mod square_node;
 pub mod switch_node;
 pub mod tracker_node;
-pub mod translate_node;
 pub mod triangle_node;
 pub mod unison_node;
 pub mod vertical_wave_shaper_node;
@@ -72,12 +71,13 @@ pub mod weird_node;
 pub mod wrapper_node;
 
 use crate::error::Result;
+use crate::node_prelude::DataType;
 use crate::nodes::tracker_node::TrackerNote;
 use crate::{
     node::{GenericSoundNode, SoundNode},
     sound_graph::{
         graph::SoundNodeGraphState,
-        graph_types::{InputParameter, Output, ValueType},
+        graph_types::{Input, Output, ValueType},
     },
 };
 use anyhow::anyhow;
@@ -137,6 +137,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_float()?)
     }
+
     fn get_bool(&self, name: &str) -> Result<bool> {
         Ok(self
             .inputs
@@ -145,6 +146,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_bool()?)
     }
+
     fn get_source(&self, name: &str) -> Result<usize> {
         Ok(self
             .inputs
@@ -153,6 +155,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_source()?)
     }
+
     fn get_duration(&self, name: &str) -> Result<Duration> {
         Ok(self
             .inputs
@@ -161,6 +164,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_duration()?)
     }
+
     fn get_file(&self, name: &str) -> Result<Option<(String, Vec<u8>)>> {
         Ok(self
             .inputs
@@ -169,6 +173,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_file()?)
     }
+
     fn get_midi(&self, name: &str) -> Result<Option<(String, MidiSong)>> {
         Ok(self
             .inputs
@@ -177,6 +182,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_midi()?)
     }
+
     fn get_graph(&self, name: &str) -> Result<Option<Vec<f32>>> {
         Ok(self
             .inputs
@@ -185,6 +191,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_graph()?)
     }
+
     fn get_dropdown(&self, name: &str) -> Result<String> {
         Ok(self
             .inputs
@@ -193,6 +200,7 @@ impl<'a> SoundNodeProps<'a> {
             .clone()
             .try_to_dropdown()?)
     }
+
     fn get_tracker(&self, name: &str) -> Result<Vec<TrackerNote>> {
         Ok(self
             .inputs
@@ -203,12 +211,19 @@ impl<'a> SoundNodeProps<'a> {
     }
 }
 
+pub fn get_default_outputs() -> Vec<Output> {
+    vec![Output {
+        data_type: DataType::AudioSource,
+        name: "out".to_string(),
+    }]
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SoundNodeMetadata {
     pub name: String,
     pub tooltip: String,
-    pub inputs: BTreeMap<String, InputParameter>,
-    pub outputs: BTreeMap<String, Output>,
+    pub inputs: Vec<Input>,
+    pub outputs: Vec<Output>,
     #[serde(skip)]
     pub op: Option<Arc<dyn Fn(SoundNodeProps) -> Result<BTreeMap<String, ValueType>>>>,
 }
@@ -250,7 +265,6 @@ impl Default for NodeDefinitions {
             wrapper_node::wrapper_node(),
             wave_table_node::wave_table_node(),
             wave_shaper_node::wave_shaper_node(),
-            translate_node::translate_node(),
             automated_triangle_node::automated_triangle_node(),
             automated_sawtooth_node::automated_sawtooth_node(),
             automated_sine_node::automated_sine_node(),
@@ -275,7 +289,6 @@ impl Default for NodeDefinitions {
             automated_clamp_node::automated_clamp_node(),
             automated_mod_node::automated_mod_node(),
             automated_mod_raw_node::automated_mod_raw_node(),
-            automated_translate_node::automated_translate_node(),
             duration_node::duration_node(),
             bit_crush_node::bit_crush_node(),
             automated_wave_shaper_node::automated_wave_shaper_node(),

@@ -127,9 +127,9 @@ impl NodeTemplateTrait for NodeDefinitionUi {
         for input in self.0.inputs.iter() {
             graph.add_input_param(
                 node_id,
-                input.0.clone(),
-                input.1.data_type,
-                match &input.1.value {
+                input.name.clone(),
+                input.data_type,
+                match &input.value {
                     InputValueConfig::TrackerNotes { notes } => ValueType::TrackerNotes {
                         notes: notes.clone(),
                     },
@@ -166,7 +166,7 @@ impl NodeTemplateTrait for NodeDefinitionUi {
                         values: values.clone(),
                     },
                 },
-                input.1.kind,
+                input.kind,
                 true,
             );
         }
@@ -569,10 +569,10 @@ pub fn evaluate_node<'a>(
         )?;
 
     let input_to_name_res: HashMap<std::string::String, Result<ValueType>> =
-        HashMap::from_iter(node.inputs.iter().map(|(name, _input)| {
+        HashMap::from_iter(node.inputs.iter().map(|input| {
             (
-                name.to_string(),
-                evaluate_input(graph, node_id, name, outputs_cache, all_nodes, state),
+                input.name.to_string(),
+                evaluate_input(graph, node_id, &input.name, outputs_cache, all_nodes, state),
             )
         }));
     let mut input_to_name: HashMap<String, ValueType> = HashMap::new();

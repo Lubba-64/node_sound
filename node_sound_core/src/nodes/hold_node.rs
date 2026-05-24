@@ -46,7 +46,7 @@ pub fn hold_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),
@@ -55,7 +55,7 @@ pub fn hold_node() -> SoundNodeMetadata {
             ),
             (
                 "hold".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "hold".to_string(),
@@ -68,7 +68,7 @@ pub fn hold_node() -> SoundNodeMetadata {
             ),
             (
                 "note independant".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "note independant".to_string(),

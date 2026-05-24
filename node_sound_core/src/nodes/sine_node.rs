@@ -33,7 +33,7 @@ pub fn sine_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "frequency".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "frequency".to_string(),
@@ -46,7 +46,7 @@ pub fn sine_node() -> SoundNodeMetadata {
             ),
             (
                 "note independant".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "note independant".to_string(),

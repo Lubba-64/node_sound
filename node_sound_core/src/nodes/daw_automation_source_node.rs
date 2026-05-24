@@ -24,7 +24,7 @@ pub fn daw_automation_source_node() -> SoundNodeMetadata {
         tooltip: r#"Daw automation parameters 1-18 can be accessed through this node."#.to_string(),
         inputs: BTreeMap::from([(
             "channel".to_string(),
-            InputParameter {
+            Input {
                 data_type: DataType::Float,
                 kind: InputParamKind::ConnectionOnly,
                 name: "channel".to_string(),

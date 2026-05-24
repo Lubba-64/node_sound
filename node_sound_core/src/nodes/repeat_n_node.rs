@@ -7,7 +7,7 @@ pub fn repeat_n_node() -> SoundNodeMetadata {
         inputs: BTreeMap::from([
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio source 1".to_string(),
@@ -16,7 +16,7 @@ pub fn repeat_n_node() -> SoundNodeMetadata {
             ),
             (
                 "n".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "n".to_string(),

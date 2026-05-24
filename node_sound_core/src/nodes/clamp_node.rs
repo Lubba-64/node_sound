@@ -39,7 +39,7 @@ making sure no values go above or below the given min or max."#
         inputs: BTreeMap::from([
             (
                 "min".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "min".to_string(),
@@ -52,7 +52,7 @@ making sure no values go above or below the given min or max."#
             ),
             (
                 "max".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "max".to_string(),
@@ -65,7 +65,7 @@ making sure no values go above or below the given min or max."#
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),

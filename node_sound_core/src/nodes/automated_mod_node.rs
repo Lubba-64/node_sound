@@ -32,33 +32,21 @@ pub fn automated_mod_node() -> SoundNodeMetadata {
 The mod amount is controlled by a waveform going from -1.0 to 1.0.
 Mod stairsteps the wave by the desired amount."#
             .to_string(),
-        inputs: BTreeMap::from([
-            (
-                "mod".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "mod".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-            (
-                "audio 1".to_string(),
-                InputParameter {
-                    data_type: DataType::AudioSource,
-                    kind: InputParamKind::ConnectionOnly,
-                    name: "audio 1".to_string(),
-                    value: InputValueConfig::AudioSource {},
-                },
-            ),
-        ]),
-        outputs: BTreeMap::from([(
-            "out".to_string(),
-            Output {
+        inputs: vec![
+            Input {
                 data_type: DataType::AudioSource,
-                name: "out".to_string(),
+                kind: InputParamKind::ConnectionOnly,
+                name: "mod".to_string(),
+                value: InputValueConfig::AudioSource {},
             },
-        )]),
+            Input {
+                data_type: DataType::AudioSource,
+                kind: InputParamKind::ConnectionOnly,
+                name: "audio 1".to_string(),
+                value: InputValueConfig::AudioSource {},
+            },
+        ],
+        outputs: get_default_outputs(),
         op: Some(Arc::new(|mut props| {
             let cloned1 = props.clone_sound(props.get_source("audio 1")?)?;
             let cloned2 = props.clone_sound(props.get_source("mod")?)?;
