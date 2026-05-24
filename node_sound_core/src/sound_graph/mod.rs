@@ -1,5 +1,5 @@
 pub mod copy_paste_del_helpers;
-mod float_selector;
+pub mod float_selector;
 pub mod graph;
 pub mod graph_types;
 pub mod note;

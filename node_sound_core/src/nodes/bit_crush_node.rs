@@ -1,20 +1,36 @@
-use super::{SoundNodeProps, SoundNodeResult};
-use crate::nodes::SoundNode;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
-};
-use crate::sounds::bit_crush::BitCrusher;
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
+use crate::node_prelude::*;
 
-pub fn bit_crush_node() -> SoundNode {
-    SoundNode {
+#[derive(Clone, Debug)]
+pub struct BitCrusher<I: SoundNode> {
+    source: I,
+    step_size: f32,
+}
+
+impl<I: SoundNode> BitCrusher<I> {
+    #[inline]
+    pub fn new(source: I, bits: u32) -> Self {
+        let bits = bits.clamp(1, 16);
+        let step_size = 1.0 / bits as f32;
+        Self { source, step_size }
+    }
+}
+
+impl<I: SoundNode + Clone> SoundNode for BitCrusher<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.source
+            .next(index, channel)
+            .map(|sample| ((sample / self.step_size).rem_euclid(self.step_size)).clamp(-1.0, 1.0))
+    }
+}
+
+pub fn bit_crush_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Bit Crusher".to_string(),
         tooltip: r#"Bit chrushes the given waveform."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "reduction".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "reduction".to_string(),
@@ -27,7 +43,7 @@ pub fn bit_crush_node() -> SoundNode {
             ),
             (
                 "audio".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio".to_string(),
@@ -42,18 +58,17 @@ pub fn bit_crush_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(BitCrusher::new(
+                        cloned,
+                        props.get_float("reduction")? as u32,
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn bit_crush_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(BitCrusher::new(
-                cloned,
-                props.get_float("reduction")? as u32,
-            ))),
-        },
-    )]))
 }

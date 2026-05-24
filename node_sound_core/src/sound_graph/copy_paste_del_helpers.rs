@@ -28,32 +28,30 @@ pub fn delete_nodes(state: &mut SoundGraphEditorState, all: bool) {
     for node_id in nodes.iter() {
         state.graph.remove_node(*node_id);
         match state.node_order.iter().position(|a| a == node_id) {
-            Some(x) => {
-                state.node_order.remove(x);
+            Some(node_order) => {
+                state.node_order.remove(node_order);
             }
             None => {}
         }
     }
 }
 
-pub fn copy(state: &mut SoundGraphEditorState, all: bool) -> ClipboardData {
+pub fn copy(state: &mut SoundGraphEditorState, all: bool) -> Option<ClipboardData> {
     let mut clipboard_data = ClipboardData {
         connections: vec![],
         nodes: vec![],
         input_params: HashMap::new(),
         output_params: HashMap::new(),
     };
-    let nodes;
-    if all {
-        nodes = state.graph.nodes.keys().into_iter().collect::<Vec<_>>();
+    let nodes = if all {
+        state.graph.nodes.keys().into_iter().collect::<Vec<_>>()
     } else {
-        nodes = state.selected_nodes.clone();
-    }
-
+        state.selected_nodes.clone()
+    };
     for node_id in nodes {
         let node_data = state.graph.nodes.get(node_id);
         let node = match node_data {
-            Some(x) => x.clone(),
+            Some(node) => node.clone(),
             None => {
                 continue;
             }
@@ -64,51 +62,33 @@ pub fn copy(state: &mut SoundGraphEditorState, all: bool) -> ClipboardData {
         for input_id in node.inputs.iter().map(|(_, id)| id) {
             let output_id = state.graph.connections.get(*input_id);
             match output_id {
-                Some(x) => {
-                    clipboard_data.connections.push((*input_id, *x));
+                Some(output_id) => {
+                    clipboard_data.connections.push((*input_id, *output_id));
                 }
                 None => {}
             }
         }
         for input_id in node.inputs.iter().map(|(_, id)| id) {
-            clipboard_data.input_params.insert(
-                *input_id,
-                state
-                    .graph
-                    .inputs
-                    .get(*input_id)
-                    .expect("clipboard data failure")
-                    .clone(),
-            );
+            clipboard_data
+                .input_params
+                .insert(*input_id, state.graph.inputs.get(*input_id)?.clone());
         }
         for output_id in node.outputs.iter().map(|(_, id)| id) {
-            clipboard_data.output_params.insert(
-                *output_id,
-                state
-                    .graph
-                    .outputs
-                    .get(*output_id)
-                    .expect("clipboard data failure")
-                    .clone(),
-            );
+            clipboard_data
+                .output_params
+                .insert(*output_id, state.graph.outputs.get(*output_id)?.clone());
         }
     }
-
     clipboard_data.connections = clipboard_data
         .connections
         .iter()
         .unique()
         .cloned()
         .collect();
-
-    return clipboard_data;
+    Some(clipboard_data)
 }
 
-pub async fn paste(
-    state: &mut SoundGraphEditorState,
-    cursor_pos: Option<Vec2>,
-    data: ClipboardData,
-) {
+pub fn paste(state: &mut SoundGraphEditorState, cursor_pos: Option<Vec2>, data: ClipboardData) {
     let mut ids = vec![];
     for (node, node_pos) in data.nodes.clone() {
         let mut _id = Default::default();
@@ -170,5 +150,5 @@ pub async fn paste(
         }
     }
 
-    let _ = ids.iter().map(|x| state.selected_nodes.push(*x));
+    let _ = ids.iter().map(|id| state.selected_nodes.push(*id));
 }

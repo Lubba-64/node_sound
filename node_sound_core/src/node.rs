@@ -1,0 +1,109 @@
+use crate::error::Result;
+use crate::nodes::const_node::ConstWave;
+use anyhow::anyhow;
+use dyn_clone::DynClone;
+use std::{
+    fmt::Debug,
+    sync::{Arc, Mutex},
+};
+
+pub trait SoundNode: DynClone + Debug {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32>;
+}
+
+#[derive(Debug)]
+pub struct GenericSoundNode {
+    sound: Box<dyn SoundNode>,
+}
+
+impl Clone for GenericSoundNode {
+    fn clone(&self) -> Self {
+        Self {
+            sound: dyn_clone::clone_box(&*self.sound),
+        }
+    }
+}
+unsafe impl Send for GenericSoundNode {}
+unsafe impl Sync for GenericSoundNode {}
+
+impl GenericSoundNode {
+    pub fn new(sound: Box<dyn SoundNode>) -> Self {
+        Self { sound: sound }
+    }
+}
+
+impl SoundNode for GenericSoundNode {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.sound.next(index, channel)
+    }
+}
+
+pub struct SoundQueue {
+    queue: Vec<GenericSoundNode>,
+    sample_rate: f32,
+    speed: f32,
+    bpm: Arc<Mutex<f32>>,
+}
+
+impl Default for SoundQueue {
+    fn default() -> Self {
+        SoundQueue::new(48000.0)
+    }
+}
+
+impl SoundQueue {
+    pub fn new(sample_rate: f32) -> Self {
+        let mut queue = SoundQueue {
+            queue: vec![],
+            speed: 1.0,
+            sample_rate: sample_rate,
+            bpm: Arc::new(Mutex::new(120.0)),
+        };
+        queue.push_sound(Box::new(ConstWave::new(0.0)));
+        return queue;
+    }
+
+    pub fn clone_sound(&mut self, idx: usize) -> Result<GenericSoundNode> {
+        if idx >= self.queue.len() {
+            return Err(anyhow!("Sound queue accessed an out of bounds element").into());
+        }
+        return Ok(self.queue[idx].clone());
+    }
+
+    pub fn push_sound(&mut self, sound: Box<dyn SoundNode>) -> usize {
+        self.queue.push(GenericSoundNode::new(sound));
+        return self.queue.len() - 1;
+    }
+
+    pub fn sound_queue_len(&self) -> usize {
+        self.queue.len()
+    }
+
+    pub fn clear(&mut self) {
+        self.queue.clear();
+        self.push_sound(Box::new(ConstWave::new(0.0)));
+    }
+
+    pub fn set_sample_rate(&mut self, sample_rate: f32) {
+        self.sample_rate = sample_rate;
+    }
+
+    pub fn get_sample_rate(&self) -> f32 {
+        self.sample_rate
+    }
+
+    pub fn set_note_speed(&mut self, speed: f32) {
+        self.speed = speed;
+    }
+
+    pub fn get_note_speed(&self) -> f32 {
+        self.speed
+    }
+
+    pub fn get_bpm(&self) -> Arc<Mutex<f32>> {
+        self.bpm.clone()
+    }
+    pub fn set_bpm(&mut self, bpm: Arc<Mutex<f32>>) {
+        self.bpm = bpm
+    }
+}

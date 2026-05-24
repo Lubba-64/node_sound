@@ -1,21 +1,35 @@
-use crate::nodes::SoundNode;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
-};
-use crate::sounds::mod_source::Mod;
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
+use crate::node_prelude::*;
 
-use super::{SoundNodeProps, SoundNodeResult};
+#[derive(Clone, Debug)]
+pub struct Mod<I: SoundNode> {
+    source: I,
+    mod_by: f32,
+}
 
-pub fn mod_node() -> SoundNode {
-    SoundNode {
+impl<I: SoundNode> Mod<I> {
+    #[inline]
+    pub fn new(source: I, mod_by: f32) -> Self {
+        Self { source, mod_by }
+    }
+}
+
+impl<I: SoundNode + Clone> SoundNode for Mod<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        match self.source.next(index, channel) {
+            Some(sample) => Some(sample % self.mod_by),
+            None => None,
+        }
+    }
+}
+
+pub fn mod_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Mod".to_string(),
         tooltip: r#"Stairsteps a given wave by a given value."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "mod".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "mod".to_string(),
@@ -28,7 +42,7 @@ pub fn mod_node() -> SoundNode {
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),
@@ -43,14 +57,14 @@ pub fn mod_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(Mod::new(cloned, props.get_float("mod")?))),
+                },
+            )]))
+        })),
     }
-}
-pub fn mod_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(Mod::new(cloned, props.get_float("mod")?))),
-        },
-    )]))
 }

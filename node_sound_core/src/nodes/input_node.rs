@@ -1,11 +1,28 @@
-use crate::nodes::SoundNode;
-use crate::sound_graph::graph_types::{DataType, Output, ValueType};
-use crate::sounds::input::InputChannel;
-use std::collections::BTreeMap;
+use crate::node_prelude::*;
 
-use super::{SoundNodeProps, SoundNodeResult};
-pub fn input_node() -> SoundNode {
-    SoundNode {
+#[derive(Clone, Debug)]
+pub struct InputChannel {
+    channel: Arc<Mutex<(f32, f32)>>,
+}
+
+impl InputChannel {
+    #[inline]
+    pub fn new(channel: Arc<Mutex<(f32, f32)>>) -> Self {
+        Self { channel }
+    }
+}
+
+impl SoundNode for InputChannel {
+    fn next(&mut self, _index: f32, channel: u8) -> Option<f32> {
+        match self.channel.lock() {
+            Err(_) => None,
+            Ok(sample) => Some(if channel == 0 { sample.0 } else { sample.1 }),
+        }
+    }
+}
+
+pub fn input_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Daw Input".to_string(),
         tooltip: r#"Input sound from DAW."#.to_string(),
         inputs: BTreeMap::from([]),
@@ -16,16 +33,15 @@ pub fn input_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(InputChannel::new(
+                        props.state.runtime_state.input.0.clone(),
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn input_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(InputChannel::new(
-                props.state._unserializeable_state.input.0.clone(),
-            ))),
-        },
-    )]))
 }

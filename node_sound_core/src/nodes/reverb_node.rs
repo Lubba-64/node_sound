@@ -1,17 +1,10 @@
-use super::{SoundNodeProps, SoundNodeResult};
-use crate::constants::MAX_FREQ;
-use crate::nodes::SoundNode;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
+use crate::{
+    node_prelude::*,
+    nodes::{amplify_node::Amplify, delay_node::Delay, mix_node::Mix},
 };
-use crate::sounds::amplify::Amplify;
-use crate::sounds::delay::Delay;
-use crate::sounds::mix::Mix;
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
 
-pub fn reverb_node() -> SoundNode {
-    SoundNode {
+pub fn reverb_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Reverb".to_string(),
         tooltip: r#"More like a delay, this is just a mix node, delay node, and amplify node under the hood."#
             .to_string(),
@@ -64,25 +57,24 @@ pub fn reverb_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props|{
+            let cloned = Delay::new(
+                props.get_duration("duration")?.as_secs_f32(),
+                Amplify::new(
+                    props.clone_sound(props.get_source("audio 1")?)?,
+                    props.get_float("amplification")?,
+                ),
+                props.get_bool("note independant")?,
+                props.sample_rate(),
+                props.note_speed(),
+            );
+            let mixed = Mix::new(props.clone_sound(props.get_source("audio 1")?)?, cloned);
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(mixed)),
+                },
+            )]))
+        }))
     }
-}
-
-pub fn reverb_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = Delay::new(
-        props.get_duration("duration")?.as_secs_f32(),
-        Amplify::new(
-            props.clone_sound(props.get_source("audio 1")?)?,
-            props.get_float("amplification")?,
-        ),
-        props.get_bool("note independant")?,
-        props.sample_rate(),
-        props.note_speed(),
-    );
-    let mixed = Mix::new(props.clone_sound(props.get_source("audio 1")?)?, cloned);
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(mixed)),
-        },
-    )]))
 }

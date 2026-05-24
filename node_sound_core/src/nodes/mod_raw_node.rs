@@ -1,15 +1,29 @@
-use crate::nodes::SoundNode;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
-};
-use crate::sounds::mod_raw::RawMod;
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
+use crate::node_prelude::*;
 
-use super::{SoundNodeProps, SoundNodeResult};
+#[derive(Clone, Debug)]
+pub struct RawMod<I: SoundNode> {
+    source: I,
+    mod_by: f32,
+}
 
-pub fn mod_raw_node() -> SoundNode {
-    SoundNode {
+impl<I: SoundNode> RawMod<I> {
+    #[inline]
+    pub fn new(source: I, mod_by: f32) -> Self {
+        Self { source, mod_by }
+    }
+}
+
+impl<I: SoundNode + Clone> SoundNode for RawMod<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        match self.source.next(index, channel) {
+            Some(sample) => Some(sample % self.mod_by),
+            None => None,
+        }
+    }
+}
+
+pub fn mod_raw_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Mod Raw".to_string(),
         tooltip: r#"Takes the remainder of the wave and this value."#.to_string(),
         inputs: BTreeMap::from([
@@ -43,14 +57,14 @@ pub fn mod_raw_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(RawMod::new(cloned, props.get_float("mod")?))),
+                },
+            )]))
+        })),
     }
-}
-pub fn mod_raw_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(RawMod::new(cloned, props.get_float("mod")?))),
-        },
-    )]))
 }

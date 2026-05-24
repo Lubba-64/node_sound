@@ -1,8 +1,7 @@
-use crate::sound_map::DawSource;
-use std::u32;
+use crate::node_prelude::*;
 
 #[derive(Clone, Debug)]
-pub struct RepeatRefSource<I: DawSource> {
+pub struct RepeatRefSource<I: SoundNode> {
     original_source: I,
     current_source: I,
     repeat_count: Option<u32>,
@@ -10,7 +9,7 @@ pub struct RepeatRefSource<I: DawSource> {
     ind_min: f32,
 }
 
-impl<I: DawSource + Clone> RepeatRefSource<I> {
+impl<I: SoundNode + Clone> RepeatRefSource<I> {
     #[inline]
     pub fn new(source: I, repeat_count: Option<u32>) -> Self {
         Self {
@@ -23,7 +22,7 @@ impl<I: DawSource + Clone> RepeatRefSource<I> {
     }
 }
 
-impl<I: DawSource + Clone> DawSource for RepeatRefSource<I> {
+impl<I: SoundNode + Clone> SoundNode for RepeatRefSource<I> {
     fn next(&mut self, mut index: f32, channel: u8) -> Option<f32> {
         if self.repeat_count.unwrap_or(u32::MAX) <= self.repeats {
             return None;
@@ -39,7 +38,7 @@ impl<I: DawSource + Clone> DawSource for RepeatRefSource<I> {
                 self.ind_min += index;
                 self.current_source.next(0.0, channel)
             }
-            Some(x) => Some(x),
+            Some(sample) => Some(sample),
         }
     }
 }

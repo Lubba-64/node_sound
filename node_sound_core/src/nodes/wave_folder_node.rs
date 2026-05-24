@@ -1,21 +1,60 @@
-use crate::nodes::SoundNode;
-use crate::sound_graph::graph_types::{
-    DataType, InputParameter, InputValueConfig, Output, ValueType,
-};
-use crate::sounds::wave_folder::Wavefolder;
-use egui_node_graph_2::InputParamKind;
-use std::collections::BTreeMap;
+use crate::node_prelude::*;
 
-use super::{SoundNodeProps, SoundNodeResult};
+#[derive(Clone, Debug)]
+pub struct Wavefolder<I: SoundNode> {
+    source: I,
+    gain: f32,
+    offset: f32,
+    folds: u8,
+    last_sample: f32,
+}
 
-pub fn wave_folder_node() -> SoundNode {
-    SoundNode {
+impl<I: SoundNode> Wavefolder<I> {
+    #[inline]
+    pub fn new(source: I, gain: f32, offset: f32, folds: u8) -> Self {
+        Self {
+            source,
+            gain,
+            offset,
+            folds,
+            last_sample: 0.0,
+        }
+    }
+
+    fn fold_wave(&mut self, mut sample: f32) -> f32 {
+        sample = sample * self.gain + self.offset;
+
+        for _ in 0..self.folds {
+            sample += self.last_sample;
+            sample = if sample > 1.0 {
+                2.0 - sample
+            } else if sample < -1.0 {
+                -2.0 - sample
+            } else {
+                sample
+            };
+        }
+        self.last_sample = sample;
+        sample.clamp(-1.0, 1.0)
+    }
+}
+
+impl<I: SoundNode + Clone> SoundNode for Wavefolder<I> {
+    fn next(&mut self, index: f32, channel: u8) -> Option<f32> {
+        self.source
+            .next(index, channel)
+            .map(|sample| self.fold_wave(sample))
+    }
+}
+
+pub fn wave_folder_node() -> SoundNodeMetadata {
+    SoundNodeMetadata {
         name: "Wave Folder".to_string(),
         tooltip: r#"Distortion effect for folding a wave into itself repeatedly."#.to_string(),
         inputs: BTreeMap::from([
             (
                 "gain".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "gain".to_string(),
@@ -28,7 +67,7 @@ pub fn wave_folder_node() -> SoundNode {
             ),
             (
                 "offset".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "offset".to_string(),
@@ -41,7 +80,7 @@ pub fn wave_folder_node() -> SoundNode {
             ),
             (
                 "folds".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::Float,
                     kind: InputParamKind::ConnectionOrConstant,
                     name: "folds".to_string(),
@@ -54,7 +93,7 @@ pub fn wave_folder_node() -> SoundNode {
             ),
             (
                 "audio 1".to_string(),
-                InputParameter {
+                Input {
                     data_type: DataType::AudioSource,
                     kind: InputParamKind::ConnectionOnly,
                     name: "audio 1".to_string(),
@@ -69,20 +108,19 @@ pub fn wave_folder_node() -> SoundNode {
                 name: "out".to_string(),
             },
         )]),
+        op: Some(Arc::new(|mut props| {
+            let cloned = props.clone_sound(props.get_source("audio 1")?)?;
+            Ok(BTreeMap::from([(
+                "out".to_string(),
+                ValueType::AudioSource {
+                    value: props.push_sound(Box::new(Wavefolder::new(
+                        cloned,
+                        props.get_float("gain")?,
+                        props.get_float("offset")?,
+                        props.get_float("folds")? as u8,
+                    ))),
+                },
+            )]))
+        })),
     }
-}
-
-pub fn wave_folder_logic(mut props: SoundNodeProps) -> SoundNodeResult {
-    let cloned = props.clone_sound(props.get_source("audio 1")?)?;
-    Ok(BTreeMap::from([(
-        "out".to_string(),
-        ValueType::AudioSource {
-            value: props.push_sound(Box::new(Wavefolder::new(
-                cloned,
-                props.get_float("gain")?,
-                props.get_float("offset")?,
-                props.get_float("folds")? as u8,
-            ))),
-        },
-    )]))
 }
